@@ -396,9 +396,9 @@ changelog:
 
 ### Milestone 1.1: Domain Types & Interfaces
 
-- [ ] **T1.1** Create `internal/shortener/model.go` — URL struct, CreateRequest, ListOptions
-- [ ] **T1.2** Create `internal/shortener/errors.go` — Sentinel errors: ErrNotFound, ErrExpired, ErrAliasTaken, ErrReservedPath, ErrInvalidURL
-- [ ] **T1.3** Create `internal/shortener/service.go` — Service interface definition:
+- [x] **T1.1** Create `internal/shortener/model.go` — URL struct, CreateRequest, ListOptions
+- [x] **T1.2** Create `internal/shortener/errors.go` — Sentinel errors: ErrNotFound, ErrExpired, ErrAliasTaken, ErrReservedPath, ErrInvalidURL
+- [x] **T1.3** Create `internal/shortener/service.go` — Service interface definition:
   ```go
   type Service interface {
       Create(ctx, CreateRequest) (*URL, error)
@@ -408,23 +408,23 @@ changelog:
       IncrementClicks(ctx, code) error
   }
   ```
-- [ ] **T1.4** Create `internal/storage/storage.go` — Storage interface
-- [ ] **T1.5** Create `internal/cache/cache.go` — Cache interface (Get, Set, Delete)
-- [ ] **T1.6** Create `internal/shortener/encoder.go` — Encoder interface (Encode, Decode)
-- [ ] **T1.7** Verify: `go build ./...` compiles
+- [x] **T1.4** Create `internal/storage/storage.go` — Storage interface
+- [x] **T1.5** Create `internal/cache/cache.go` — Cache interface (Get, Set, Delete)
+- [x] **T1.6** Create `internal/shortener/encoder.go` — Encoder interface (Encode, Decode)
+- [x] **T1.7** Verify: `go build ./...` compiles
 
 ### Milestone 1.2: Sqids Encoder (TDD)
 
-- [ ] **T1.8** Write failing tests: `internal/shortener/encoder_test.go`
+- [x] **T1.8** Write failing tests: `internal/shortener/encoder_test.go`
   - Encode returns non-empty string
   - Encode → Decode roundtrip returns same ID
   - Different IDs produce different codes
   - Codes contain only `[a-zA-Z0-9]`
   - Consecutive IDs produce non-sequential codes
-- [ ] **T1.9** Install sqids: `go get github.com/sqids/sqids-go`
-- [ ] **T1.10** Implement `SqidsEncoder` — make tests pass
-- [ ] **T1.11** Write fuzz test: `FuzzEncode` — never panics on any int64 input
-- [ ] **T1.12** `make test` — all pass
+- [x] **T1.9** Install sqids: `go get github.com/sqids/sqids-go`
+- [x] **T1.10** Implement `SqidsEncoder` — make tests pass
+- [x] **T1.11** Write fuzz test: `FuzzEncode` — never panics on any int64 input
+- [x] **T1.12** `make test` — all pass
 
 ### Milestone 1.3: URL Validator (TDD)
 
