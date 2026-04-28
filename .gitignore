@@ -1,0 +1,28 @@
+# Binaries
+goshort
+goshort-cli
+dist/
+
+# Data
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Config with secrets
+goshort.local.toml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
+
+# Claude Code local
+CLAUDE.local.md

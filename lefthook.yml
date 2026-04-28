@@ -1,0 +1,43 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.go"
+      run: golangci-lint run --fix
+      stage_fixed: true
+    test:
+      glob: "*.go"
+      run: go test -race -count=1 -timeout=30s ./...
+    secrets:
+      run: gitleaks git --no-banner --staged
+
+pre-push:
+  commands:
+    full-test:
+      run: go test -race -count=1 -timeout=60s ./...
+    vet:
+      run: go vet ./...
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        msg=$(cat {1})
+        types="(🎉 init|✨ feat|🐛 fix|🚑️ hotfix|📝 docs|💄 style|♻️ refactor|⚡️ perf|✅ test|⬆️ update-deps|🔧 configs|🔨 chore|💥 breaking|🚀 deploy)"
+        if ! echo "$msg" | grep -qP "^${types}(\([^)]+\))?!?: .+"; then
+          echo "❌ Commit message must follow: emoji type(scope): subject"
+          echo ""
+          echo "   Valid types:"
+          echo "   🎉 init    ✨ feat    🐛 fix      🚑️ hotfix"
+          echo "   📝 docs    💄 style   ♻️  refactor  ⚡️ perf"
+          echo "   ✅ test    ⬆️  update-deps   🔧 configs  🔨 chore"
+          echo "   💥 breaking  🚀 deploy"
+          echo ""
+          echo "   Examples:"
+          echo "   ✨ feat(api): add URL shortening endpoint"
+          echo "   🐛 fix(cache): align TTL to expiry time"
+          echo "   🔧 configs: add golangci-lint configuration"
+          echo ""
+          echo "   Got: $msg"
+          exit 1
+        fi

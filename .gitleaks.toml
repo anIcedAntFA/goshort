@@ -1,0 +1,8 @@
+title = "GoShort Gitleaks Config"
+
+[allowlist]
+  paths = [
+    '''go\.sum''',
+    '''vendor/''',
+    '''docs/''',
+  ]

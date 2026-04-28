@@ -1,0 +1,109 @@
+version: "2"
+
+linters:
+  enable:
+    - gocognit        # check for high cyclomatic complexity
+    - godot           # enforce consistent punctuation in comments
+    - lll             # check for long lines
+    - misspell        # check for common misspellings
+    - prealloc        # suggest preallocating slices
+    - revive          # configurable linter for style issues
+    - errcheck        # check for unchecked errors
+    - govet           # go vet on steroids
+    - staticcheck     # comprehensive static analysis
+    - unused          # detect unused code
+    - ineffassign     # detect useless assignments
+    - gocritic        # opinionated code checks
+    - errname         # error naming conventions
+    - errorlint       # error wrapping checks
+    - gosec           # security checks
+    - bodyclose       # detect unclosed HTTP response bodies
+    - noctx           # detect HTTP requests without context
+
+  settings:
+    govet:
+      enable-all: false
+
+    errcheck:
+      check-type-assertions: true
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (fmt).Fprintf
+        - (fmt).Fprintln
+
+    gocognit:
+      min-complexity: 15
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - commentedOutCode
+        - whyNoLint
+
+    godot:
+      scope: toplevel
+      period: true
+      capital: false
+
+    lll:
+      line-length: 120
+      tab-width: 1
+
+    misspell:
+      locale: US
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+        - name: unreachable-code
+        - name: redefines-builtin-id
+
+  exclusions:
+    rules:
+      - linters:
+        - errcheck
+        - noctx
+        path: _test\.go
+      - linters:
+        - gosec
+        - gocyclo
+        path: _test\.go
+        text: "(G301|G304|cyclomatic complexity)"
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
