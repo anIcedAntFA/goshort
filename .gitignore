@@ -27,3 +27,8 @@ vendor/
 # Claude Code local
 CLAUDE.local.md
 .agents/
+
+
+# Test output
+test_output/
+coverage.out
