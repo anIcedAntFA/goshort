@@ -341,50 +341,50 @@ changelog:
 
 ### Milestone 0.1: Repository Setup
 
-- [ ] **T0.1** Create GitHub repository `goshort`
-- [ ] **T0.2** Clone locally, `cd goshort`
-- [ ] **T0.3** `go mod init github.com/yourname/goshort`
-- [ ] **T0.4** Create directory structure:
+- [x] **T0.1** Create GitHub repository `goshort`
+- [x] **T0.2** Clone locally, `cd goshort`
+- [x] **T0.3** `go mod init github.com/yourname/goshort`
+- [x] **T0.4** Create directory structure:
   ```
   mkdir -p cmd/server cmd/cli internal/{shortener,storage,cache,api,mcp,config} db docs api-tests data
   ```
-- [ ] **T0.5** Create placeholder `cmd/server/main.go`:
+- [x] **T0.5** Create placeholder `cmd/server/main.go`:
   ```go
   package main
   func main() { println("goshort") }
   ```
-- [ ] **T0.6** Verify: `go build ./cmd/server` compiles
+- [x] **T0.6** Verify: `go build ./cmd/server` compiles
 
 ### Milestone 0.2: Tooling Configuration
 
-- [ ] **T0.7** Create `.gitignore` (from design doc)
-- [ ] **T0.8** Create `.editorconfig`
-- [ ] **T0.9** Create `Makefile` with targets: build, test, lint, clean, ci
-- [ ] **T0.10** Install & configure golangci-lint:
+- [x] **T0.7** Create `.gitignore` (from design doc)
+- [x] **T0.8** Create `.editorconfig`
+- [x] **T0.9** Create `Makefile` with targets: build, test, lint, clean, ci
+- [x] **T0.10** Install & configure golangci-lint:
   ```bash
   curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin
   ```
-- [ ] **T0.11** Create `.golangci.yml`
-- [ ] **T0.12** Install & configure lefthook:
+- [x] **T0.11** Create `.golangci.yml`
+- [x] **T0.12** Install & configure lefthook:
   ```bash
   go install github.com/evilmartians/lefthook@latest
   lefthook install
   ```
-- [ ] **T0.13** Create `lefthook.yml`
-- [ ] **T0.14** Install gitleaks: `brew install gitleaks` or download binary
-- [ ] **T0.15** Create `.gitleaks.toml`
-- [ ] **T0.16** Verify: `make lint` passes, `make test` passes
+- [x] **T0.13** Create `lefthook.yml`
+- [x] **T0.14** Install gitleaks: `brew install gitleaks` or download binary
+- [x] **T0.15** Create `.gitleaks.toml`
+- [x] **T0.16** Verify: `make lint` passes, `make test` passes
 
 ### Milestone 0.3: GitHub Setup
 
-- [ ] **T0.17** Create `.github/workflows/ci.yml`
-- [ ] **T0.18** Create `LICENSE` (MIT)
-- [ ] **T0.19** Create initial `README.md` (project description, badges)
-- [ ] **T0.20** Copy project docs: `CLAUDE.md`, `docs/design.md`, `docs/LEARNING.md`, `docs/cc-workflow-guide.md`
-- [ ] **T0.21** Install samber skills (8 selected — see `docs/install-samber-skills.md`)
-- [ ] **T0.22** `git add . && git commit -m "chore: initial project skeleton with tooling"`
-- [ ] **T0.23** Push to GitHub, verify CI passes
-- [ ] **T0.24** Tag: `git tag v0.0.1 && git push --tags`
+- [x] **T0.17** Create `.github/workflows/ci.yml`
+- [x] **T0.18** Create `LICENSE` (MIT)
+- [x] **T0.19** Create initial `README.md` (project description, badges)
+- [x] **T0.20** Copy project docs: `CLAUDE.md`, `docs/design.md`, `docs/LEARNING.md`, `docs/cc-workflow-guide.md`
+- [x] **T0.21** Install samber skills (8 selected — see `docs/install-samber-skills.md`)
+- [x] **T0.22** `git add . && git commit -m "chore: initial project skeleton with tooling"`
+- [x] **T0.23** Push to GitHub, verify CI passes
+- [x] **T0.24** Tag: `git tag v0.0.1 && git push --tags`
 
 ---
 
