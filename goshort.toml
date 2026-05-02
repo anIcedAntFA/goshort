@@ -4,9 +4,9 @@
 
 [server]
 # Port the HTTP server listens on
-port = 3000
+port = 8080
 # Public base URL used when constructing short URLs in API responses
-base_url = "http://localhost:3000"
+base_url = "http://localhost:8080"
 
 [storage]
 # Storage backend: "sqlite" (default). "postgres" planned for Phase 5+
