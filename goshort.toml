@@ -1,0 +1,43 @@
+# GoShort Configuration
+# All values can be overridden with env vars prefixed GOSHORT_
+# Example: GOSHORT_SERVER_PORT=9090 overrides server.port
+
+[server]
+# Port the HTTP server listens on
+port = 3000
+# Public base URL used when constructing short URLs in API responses
+base_url = "http://localhost:3000"
+
+[storage]
+# Storage backend: "sqlite" (default). "postgres" planned for Phase 5+
+driver = "sqlite"
+# Path to the SQLite database file
+sqlite_path = "./data/goshort.db"
+
+[cache]
+# Cache backend: "none" | "memory" | "redis"
+driver = "none"
+# Redis connection URL — used when driver = "redis"
+redis_url = "redis://localhost:6379"
+
+[auth]
+# API key for write endpoints (POST, DELETE). Empty = no auth (Phase 3)
+api_key = ""
+
+[rate_limit]
+# Enable per-IP token-bucket rate limiting (Phase 3)
+enabled = false
+# Maximum requests per minute per IP
+requests_per_minute = 60
+
+[shortener]
+# Length of generated short codes (Sqids output)
+code_length = 6
+# Default expiry for new URLs: "0" = no expiry, or a duration like "30d"
+default_expiry = "0"
+
+[logging]
+# Log level: "debug" | "info" | "warn" | "error"
+level = "info"
+# Log format: "json" | "text"
+format = "json"

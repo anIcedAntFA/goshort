@@ -3,86 +3,77 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/anIcedAntFA/goshort/internal/api"
 	"github.com/anIcedAntFA/goshort/internal/cache"
+	"github.com/anIcedAntFA/goshort/internal/config"
 	"github.com/anIcedAntFA/goshort/internal/encoder"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 	"github.com/anIcedAntFA/goshort/internal/storage"
 )
 
 func main() {
-	port := envOr("GOSHORT_PORT", "8080")
-	dataDir := envOr("GOSHORT_DATA_DIR", "./data")
-	baseURL := envOr("GOSHORT_BASE_URL", "http://localhost:8080")
-	cacheDriver := envOr("GOSHORT_CACHE_DRIVER", "none")
+	configPath := flag.String("config", "", "path to TOML config file (default: env vars + built-in defaults)")
+	flag.Parse()
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	slog.SetDefault(logger)
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load config: %v\n", err)
+		os.Exit(1)
+	}
 
-	if err := os.MkdirAll(dataDir, 0o750); err != nil {
+	setupLogger(cfg.Logging)
+
+	if err := os.MkdirAll(filepath.Dir(cfg.Storage.SQLitePath), 0o750); err != nil {
 		slog.Error("create data dir", "error", err)
 		os.Exit(1)
 	}
 
-	// Initialize fallible dependencies before registering deferred cleanup so
-	// os.Exit calls on startup errors do not skip deferred functions.
-	dbPath := dataDir + "/goshort.db" //nolint:gosec // path from trusted env var
-	store, err := storage.NewSQLiteStorage(context.Background(), dbPath)
+	store, err := storage.NewSQLiteStorage(context.Background(), cfg.Storage.SQLitePath)
 	if err != nil {
 		slog.Error("open storage", "error", err)
 		os.Exit(1)
 	}
 
-	enc, err := encoder.NewSqidsEncoder(6)
+	if cfg.Shortener.CodeLength < 1 || cfg.Shortener.CodeLength > 255 {
+		slog.Error("shortener.code_length must be between 1 and 255", "value", cfg.Shortener.CodeLength)
+		os.Exit(1)
+	}
+	enc, err := encoder.NewSqidsEncoder(uint8(cfg.Shortener.CodeLength)) //nolint:gosec // range validated above
 	if err != nil {
 		slog.Error("create encoder", "error", err)
 		os.Exit(1)
 	}
 
-	// All fallible setup complete. Register signal handling + deferred cleanup.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	var c shortener.Cache
-	switch cacheDriver {
-	case "memory":
-		c = cache.NewMemoryCache()
-	case "redis":
-		redisAddr := envOr("GOSHORT_REDIS_URL", "localhost:6379")
-		rc, rcErr := cache.NewRedisCache(redisAddr)
-		if rcErr != nil {
-			slog.Warn("redis unavailable, falling back to noop cache", "error", rcErr)
-			c = cache.NewNoopCache()
-		} else {
-			c = rc
-		}
-	default:
-		c = cache.NewNoopCache()
-	}
-
+	c := buildCache(cfg.Cache)
 	svc := shortener.NewService(store, c, enc)
-	h := api.NewHandler(svc, c, logger, baseURL)
+	h := api.NewHandler(svc, c, slog.Default(), cfg.Server.BaseURL)
 	router := api.NewRouter(h)
 
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
-	go startCleanupJob(ctx, store, logger)
+	go startCleanupJob(ctx, store)
 
 	go func() {
-		slog.Info("server starting", "addr", srv.Addr, "base_url", baseURL)
+		slog.Info("server starting", "addr", srv.Addr, "base_url", cfg.Server.BaseURL)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", "error", err)
 			os.Exit(1)
@@ -104,31 +95,61 @@ func main() {
 	slog.Info("server stopped")
 }
 
-func startCleanupJob(ctx context.Context, store shortener.Storage, logger *slog.Logger) {
+func setupLogger(cfg config.LoggingConfig) {
+	logLevel := slog.LevelInfo
+	switch cfg.Level {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	}
+
+	opts := &slog.HandlerOptions{Level: logLevel}
+	var handler slog.Handler
+	if cfg.Format == "text" {
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	} else {
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	}
+	slog.SetDefault(slog.New(handler))
+}
+
+func buildCache(cfg config.CacheConfig) shortener.Cache {
+	switch cfg.Driver {
+	case "memory":
+		return cache.NewMemoryCache()
+	case "redis":
+		rc, err := cache.NewRedisCache(cfg.RedisURL)
+		if err != nil {
+			slog.Warn("redis unavailable, falling back to noop cache", "error", err)
+			return cache.NewNoopCache()
+		}
+		return rc
+	default:
+		return cache.NewNoopCache()
+	}
+}
+
+func startCleanupJob(ctx context.Context, store shortener.Storage) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("cleanup job stopped")
+			slog.Info("cleanup job stopped")
 			return
 		case <-ticker.C:
 			deleted, err := store.DeleteExpired(ctx, 1000)
 			if err != nil {
-				logger.Error("cleanup failed", "error", err)
+				slog.Error("cleanup failed", "error", err)
 				continue
 			}
 			if deleted > 0 {
-				logger.Info("cleanup completed", "deleted", deleted)
+				slog.Info("cleanup completed", "deleted", deleted)
 			}
 		}
 	}
-}
-
-func envOr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
 }
