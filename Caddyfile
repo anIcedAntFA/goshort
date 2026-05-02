@@ -1,0 +1,14 @@
+{
+    # Uses Caddy's internal CA for local development (self-signed cert).
+    # Remove this block for production — Caddy will obtain Let's Encrypt certs automatically.
+    local_certs
+}
+
+localhost {
+    reverse_proxy goshort:8080
+}
+
+# Production example (uncomment and replace with your domain):
+# goshort.yourdomain.com {
+#     reverse_proxy goshort:8080
+# }

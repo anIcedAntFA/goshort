@@ -621,11 +621,11 @@ changelog:
 
 ### Milestone 3.4: Docker
 
-- [ ] **T3.20** Create `Dockerfile` (multi-stage build)
-- [ ] **T3.21** Create `docker-compose.yml` (app + Caddy + optional Redis)
-- [ ] **T3.22** Create `Caddyfile`
-- [ ] **T3.23** Verify: `docker compose up -d` → app accessible via HTTPS locally
-- [ ] **T3.24** Test: `docker build -t goshort . && docker run -p 8080:8080 goshort`
+- [x] **T3.20** Create `Dockerfile` (multi-stage build)
+- [x] **T3.21** Create `docker-compose.yml` (app + Caddy + optional Redis)
+- [x] **T3.22** Create `Caddyfile`
+- [x] **T3.23** Verify: `docker compose up -d` → app accessible via HTTPS locally
+- [x] **T3.24** Test: `docker build -t goshort . && docker run -p 8080:8080 goshort`
 
 ### Milestone 3.5: Release Infrastructure
 

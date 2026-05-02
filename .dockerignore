@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+.github
+
+# Data
+data/
+*.db
+
+# Binaries
+goshort
+goshort-cli
+dist/
+
+# IDE
+.idea/
+.vscode/
+
+# Claude
+.claude/
+.agents/
+CLAUDE.md
+CLAUDE.local.md
+
+# Test output
+coverage.out
+test_output/
+
+# Docs (not served by app — openapi.yaml is kept)
+docs/DESIGN.md
+docs/LEARNING.md
+docs/ROADMAP.md
+docs/REFACTORING.md
+
+# API tests
+api-tests/
