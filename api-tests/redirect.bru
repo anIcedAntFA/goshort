@@ -1,0 +1,13 @@
+meta {
+  name: Redirect
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/{{short_code}}
+}
+
+assert {
+  res.status: lt 500
+}

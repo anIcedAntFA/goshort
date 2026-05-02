@@ -1,0 +1,32 @@
+meta {
+  name: Create Short URL
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/urls
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "https://example.com/very/long/path?with=params"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.short_code: isDefined
+  res.body.short_url: isDefined
+  res.body.original_url: eq https://example.com/very/long/path?with=params
+  res.body.created_at: isDefined
+}
+
+script:post-response {
+  bru.setVar("short_code", res.body.short_code);
+}

@@ -1,0 +1,16 @@
+meta {
+  name: List URLs
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/v1/urls?page=1&per_page=10
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isDefined
+  res.body.pagination: isDefined
+  res.body.pagination.page: eq 1
+}

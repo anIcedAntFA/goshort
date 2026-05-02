@@ -1,0 +1,25 @@
+meta {
+  name: Create URL - Invalid URL
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/urls
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "not-a-valid-url"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: isDefined
+}

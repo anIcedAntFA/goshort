@@ -1,0 +1,13 @@
+meta {
+  name: Delete Custom Alias (cleanup)
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{base_url}}/api/v1/urls/my-test-link
+}
+
+assert {
+  res.status: eq 204
+}

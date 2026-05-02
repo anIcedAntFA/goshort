@@ -1,0 +1,15 @@
+meta {
+  name: Get URL Details
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/v1/urls/{{short_code}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.short_code: isDefined
+  res.body.original_url: isDefined
+}
