@@ -133,7 +133,7 @@ func (q *Queries) IncrementCounter(ctx context.Context) (int64, error) {
 }
 
 const listURLs = `-- name: ListURLs :many
-SELECT id, short_code, original_url, is_custom, created_at, expires_at, click_count FROM urls ORDER BY created_at DESC LIMIT ? OFFSET ?
+SELECT id, short_code, original_url, is_custom, created_at, expires_at, click_count FROM urls ORDER BY id DESC LIMIT ? OFFSET ?
 `
 
 type ListURLsParams struct {
