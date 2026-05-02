@@ -1,0 +1,62 @@
+services:
+  goshort:
+    build:
+      context: .
+      args:
+        VERSION: "${VERSION:-dev}"
+    container_name: goshort
+    ports:
+      - "8080:8080"
+    volumes:
+      - goshort-data:/app/data
+    environment:
+      - GOSHORT_SERVER_PORT=8080
+      - GOSHORT_SERVER_BASE_URL=https://localhost
+      - GOSHORT_STORAGE_SQLITE_PATH=/app/data/goshort.db
+      - GOSHORT_CACHE_DRIVER=${CACHE_DRIVER:-memory}
+      - GOSHORT_AUTH_API_KEY=${GOSHORT_API_KEY:-}
+      - GOSHORT_LOGGING_FORMAT=json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: goshort-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      goshort:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Optional: uncomment to use Redis cache (also set CACHE_DRIVER=redis)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: goshort-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   command: redis-server --appendonly yes
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  goshort-data:
+  caddy-data:
+  caddy-config:
+  # redis-data:
