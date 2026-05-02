@@ -490,16 +490,16 @@ changelog:
 
 ### Milestone 2.1: Chi Router + Handlers
 
-- [ ] **T2.1** Install chi: `go get github.com/go-chi/chi/v5`
-- [ ] **T2.2** Create `internal/api/router.go` — route definitions with groups
-- [ ] **T2.3** Create `internal/api/errors.go` — error response helpers, error→status mapping
-- [ ] **T2.4** Create `internal/api/handler.go` — Handler struct with service dependency
-- [ ] **T2.5** Implement `POST /api/v1/urls` handler
-- [ ] **T2.6** Implement `GET /{code}` redirect handler (302 + click counting)
-- [ ] **T2.7** Implement `GET /api/v1/urls` list handler (pagination)
-- [ ] **T2.8** Implement `GET /api/v1/urls/{code}` detail handler
-- [ ] **T2.9** Implement `DELETE /api/v1/urls/{code}` handler
-- [ ] **T2.10** Implement `GET /health` endpoint
+- [x] **T2.1** Install chi: `go get github.com/go-chi/chi/v5`
+- [x] **T2.2** Create `internal/api/router.go` — route definitions with groups
+- [x] **T2.3** Create `internal/api/errors.go` — error response helpers, error→status mapping
+- [x] **T2.4** Create `internal/api/handler.go` — Handler struct with service dependency
+- [x] **T2.5** Implement `POST /api/v1/urls` handler
+- [x] **T2.6** Implement `GET /{code}` redirect handler (302 + click counting)
+- [x] **T2.7** Implement `GET /api/v1/urls` list handler (pagination)
+- [x] **T2.8** Implement `GET /api/v1/urls/{code}` detail handler
+- [x] **T2.9** Implement `DELETE /api/v1/urls/{code}` handler
+- [x] **T2.10** Implement `GET /health` endpoint
 
 ### Milestone 2.2: HTTP Tests
 
