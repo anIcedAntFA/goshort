@@ -43,6 +43,11 @@ indent_size = 2
 [Makefile]
 indent_style = tab
 
+# SQL files
+[*.sql]
+indent_style = space
+indent_size = 2
+
 # VHS tape files
 [*.tape]
 indent_style = space
