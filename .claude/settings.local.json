@@ -12,7 +12,10 @@
       "Bash(go build *)",
       "Bash(go test *)",
       "Bash(golangci-lint run *)",
-      "Bash(go mod *)"
+      "Bash(go mod *)",
+      "Bash(make test *)",
+      "Bash(make lint *)",
+      "Bash(go tool *)"
     ]
   }
 }
