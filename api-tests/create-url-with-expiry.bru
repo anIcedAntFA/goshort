@@ -1,0 +1,26 @@
+meta {
+  name: Create URL with Expiry
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/urls
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "https://example.com/expiring",
+    "expires_in": "7d"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.expires_at: isDefined
+}

@@ -154,5 +154,5 @@ Phase 2 in progress.
 - ✅ 2.5: Caching layers (cache-aside, Redis, TTL alignment)
 - ✅ 2.6: Configuration (Koanf — goshort.toml + GOSHORT_ env vars)
 - ✅ 2.7: API Documentation (OpenAPI 3.1.0 + Scalar UI at /docs)
-- 🔲 2.8: Bruno test collection (next)
+- ✅ 2.8: Bruno test collection (next)
 - 🔲 2.9: CI + Coverage

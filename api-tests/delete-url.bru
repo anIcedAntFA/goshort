@@ -1,0 +1,13 @@
+meta {
+  name: Delete URL
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{base_url}}/api/v1/urls/{{short_code}}
+}
+
+assert {
+  res.status: eq 204
+}
