@@ -1,17 +1,37 @@
-# GoShort
+<h1 align="center">GoShort</h1>
 
-[![CI](https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml/badge.svg)](https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/anIcedAntFA/goshort/graph/badge.svg)](https://codecov.io/gh/anIcedAntFA/goshort)
-[![Go Report Card](https://goreportcard.com/badge/github.com/anIcedAntFA/goshort)](https://goreportcard.com/report/github.com/anIcedAntFA/goshort)
-[![Release](https://img.shields.io/github/v/release/anIcedAntFA/goshort)](https://github.com/anIcedAntFA/goshort/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](go.mod)
+<p align="center">
+  Self-hosted URL shortener — single binary, SQLite-backed, zero config to start.
+</p>
 
-Self-hosted URL shortener — single binary, SQLite-backed, API-key auth, Redis-optional caching.
+<p align="center">
+  <sub>Turn long URLs into short, shareable links with click tracking and custom aliases.</sub>
+</p>
 
-```
-https://docs.google.com/spreadsheets/d/1a2b3c4d5e6f7g8h  →  https://short.example.com/k7Xm2p
-```
+<p align="center">
+  <a href="https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml">
+    <img src="https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml/badge.svg" alt="CI">
+  </a>
+  <a href="https://codecov.io/gh/anIcedAntFA/goshort">
+    <img src="https://codecov.io/gh/anIcedAntFA/goshort/graph/badge.svg" alt="codecov">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/anIcedAntFA/goshort">
+    <img src="https://goreportcard.com/badge/github.com/anIcedAntFA/goshort" alt="Go Report Card">
+  </a>
+  <a href="https://github.com/anIcedAntFA/goshort/releases/latest">
+    <img src="https://img.shields.io/github/v/release/anIcedAntFA/goshort" alt="Release">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
+  <a href="go.mod">
+    <img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go" alt="Go">
+  </a>
+</p>
+
+<p align="center">
+  <img src="docs/demo.gif" alt="GoShort Demo" width="800">
+</p>
 
 ---
 
@@ -25,6 +45,23 @@ https://docs.google.com/spreadsheets/d/1a2b3c4d5e6f7g8h  →  https://short.exam
 - **CLI client** — `goshort-cli` for shorten, list, stats, delete from the terminal
 - **Prometheus metrics + structured logs** — `/metrics`, `slog` throughout, no extra dependencies
 - **Self-documenting API** — OpenAPI spec + interactive Scalar UI at `/docs`
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Language | Go 1.26 |
+| HTTP | [Chi](https://go-chi.io) v5 |
+| Database | SQLite via [sqlc](https://sqlc.dev) (pure Go, no CGO) |
+| Encoding | [Sqids](https://sqids.org) (zero-collision, non-sequential) |
+| CLI | [Cobra](https://cobra.dev) |
+| Config | [Koanf](https://github.com/knadh/koanf) v2 (TOML + env vars) |
+| Metrics | Prometheus |
+| Rate Limit | `golang.org/x/time/rate` (token bucket) |
+| Reverse Proxy | Caddy (Docker Compose) |
+| Release | GoReleaser + GitHub Actions |
 
 ---
 
@@ -182,7 +219,8 @@ Interactive docs at [http://localhost:8080/docs](http://localhost:8080/docs).
 
 ---
 
-## Architecture
+<details>
+<summary>🏗️ Architecture</summary>
 
 ```
 Request
@@ -207,6 +245,39 @@ Request
 ```
 
 Layer boundaries: `api/` and `mcp/` call `shortener/`; `shortener/` calls `storage/` and `cache/` interfaces only — never concrete types. Full design rationale in [`docs/DESIGN.md`](docs/DESIGN.md).
+
+</details>
+
+<details>
+<summary>📁 Project Structure</summary>
+
+```
+cmd/
+├── server/main.go       # HTTP server entry point
+└── cli/main.go          # CLI entry point
+
+internal/
+├── api/                 # Chi handlers, router, middleware, error types
+├── shortener/           # Core business logic (service, encoder, validator)
+├── storage/             # Storage interface + SQLite (sqlc) implementation
+├── cache/               # Cache interface + noop / memory / Redis
+├── config/              # Koanf config loading (TOML + env vars)
+└── mcp/                 # MCP server tools (Phase 4)
+
+db/
+├── schema.sql
+├── queries.sql
+└── sqlc.yaml
+
+docs/
+├── DESIGN.md            # Full system design and architecture rationale
+├── ROADMAP.md           # Phase-by-phase task tracking
+└── openapi.yaml         # OpenAPI 3.1 spec (served at /docs)
+
+api-tests/               # Bruno API tests (.bru files)
+```
+
+</details>
 
 ---
 
@@ -260,6 +331,12 @@ fly launch && fly volumes create data --size 1 && fly deploy
 | 5+ | Analytics, PostgreSQL, Redis counter, AI agent | 🔲 |
 
 Each phase ships a working, deployable product.
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=anIcedAntFA/goshort&type=Date)](https://star-history.com/#anIcedAntFA/goshort&Date)
 
 ---
 
