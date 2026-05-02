@@ -145,8 +145,10 @@ format = "json"
 
 ## Current State
 
-Phase 2 complete. v0.2.0 tagged.
+Phase 3 complete. Preparing v0.3.0 release.
 
 - ✅ Phase 1: Core library (shortener, storage, cache, encoder)
 - ✅ Phase 2: HTTP API, caching, config, monitoring, docs
-- 🔲 Phase 3: Auth, rate limiting, CLI, Docker, deploy
+- ✅ Phase 3: Auth, rate limiting, CLI, Docker, release infra
+- 🔲 Phase 3.5: Deploy (Fly.io, bare VPS)
+- 🔲 Phase 4: MCP server
