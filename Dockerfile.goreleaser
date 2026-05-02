@@ -1,0 +1,22 @@
+# Used by GoReleaser — binary is pre-built and injected by goreleaser.
+# For local builds use the multi-stage Dockerfile instead.
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata
+RUN addgroup -S goshort && adduser -S goshort -G goshort
+
+WORKDIR /app
+
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/goshort  /app/goshort
+COPY docs/openapi.yaml           /app/docs/openapi.yaml
+
+RUN mkdir -p /app/data && chown -R goshort:goshort /app
+
+USER goshort
+
+EXPOSE 8080
+
+VOLUME ["/app/data"]
+
+ENTRYPOINT ["/app/goshort"]
