@@ -457,6 +457,51 @@ goshort/
 └── README.md
 ```
 
+### Interface Evolution Strategy
+
+The `Service` interface currently has 5 methods (Create, GetByCode, Delete, List, IncrementClicks).
+This is appropriate for Phase 1–3 where a single consumer (HTTP handler) uses all methods.
+
+**Split point: Phase 4 (MCP server).** When the MCP server arrives as a second consumer
+with different needs, split `Service` into composable interfaces:
+
+```go
+type URLReader interface {
+    GetByCode(ctx context.Context, code string) (*URL, error)
+    List(ctx context.Context, opts ListOptions) ([]URL, int, error)
+}
+
+type URLWriter interface {
+    Create(ctx context.Context, req CreateRequest) (*URL, error)
+    Delete(ctx context.Context, code string) error
+}
+
+type ClickTracker interface {
+    IncrementClicks(ctx context.Context, code string) error
+}
+
+// Full service composes all three.
+type Service interface {
+    URLReader
+    URLWriter
+    ClickTracker
+}
+```
+
+Because Go interfaces are satisfied implicitly, `ServiceImpl` will satisfy both the old
+`Service` and the new split interfaces with zero code changes. The split only affects
+consumers: each declares the minimal interface it needs.
+
+**Cache placement:** Cache-aside logic lives in the delivery layer (HTTP handler, MCP handler),
+not in the service. The service operates on storage directly. This keeps the service testable
+without cache concerns and lets each delivery layer manage its own caching strategy.
+
+**`Encoder` interface:** Contains only `Encode`. The `Decode` method exists on the concrete
+`SqidsEncoder` for testing and potential future use, but is not part of the interface because
+no consumer calls it.
+
+---
+
 ### Key Go Libraries
 
 | Library | Purpose | Phase |
