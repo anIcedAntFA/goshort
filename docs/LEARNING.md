@@ -1846,7 +1846,7 @@ Every file in GoShort teaches specific concepts. Use this to know what you'll le
 │   errors.go                    │ Error → HTTP status mapping     │
 ├────────────────────────────────┼─────────────────────────────────┤
 │ internal/config/               │                                 │
-│   config.go                    │ TOML, env vars, viper, defaults │
+│   config.go                    │ TOML, env vars, koanf, defaults │
 ├────────────────────────────────┼─────────────────────────────────┤
 │ internal/mcp/                  │                                 │
 │   server.go                    │ MCP protocol, JSON-RPC, stdio   │

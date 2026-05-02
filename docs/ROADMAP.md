@@ -540,12 +540,26 @@ changelog:
 - [x] **T2.26** Write tests for Redis cache (with real Redis via Docker)
 - [x] **T2.27** Config flag: `cache.driver = "none" | "memory" | "redis"`
 
-### Milestone 2.6: Configuration
+### Milestone 2.6: Configuration (Koanf)
 
-- [ ] **T2.28** Install viper: `go get github.com/spf13/viper`
-- [ ] **T2.29** Implement `internal/config/config.go` — TOML + env vars
-- [ ] **T2.30** Create default `goshort.toml`
-- [ ] **T2.31** Verify all config options work
+- [ ] **T2.28** Install koanf:
+  ```bash
+  go get -u github.com/knadh/koanf/v2
+  go get -u github.com/knadh/koanf/providers/file
+  go get -u github.com/knadh/koanf/providers/env/v2
+  go get -u github.com/knadh/koanf/parsers/toml/v2
+  ```
+- [ ] **T2.29** Implement `internal/config/config.go`:
+  - Config struct with `koanf:"field"` tags
+  - Load() function: TOML file → env vars (GOSHORT_ prefix) → defaults
+  - Env var transform: GOSHORT_SERVER_PORT → server.port
+- [ ] **T2.30** Create default `goshort.toml` with all options documented
+- [ ] **T2.31** Write `internal/config/config_test.go`:
+  - Test defaults when no file/env
+  - Test TOML file parsing
+  - Test env var override
+- [ ] **T2.32** Update `cmd/server/main.go` to use config.Load()
+- [ ] **T2.33** Verify: all config options work via file and env vars
 
 ### Milestone 2.7: API Documentation
 

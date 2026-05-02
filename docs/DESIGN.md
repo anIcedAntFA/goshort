@@ -86,6 +86,7 @@ Phase 5+:   Optional hosted service (free tier + paid for heavy use)
 | D20 | API docs | swaggo, Huma, Manual OpenAPI | **OpenAPI YAML + Scalar UI** | Learn OpenAPI standard; 5 endpoints = manageable; serve at /docs |
 | D21 | API testing | Postman, Bruno, Hoppscotch, curl | **Bruno + curl + Go httptest** | Bruno = Git-native; httptest = automated TDD; curl = quick |
 | D22 | Testing approach | Test after, TDD | **TDD + table-driven + fuzz** | Write failing tests first; table-driven for multiple cases; fuzz for validators |
+| D23 | Config library | Viper, Koanf, stdlib | **Koanf v2** | Modular deps (313% smaller binary than Viper); case-sensitive keys; no dependency bloat |
 
 ---
 
@@ -467,7 +468,10 @@ goshort/
 | `github.com/redis/go-redis/v9` | Redis client | 2 |
 | `github.com/prometheus/client_golang` | Prometheus metrics | 2 |
 | `github.com/spf13/cobra` | CLI framework | 3 |
-| `github.com/spf13/viper` | Configuration | 3 |
+| `github.com/knadh/koanf/v2` | Configuration (core) | 2 |
+| `github.com/knadh/koanf/providers/file` | Config from TOML file | 2 |
+| `github.com/knadh/koanf/providers/env/v2` | Config from env vars | 2 |
+| `github.com/knadh/koanf/parsers/toml/v2` | TOML parser | 2 |
 | `github.com/mark3labs/mcp-go` | MCP server | 4 |
 | `golang.org/x/time/rate` | Rate limiting | 3 |
 | `log/slog` | Structured logging (stdlib) | 2 |
