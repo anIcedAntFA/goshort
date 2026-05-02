@@ -1,0 +1,17 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 5%
+    patch:
+      default:
+        target: 80%
+
+ignore:
+  - "internal/db/**"     # sqlc-generated code
+  - "cmd/server/main.go" # entrypoint, not unit-testable
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default

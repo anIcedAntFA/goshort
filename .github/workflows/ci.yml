@@ -20,12 +20,22 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      - run: go test -race -tags redis -coverprofile=coverage.out -covermode=atomic ./...
       - uses: codecov/codecov-action@v5
         with:
           file: coverage.out
