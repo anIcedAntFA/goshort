@@ -569,19 +569,19 @@ changelog:
 
 ### Milestone 2.8: Bruno Test Collection
 
-- [ ] **T2.35** Create Bruno collection in `api-tests/`
-- [ ] **T2.36** Create `.bru` files for each endpoint
-- [ ] **T2.37** Create environments: local + production
-- [ ] **T2.38** Verify all Bruno tests pass against running server
+- [x] **T2.35** Create Bruno collection in `api-tests/`
+- [x] **T2.36** Create `.bru` files for each endpoint
+- [x] **T2.37** Create environments: local + production
+- [x] **T2.38** Verify all Bruno tests pass against running server
 
 ### Milestone 2.9: CI + Coverage
 
-- [ ] **T2.39** Setup Codecov: connect GitHub repo, add token to secrets
-- [ ] **T2.40** Verify CI workflow: lint → test (with coverage upload) → build
-- [ ] **T2.41** Add Codecov badge to README
-- [ ] **T2.42** `make lint && make test` — all pass
-- [ ] **T2.43** Commit: `feat: HTTP API with caching, monitoring, and docs`
-- [ ] **T2.44** Tag: `git tag v0.2.0`
+- [x] **T2.39** Setup Codecov: connect GitHub repo, add token to secrets
+- [x] **T2.40** Verify CI workflow: lint → test (with coverage upload) → build
+- [x] **T2.41** Add Codecov badge to README
+- [x] **T2.42** `make lint && make test` — all pass
+- [x] **T2.43** Commit: `feat: HTTP API with caching, monitoring, and docs`
+- [x] **T2.44** Tag: `git tag v0.2.0`
 
 ---
 
@@ -589,7 +589,7 @@ changelog:
 
 > **Goal:** Secure, deployable, usable product. v1.0 opensource release.  
 > **Deliverable:** CLI works, Docker runs, GitHub release with binaries.  
-> **Tag:** `v1.0.0`
+> **Tag:** `v0.3.0`
 
 ### Milestone 3.1: Authentication
 
