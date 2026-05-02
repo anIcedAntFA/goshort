@@ -1,0 +1,90 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: server
+    main: ./cmd/server
+    binary: goshort
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+  - id: cli
+    main: ./cmd/cli
+    binary: goshort-cli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+archives:
+  - id: server
+    ids: [server]
+    name_template: "goshort_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+  - id: cli
+    ids: [cli]
+    name_template: "goshort-cli_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+dockers_v2:
+  - images:
+      - "ghcr.io/anicedantfa/goshort"
+    tags:
+      - "{{ .Tag }}"
+      - latest
+    dockerfile: Dockerfile.goreleaser
+    extra_files:
+      - docs/openapi.yaml
+    ids:
+      - server
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^ci:"
+      - "^style:"
+      - "Merge pull request"
+
+release:
+  github:
+    owner: anIcedAntFA
+    name: goshort
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"
