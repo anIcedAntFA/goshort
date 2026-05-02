@@ -43,6 +43,12 @@
       "skillPath": "skills/golang-testing/SKILL.md",
       "computedHash": "8d70aabb4fbb5a35ba807c11c26f100f72fddc8d838dc5d7f0ee4ad638c5a0ae"
     },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "c77b86b4332919499608f9af1880074e1fec65a59b95c70c27a9f39cd137865e"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(golang-testing)",
+      "Bash(sqlc version *)",
+      "Bash(go env *)",
+      "WebSearch",
+      "WebFetch(domain:docs.sqlc.dev)",
+      "Bash(go install *)",
+      "Bash(sqlc generate *)",
+      "Bash(go get *)",
+      "Bash(go build *)",
+      "Bash(go test *)",
+      "Bash(golangci-lint run *)",
+      "Bash(go mod *)"
+    ]
+  }
+}
