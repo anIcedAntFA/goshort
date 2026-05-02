@@ -8,6 +8,10 @@ delete {
   url: {{base_url}}/api/v1/urls/my-test-link
 }
 
+headers {
+  X-API-Key: {{api_key}}
+}
+
 assert {
   res.status: eq 204
 }

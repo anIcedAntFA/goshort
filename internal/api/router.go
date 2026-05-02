@@ -8,7 +8,8 @@ import (
 )
 
 // NewRouter creates and configures the Chi router with all application routes.
-func NewRouter(h *Handler) chi.Router {
+// apiKey is forwarded to AuthMiddleware; pass "" to disable auth.
+func NewRouter(h *Handler, apiKey string) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(LoggingMiddleware(h.logger))
@@ -21,8 +22,9 @@ func NewRouter(h *Handler) chi.Router {
 	r.Get("/docs", serveDocs)
 	r.Get("/docs/openapi.yaml", serveOpenAPISpec)
 
-	// API v1
+	// API v1 — all routes under this group require a valid API key.
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(AuthMiddleware(apiKey))
 		r.Post("/urls", h.CreateURL)
 		r.Get("/urls", h.ListURLs)
 		r.Get("/urls/{code}", h.GetURL)

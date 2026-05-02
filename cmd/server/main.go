@@ -57,10 +57,16 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if cfg.Auth.APIKey != "" {
+		slog.Info("API key auth enabled")
+	} else {
+		slog.Warn("API key auth disabled — all endpoints are public")
+	}
+
 	c := buildCache(cfg.Cache)
 	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, c, slog.Default(), cfg.Server.BaseURL)
-	router := api.NewRouter(h)
+	router := api.NewRouter(h, cfg.Auth.APIKey)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
