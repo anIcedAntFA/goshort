@@ -23,6 +23,11 @@ type mockStorage struct {
 	urls    map[string]*shortener.URL
 	counter int64
 	nextID  int64
+
+	// Per-method error injection: when set, the matching method returns this error
+	// instead of executing its normal logic.
+	errListURLs  error
+	errCountURLs error
 }
 
 func newMockStorage() *mockStorage {
@@ -91,6 +96,10 @@ func (m *mockStorage) ListURLs(_ context.Context, limit, offset int) ([]shortene
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if m.errListURLs != nil {
+		return nil, m.errListURLs
+	}
+
 	all := make([]shortener.URL, 0, len(m.urls))
 	for _, u := range m.urls {
 		all = append(all, *u)
@@ -118,6 +127,10 @@ func (m *mockStorage) ListURLs(_ context.Context, limit, offset int) ([]shortene
 func (m *mockStorage) CountURLs(_ context.Context) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if m.errCountURLs != nil {
+		return 0, m.errCountURLs
+	}
 
 	return len(m.urls), nil
 }
@@ -425,5 +438,146 @@ func TestService_List(t *testing.T) {
 	}
 	if total2 != 5 {
 		t.Errorf("total2 = %d, want 5", total2)
+	}
+}
+
+// TestService_List_DefaultOptions verifies zero-value ListOptions defaults to page 1 / 20 per page.
+func TestService_List_DefaultOptions(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+
+	for i := range 3 {
+		u := fmt.Sprintf("https://example.com/%d", i)
+		if _, err := svc.Create(ctx, shortener.CreateRequest{URL: u}); err != nil {
+			t.Fatalf("Create URL %d: %v", i, err)
+		}
+	}
+
+	// Zero-value options: Page=0 and PerPage=0 should default to page 1 with 20 per page.
+	page, total, err := svc.List(ctx, shortener.ListOptions{})
+	if err != nil {
+		t.Fatalf("List(default options): %v", err)
+	}
+	if len(page) != 3 {
+		t.Errorf("len = %d, want 3", len(page))
+	}
+	if total != 3 {
+		t.Errorf("total = %d, want 3", total)
+	}
+}
+
+// TestService_List_StoreError verifies that a storage list failure is propagated.
+func TestService_List_StoreError(t *testing.T) {
+	t.Parallel()
+
+	svc, store := newTestService(t)
+	ctx := context.Background()
+
+	store.errListURLs = errors.New("db unavailable")
+
+	_, _, err := svc.List(ctx, shortener.ListOptions{Page: 1, PerPage: 10})
+	if err == nil {
+		t.Fatal("List(store error) = nil, want non-nil")
+	}
+}
+
+// TestService_List_CountError verifies that a storage count failure is propagated.
+func TestService_List_CountError(t *testing.T) {
+	t.Parallel()
+
+	svc, store := newTestService(t)
+	ctx := context.Background()
+
+	if _, err := svc.Create(ctx, shortener.CreateRequest{URL: "https://example.com"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	store.errCountURLs = errors.New("db unavailable")
+
+	_, _, err := svc.List(ctx, shortener.ListOptions{Page: 1, PerPage: 10})
+	if err == nil {
+		t.Fatal("List(count error) = nil, want non-nil")
+	}
+}
+
+// TestService_Delete_NotFound verifies that deleting a missing code returns ErrNotFound.
+func TestService_Delete_NotFound(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+
+	err := svc.Delete(ctx, "ghost")
+	if !errors.Is(err, shortener.ErrNotFound) {
+		t.Errorf("Delete(nonexistent) = %v, want wrapping ErrNotFound", err)
+	}
+}
+
+// TestService_IncrementClicks verifies that click counts are forwarded to storage.
+func TestService_IncrementClicks(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+
+	created, err := svc.Create(ctx, shortener.CreateRequest{URL: "https://example.com"})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := svc.IncrementClicks(ctx, created.ShortCode); err != nil {
+		t.Fatalf("IncrementClicks: %v", err)
+	}
+
+	got, err := svc.GetByCode(ctx, created.ShortCode)
+	if err != nil {
+		t.Fatalf("GetByCode: %v", err)
+	}
+	if got.ClickCount != 1 {
+		t.Errorf("ClickCount = %d, want 1", got.ClickCount)
+	}
+}
+
+// TestService_Create_InvalidExpiresIn verifies that a malformed ExpiresIn is rejected.
+func TestService_Create_InvalidExpiresIn(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+
+	_, err := svc.Create(ctx, shortener.CreateRequest{
+		URL:       "https://example.com",
+		ExpiresIn: "0h",
+	})
+	if err == nil {
+		t.Fatal("Create(invalid ExpiresIn) = nil, want non-nil")
+	}
+}
+
+// TestService_Create_WithHourExpiry verifies that ExpiresIn in hours is parsed correctly.
+func TestService_Create_WithHourExpiry(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+	ctx := context.Background()
+
+	before := time.Now()
+	got, err := svc.Create(ctx, shortener.CreateRequest{
+		URL:       "https://example.com",
+		ExpiresIn: "24h",
+	})
+	if err != nil {
+		t.Fatalf("Create(expires 24h): %v", err)
+	}
+	if got.ExpiresAt == nil {
+		t.Fatal("ExpiresAt is nil, want non-nil")
+	}
+
+	want := before.Add(24 * time.Hour)
+	diff := got.ExpiresAt.Sub(want)
+	if diff < -5*time.Second || diff > 5*time.Second {
+		t.Errorf("ExpiresAt = %v, want ~%v (±5s)", got.ExpiresAt, want)
 	}
 }
