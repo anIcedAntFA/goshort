@@ -109,7 +109,7 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		clickCtx := context.WithoutCancel(r.Context())
 		go func() { _ = h.svc.IncrementClicks(clickCtx, code) }()
 		w.Header().Set("Cache-Control", "private, max-age=0, no-cache")
-		http.Redirect(w, r, cached, http.StatusFound)
+		http.Redirect(w, r, cached, http.StatusFound) //nolint:gosec // URL validated on creation
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	go func() { _ = h.svc.IncrementClicks(clickCtx, code) }()
 
 	w.Header().Set("Cache-Control", "private, max-age=0, no-cache")
-	http.Redirect(w, r, url.OriginalURL, http.StatusFound)
+	http.Redirect(w, r, url.OriginalURL, http.StatusFound) //nolint:gosec // URL validated on creation
 }
 
 // ListURLs handles GET /api/v1/urls.
