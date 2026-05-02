@@ -48,7 +48,7 @@ internal/
 ├── cache/             # Cache interface + noop/memory/redis implementations
 ├── api/               # Chi HTTP handlers, router, middleware, error types
 ├── mcp/               # MCP server tools (Phase 4)
-└── config/            # Viper config loading (goshort.toml)
+└── config/            # Koanf config loading (goshort.toml + env vars)
 
 db/
 ├── schema.sql
@@ -79,7 +79,7 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 |-------|-------|-------------|
 | 1 | Core library: SQLite, sqlc, Sqids, TDD | `internal/shortener/` |
 | 2 | HTTP API (Chi), caching, slog, Prometheus | `internal/api/` |
-| 3 | Auth, CLI (Cobra/Viper), rate limiting, Docker, Fly.io | `cmd/cli/`, `internal/config/` |
+| 3 | Auth, CLI (Cobra), rate limiting, Docker, Fly.io | `cmd/cli/`, `internal/config/` |
 | 3.5 | Bare VPS ops: Nginx, systemd, Certbot | Infrastructure only |
 | 4 | MCP server (mcp-go), Claude/Cursor integration | `internal/mcp/` |
 | 5+ | Analytics, spam detection, PostgreSQL, Redis counter | Incremental |
@@ -93,7 +93,8 @@ Implement phases in order — each phase is a deployable milestone.
 | HTTP | `go-chi/chi/v5` |
 | DB access | `sqlc-dev/sqlc` (generates type-safe Go from SQL) |
 | Short codes | `sqids-org/sqids-go` |
-| CLI | `spf13/cobra` + `spf13/viper` |
+| CLI | `spf13/cobra` |
+| Config | `knadh/koanf/v2` + TOML parser + env provider |
 | Cache (Redis) | `redis/go-redis/v9` |
 | Metrics | `prometheus/client_golang` |
 | Rate limiting | `golang.org/x/time/rate` |
@@ -102,7 +103,7 @@ Implement phases in order — each phase is a deployable milestone.
 
 ## Configuration
 
-App reads `goshort.toml` at runtime (loaded via Viper):
+App reads `goshort.toml` at runtime (loaded via Koanf):
 
 ```toml
 [server]
@@ -135,6 +136,7 @@ format = "json"
 - Interfaces defined in the consumer package (`storage.Storage`, `cache.Cache`) — not in the implementation package
 - Table-driven tests with `t.Run` subtests; use `httptest` for HTTP handler tests
 - All SQL lives in `db/queries.sql`; never write raw SQL strings in Go code
+- Config struct tags use `koanf:"field_name"` (not `mapstructure`)
 
 ## Reference Documentation
 
@@ -150,7 +152,7 @@ Phase 2 in progress.
 - ✅ 2.3: Server wiring (main.go, graceful shutdown, cleanup job)
 - ✅ 2.4: Logging + Metrics (slog + Prometheus)
 - ✅ 2.5: Caching layers (cache-aside, Redis, TTL alignment)
-- 🔲 2.6: Configuration (Viper) (next)
+- 🔲 2.6: Configuration (Koanf) (next)
 - 🔲 2.7: API Documentation
 - 🔲 2.8: Bruno test collection
 - 🔲 2.9: CI + Coverage
