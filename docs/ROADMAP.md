@@ -640,7 +640,7 @@ changelog:
 
 ### Milestone 3.6: README + Opensource
 
-- [ ] **T3.33** Write comprehensive `README.md`:
+- [x] **T3.33** Write comprehensive `README.md`:
   - Project description + badges (CI, coverage, release)
   - Quick start (3 commands)
   - Installation: binary download, Docker, go install
@@ -648,8 +648,8 @@ changelog:
   - API documentation link
   - Contributing guide
 - [ ] **T3.34** Final review: `make ci` passes, all tests green
-- [ ] **T3.35** Commit: `feat: v1.0.0 — auth, CLI, Docker, opensource ready`
-- [ ] **T3.36** Tag + push: `git tag v1.0.0 && git push --tags`
+- [ ] **T3.35** Commit: `feat: v0.3.0 — auth, CLI, Docker, opensource ready`
+- [ ] **T3.36** Tag + push: `git tag v0.3.0 && git push --tags`
 - [ ] **T3.37** Verify: GitHub release created with binaries + Docker image
 
 ---
