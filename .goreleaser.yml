@@ -75,11 +75,33 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - "^docs:"
-      - "^chore:"
+      - "^📝 docs"
+      - "^🔨 chore"
+      - "^💄 style"
       - "^ci:"
-      - "^style:"
       - "Merge pull request"
+      - "Merge branch"
+  groups:
+    - title: "✨ New Features"
+      regexp: "^.*✨ feat.*$"
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: "^.*🐛 fix.*$"
+      order: 1
+    - title: "♻️ Refactors"
+      regexp: "^.*♻️ refactor.*$"
+      order: 2
+    - title: "⚡️ Performance"
+      regexp: "^.*⚡️ perf.*$"
+      order: 3
+    - title: "🔧 Configuration"
+      regexp: "^.*🔧 configs.*$"
+      order: 4
+    - title: "✅ Tests"
+      regexp: "^.*✅ test.*$"
+      order: 5
+    - title: "Other Changes"
+      order: 999
 
 release:
   github:

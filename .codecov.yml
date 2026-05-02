@@ -11,6 +11,7 @@ coverage:
 ignore:
   - "internal/db/**"     # sqlc-generated code
   - "cmd/server/main.go" # entrypoint, not unit-testable
+  - "cmd/cli/main.go"    # CLI entrypoint, not unit-testable
 
 comment:
   layout: "reach,diff,flags,files"
