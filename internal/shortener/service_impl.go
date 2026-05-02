@@ -11,16 +11,15 @@ import (
 // ServiceImpl implements the Service interface.
 type ServiceImpl struct {
 	store   Storage
-	cache   Cache
 	encoder Encoder
 }
 
 // compile-time interface check.
 var _ Service = (*ServiceImpl)(nil)
 
-// NewService creates a new Service backed by the provided storage, cache, and encoder.
-func NewService(store Storage, c Cache, enc Encoder) *ServiceImpl {
-	return &ServiceImpl{store: store, cache: c, encoder: enc}
+// NewService creates a new Service backed by the provided storage and encoder.
+func NewService(store Storage, enc Encoder) *ServiceImpl {
+	return &ServiceImpl{store: store, encoder: enc}
 }
 
 // Create validates the request, resolves the short code, and persists the URL.
@@ -109,14 +108,11 @@ func (s *ServiceImpl) GetByCode(ctx context.Context, code string) (*URL, error) 
 	return u, nil
 }
 
-// Delete removes a URL by its short code and invalidates the cache entry.
+// Delete removes a URL by its short code.
 func (s *ServiceImpl) Delete(ctx context.Context, code string) error {
 	if err := s.store.DeleteByCode(ctx, code); err != nil {
 		return fmt.Errorf("delete: %w", err)
 	}
-
-	_ = s.cache.Delete(ctx, code)
-
 	return nil
 }
 
