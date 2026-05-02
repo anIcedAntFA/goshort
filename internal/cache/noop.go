@@ -9,8 +9,6 @@ import (
 // It is used when caching is disabled (cache.driver = "none").
 type NoopCache struct{}
 
-var _ Cache = (*NoopCache)(nil)
-
 // NewNoopCache returns a new NoopCache.
 func NewNoopCache() *NoopCache {
 	return &NoopCache{}

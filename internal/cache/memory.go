@@ -17,8 +17,6 @@ type MemoryCache struct {
 	m sync.Map
 }
 
-var _ Cache = (*MemoryCache)(nil)
-
 // NewMemoryCache returns a new in-process MemoryCache.
 func NewMemoryCache() *MemoryCache {
 	return &MemoryCache{}

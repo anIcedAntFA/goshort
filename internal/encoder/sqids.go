@@ -1,18 +1,12 @@
-package shortener
+package encoder
 
 import (
-	"errors"
 	"fmt"
 	"math"
 
+	"github.com/anIcedAntFA/goshort/internal/shortener"
 	sqids "github.com/sqids/sqids-go"
 )
-
-// ErrNegativeID is returned when Encode is called with a negative integer.
-var ErrNegativeID = errors.New("id must be non-negative")
-
-// ErrInvalidCode is returned when Decode is called with an unrecognizable short code.
-var ErrInvalidCode = errors.New("invalid short code")
 
 // SqidsEncoder encodes integer IDs into short alphanumeric codes using the Sqids algorithm.
 type SqidsEncoder struct {
@@ -20,7 +14,7 @@ type SqidsEncoder struct {
 }
 
 // compile-time interface check.
-var _ Encoder = (*SqidsEncoder)(nil)
+var _ shortener.Encoder = (*SqidsEncoder)(nil)
 
 // NewSqidsEncoder creates a SqidsEncoder that produces codes of at least minLength characters.
 func NewSqidsEncoder(minLength uint8) (*SqidsEncoder, error) {
