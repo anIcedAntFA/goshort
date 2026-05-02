@@ -7,9 +7,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// RouterConfig holds middleware options for the router.
+// Zero value disables all optional middleware (auth disabled, rate limit disabled).
+type RouterConfig struct {
+	APIKey           string
+	RateLimitEnabled bool
+	RateLimitRPM     int
+}
+
 // NewRouter creates and configures the Chi router with all application routes.
-// apiKey is forwarded to AuthMiddleware; pass "" to disable auth.
-func NewRouter(h *Handler, apiKey string) chi.Router {
+// cfg configures optional middleware; pass zero value to disable all.
+func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(LoggingMiddleware(h.logger))
@@ -22,9 +30,10 @@ func NewRouter(h *Handler, apiKey string) chi.Router {
 	r.Get("/docs", serveDocs)
 	r.Get("/docs/openapi.yaml", serveOpenAPISpec)
 
-	// API v1 — all routes under this group require a valid API key.
+	// API v1 — auth before rate limiting so bad keys get 401, not 429.
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Use(AuthMiddleware(apiKey))
+		r.Use(AuthMiddleware(cfg.APIKey))
+		r.Use(RateLimitMiddleware(cfg.RateLimitEnabled, cfg.RateLimitRPM))
 		r.Post("/urls", h.CreateURL)
 		r.Get("/urls", h.ListURLs)
 		r.Get("/urls/{code}", h.GetURL)

@@ -601,11 +601,11 @@ changelog:
 
 ### Milestone 3.2: Rate Limiting
 
-- [ ] **T3.6** Implement token bucket rate limiter middleware
-- [ ] **T3.7** Per-IP rate limiting with `golang.org/x/time/rate`
-- [ ] **T3.8** Config: `rate_limit.enabled`, `rate_limit.requests_per_minute`
-- [ ] **T3.9** Return 429 with `Retry-After` header
-- [ ] **T3.10** Write tests: under limit passes, over limit returns 429
+- [x] **T3.6** Implement token bucket rate limiter middleware
+- [x] **T3.7** Per-IP rate limiting with `golang.org/x/time/rate`
+- [x] **T3.8** Config: `rate_limit.enabled`, `rate_limit.requests_per_minute`
+- [x] **T3.9** Return 429 with `Retry-After` header
+- [x] **T3.10** Write tests: under limit passes, over limit returns 429
 
 ### Milestone 3.3: CLI Client
 

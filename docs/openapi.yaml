@@ -89,6 +89,22 @@ paths:
                     error:
                       code: reserved_path
                       message: The alias is a reserved path
+        "429":
+          description: Too many requests
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: rate_limited
+                  message: Too many requests. Please try again later.
 
     get:
       summary: List URLs (paginated)
@@ -135,6 +151,22 @@ paths:
                   per_page: 20
                   total: 156
                   total_pages: 8
+        "429":
+          description: Too many requests
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: rate_limited
+                  message: Too many requests. Please try again later.
 
   /api/v1/urls/{code}:
     parameters:
@@ -177,6 +209,22 @@ paths:
                 error:
                   code: not_found
                   message: Short URL not found
+        "429":
+          description: Too many requests
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: rate_limited
+                  message: Too many requests. Please try again later.
 
     delete:
       summary: Delete short URL
@@ -197,6 +245,22 @@ paths:
                 error:
                   code: not_found
                   message: Short URL not found
+        "429":
+          description: Too many requests
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: rate_limited
+                  message: Too many requests. Please try again later.
 
   /{code}:
     get:
@@ -400,6 +464,8 @@ components:
                 - reserved_path
                 - not_found
                 - expired
+                - unauthorized
+                - rate_limited
                 - internal_error
               example: invalid_url
             message:

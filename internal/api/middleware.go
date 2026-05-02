@@ -4,12 +4,15 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -132,6 +135,82 @@ func AuthMiddleware(apiKey string) func(http.Handler) http.Handler {
 				}})
 				return
 			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+type ipLimiter struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
+}
+
+// extractIP extracts the client IP from r.RemoteAddr.
+// X-Forwarded-For is intentionally ignored — it can be spoofed without proxy
+// configuration. Proxy-aware extraction is a Phase 3.5 concern (Nginx/Caddy).
+func extractIP(r *http.Request) string {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
+}
+
+// startLimiterCleanup launches a background goroutine that evicts idle IP entries
+// from limiters every 5 minutes. Entries unseen for 10 minutes are removed.
+func startLimiterCleanup(limiters map[string]*ipLimiter, mu *sync.Mutex) {
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			mu.Lock()
+			for ip, entry := range limiters {
+				if time.Since(entry.lastSeen) > 10*time.Minute {
+					delete(limiters, ip)
+				}
+			}
+			mu.Unlock()
+		}
+	}()
+}
+
+// RateLimitMiddleware enforces per-IP token bucket rate limiting.
+// When enabled is false the middleware is a no-op passthrough.
+// Each IP gets a burst equal to requestsPerMinute, then throttled to RPM/60 per second.
+func RateLimitMiddleware(enabled bool, requestsPerMinute int) func(http.Handler) http.Handler {
+	if !enabled {
+		return func(next http.Handler) http.Handler { return next }
+	}
+
+	var mu sync.Mutex
+	limiters := make(map[string]*ipLimiter)
+	startLimiterCleanup(limiters, &mu)
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ip := extractIP(r)
+
+			mu.Lock()
+			entry, exists := limiters[ip]
+			if !exists {
+				entry = &ipLimiter{
+					limiter: rate.NewLimiter(rate.Limit(float64(requestsPerMinute)/60.0), requestsPerMinute),
+				}
+				limiters[ip] = entry
+			}
+			entry.lastSeen = time.Now()
+			lim := entry.limiter
+			mu.Unlock()
+
+			if !lim.Allow() {
+				w.Header().Set("Retry-After", "60")
+				respondJSON(w, http.StatusTooManyRequests, errorResponse{Error: errorDetail{
+					Code:    "rate_limited",
+					Message: "Too many requests. Please try again later.",
+				}})
+				return
+			}
+
 			next.ServeHTTP(w, r)
 		})
 	}

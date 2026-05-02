@@ -66,7 +66,11 @@ func main() {
 	c := buildCache(cfg.Cache)
 	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, c, slog.Default(), cfg.Server.BaseURL)
-	router := api.NewRouter(h, cfg.Auth.APIKey)
+	router := api.NewRouter(h, api.RouterConfig{
+		APIKey:           cfg.Auth.APIKey,
+		RateLimitEnabled: cfg.RateLimit.Enabled,
+		RateLimitRPM:     cfg.RateLimit.RequestsPerMinute,
+	})
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),

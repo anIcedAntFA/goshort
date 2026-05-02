@@ -24,24 +24,14 @@ type testDeps struct {
 }
 
 func setupTestDeps(t *testing.T) testDeps {
-	t.Helper()
-	store, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
-	if err != nil {
-		t.Fatalf("create storage: %v", err)
-	}
-	t.Cleanup(func() { _ = store.Close() })
-
-	enc, err := encoder.NewSqidsEncoder(4)
-	if err != nil {
-		t.Fatalf("create encoder: %v", err)
-	}
-
-	svc := shortener.NewService(store, enc)
-	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
-	return testDeps{router: api.NewRouter(h, ""), store: store}
+	return setupTestDepsWithConfig(t, api.RouterConfig{})
 }
 
 func setupTestDepsWithAuth(t *testing.T, apiKey string) testDeps {
+	return setupTestDepsWithConfig(t, api.RouterConfig{APIKey: apiKey})
+}
+
+func setupTestDepsWithConfig(t *testing.T, rcfg api.RouterConfig) testDeps {
 	t.Helper()
 	store, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
 	if err != nil {
@@ -56,7 +46,7 @@ func setupTestDepsWithAuth(t *testing.T, apiKey string) testDeps {
 
 	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
-	return testDeps{router: api.NewRouter(h, apiKey), store: store}
+	return testDeps{router: api.NewRouter(h, rcfg), store: store}
 }
 
 // Response structs for decoding test responses.
@@ -579,7 +569,7 @@ func TestRedirect_CacheHit(t *testing.T) {
 	mc := cache.NewMemoryCache()
 	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, mc, slog.Default(), "http://localhost:8080")
-	router := api.NewRouter(h, "")
+	router := api.NewRouter(h, api.RouterConfig{})
 
 	// Pre-populate cache — the code does not exist in the DB.
 	if err := mc.Set(context.Background(), "short:cached-code", "https://cached.example.com", time.Hour); err != nil {
@@ -674,4 +664,87 @@ func TestAuthMiddleware(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRateLimitMiddleware(t *testing.T) {
+	t.Parallel()
+
+	t.Run("disabled allows unlimited requests", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTestDepsWithConfig(t, api.RouterConfig{
+			RateLimitEnabled: false,
+			RateLimitRPM:     1,
+		})
+
+		for range 10 {
+			rec := serve(t, deps.router, http.MethodGet, "/api/v1/urls", nil)
+			if rec.Code == http.StatusTooManyRequests {
+				t.Fatal("rate limiter should be disabled")
+			}
+		}
+	})
+
+	t.Run("enabled returns 429 after exceeding burst", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTestDepsWithConfig(t, api.RouterConfig{
+			RateLimitEnabled: true,
+			RateLimitRPM:     3,
+		})
+
+		for i := range 3 {
+			rec := serve(t, deps.router, http.MethodGet, "/api/v1/urls", nil)
+			if rec.Code == http.StatusTooManyRequests {
+				t.Fatalf("request %d should not be rate limited", i+1)
+			}
+		}
+
+		rec := serve(t, deps.router, http.MethodGet, "/api/v1/urls", nil)
+		if rec.Code != http.StatusTooManyRequests {
+			t.Fatalf("status = %d, want 429", rec.Code)
+		}
+		resp := decodeJSON[errResp](t, rec)
+		if resp.Error.Code != "rate_limited" {
+			t.Errorf("error.code = %q, want %q", resp.Error.Code, "rate_limited")
+		}
+		if ra := rec.Header().Get("Retry-After"); ra == "" {
+			t.Error("missing Retry-After header")
+		}
+	})
+
+	t.Run("public routes are not rate limited", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTestDepsWithConfig(t, api.RouterConfig{
+			RateLimitEnabled: true,
+			RateLimitRPM:     1,
+		})
+
+		serve(t, deps.router, http.MethodGet, "/api/v1/urls", nil) // exhaust limit
+
+		rec := serve(t, deps.router, http.MethodGet, "/health", nil)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("health status = %d, want 200", rec.Code)
+		}
+	})
+
+	t.Run("different IPs have independent limits", func(t *testing.T) {
+		t.Parallel()
+		deps := setupTestDepsWithConfig(t, api.RouterConfig{
+			RateLimitEnabled: true,
+			RateLimitRPM:     1,
+		})
+
+		reqA := httptest.NewRequest(http.MethodGet, "/api/v1/urls", http.NoBody)
+		reqA.RemoteAddr = "1.1.1.1:12345"
+		recA := httptest.NewRecorder()
+		deps.router.ServeHTTP(recA, reqA) // exhausts IP A's limit
+
+		reqB := httptest.NewRequest(http.MethodGet, "/api/v1/urls", http.NoBody)
+		reqB.RemoteAddr = "2.2.2.2:12345"
+		recB := httptest.NewRecorder()
+		deps.router.ServeHTTP(recB, reqB)
+
+		if recB.Code == http.StatusTooManyRequests {
+			t.Fatal("IP B should have its own rate limit independent of IP A")
+		}
+	})
 }
