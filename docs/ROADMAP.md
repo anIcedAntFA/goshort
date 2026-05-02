@@ -456,10 +456,10 @@ changelog:
 
 ### Milestone 1.5: Cache Layer
 
-- [ ] **T1.24** Implement `internal/cache/noop.go` — no-op (Get always misses)
-- [ ] **T1.25** Implement `internal/cache/memory.go` — `sync.Map` with TTL
-- [ ] **T1.26** Write tests for memory cache: set/get, TTL expiry, delete
-- [ ] **T1.27** Compile-time interface checks for both
+- [x] **T1.24** Implement `internal/cache/noop.go` — no-op (Get always misses)
+- [x] **T1.25** Implement `internal/cache/memory.go` — `sync.Map` with TTL
+- [x] **T1.26** Write tests for memory cache: set/get, TTL expiry, delete
+- [x] **T1.27** Compile-time interface checks for both
 
 ### Milestone 1.6: Service Implementation (TDD)
 
