@@ -24,6 +24,10 @@ build/server: ## Build the server binary (goshort)
 build/cli: ## Build the CLI binary (goshort-cli)
 	go build $(LDFLAGS) -o $(BINARY_CLI) $(CMD_CLI)
 
+.PHONY: run
+run:
+	go run $(CMD_SERVER)
+
 .PHONY: test
 test: ## Run all tests
 	go test ./...

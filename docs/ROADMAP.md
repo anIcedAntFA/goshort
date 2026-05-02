@@ -513,13 +513,13 @@ changelog:
 
 ### Milestone 2.3: Server Wiring
 
-- [ ] **T2.13** Update `cmd/server/main.go`:
+- [x] **T2.13** Update `cmd/server/main.go`:
   - Parse config (TOML + env vars)
   - Initialize storage, cache, encoder, service, handler
   - Setup router with middleware placeholder
   - Graceful shutdown with signal handling
   - Start background cleanup goroutine
-- [ ] **T2.14** Verify: `make run` starts server, `curl` works
+- [x] **T2.14** Verify: `make run` starts server, `curl` works
 
 ### Milestone 2.4: Logging + Metrics
 
