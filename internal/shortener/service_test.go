@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anIcedAntFA/goshort/internal/cache"
 	"github.com/anIcedAntFA/goshort/internal/encoder"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 )
@@ -195,7 +194,7 @@ func newTestService(t *testing.T) (shortener.Service, *mockStorage) {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
 
-	return shortener.NewService(store, cache.NewNoopCache(), enc), store
+	return shortener.NewService(store, enc), store
 }
 
 // alphanumericRe matches codes produced by SqidsEncoder — no hyphens allowed.

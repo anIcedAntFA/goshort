@@ -36,7 +36,7 @@ func setupTestDeps(t *testing.T) testDeps {
 		t.Fatalf("create encoder: %v", err)
 	}
 
-	svc := shortener.NewService(store, cache.NewNoopCache(), enc)
+	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
 	return testDeps{router: api.NewRouter(h), store: store}
 }
@@ -559,7 +559,7 @@ func TestRedirect_CacheHit(t *testing.T) {
 	}
 
 	mc := cache.NewMemoryCache()
-	svc := shortener.NewService(store, mc, enc)
+	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, mc, slog.Default(), "http://localhost:8080")
 	router := api.NewRouter(h)
 

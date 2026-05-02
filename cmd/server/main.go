@@ -30,6 +30,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "load config: %v\n", err)
 		os.Exit(1)
 	}
+	if err := cfg.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid config: %v\n", err)
+		os.Exit(1)
+	}
 
 	setupLogger(cfg.Logging)
 
@@ -44,11 +48,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.Shortener.CodeLength < 1 || cfg.Shortener.CodeLength > 255 {
-		slog.Error("shortener.code_length must be between 1 and 255", "value", cfg.Shortener.CodeLength)
-		os.Exit(1)
-	}
-	enc, err := encoder.NewSqidsEncoder(uint8(cfg.Shortener.CodeLength)) //nolint:gosec // range validated above
+	enc, err := encoder.NewSqidsEncoder(uint8(cfg.Shortener.CodeLength)) //nolint:gosec // Validate() ensures [1,255]
 	if err != nil {
 		slog.Error("create encoder", "error", err)
 		os.Exit(1)
@@ -58,7 +58,7 @@ func main() {
 	defer stop()
 
 	c := buildCache(cfg.Cache)
-	svc := shortener.NewService(store, c, enc)
+	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, c, slog.Default(), cfg.Server.BaseURL)
 	router := api.NewRouter(h)
 
