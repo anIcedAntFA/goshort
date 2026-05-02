@@ -152,7 +152,7 @@ Phase 2 in progress.
 - ✅ 2.3: Server wiring (main.go, graceful shutdown, cleanup job)
 - ✅ 2.4: Logging + Metrics (slog + Prometheus)
 - ✅ 2.5: Caching layers (cache-aside, Redis, TTL alignment)
-- 🔲 2.6: Configuration (Koanf) (next)
-- 🔲 2.7: API Documentation
-- 🔲 2.8: Bruno test collection
+- ✅ 2.6: Configuration (Koanf — goshort.toml + GOSHORT_ env vars)
+- ✅ 2.7: API Documentation (OpenAPI 3.1.0 + Scalar UI at /docs)
+- 🔲 2.8: Bruno test collection (next)
 - 🔲 2.9: CI + Coverage

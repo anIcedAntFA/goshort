@@ -563,9 +563,9 @@ changelog:
 
 ### Milestone 2.7: API Documentation
 
-- [ ] **T2.32** Write `docs/openapi.yaml` (all 5 endpoints)
-- [ ] **T2.33** Serve Scalar UI at `/docs` endpoint
-- [ ] **T2.34** Verify: browser at `localhost:8080/docs` shows interactive API docs
+- [x] **T2.32** Write `docs/openapi.yaml` (all 5 endpoints)
+- [x] **T2.33** Serve Scalar UI at `/docs` endpoint
+- [x] **T2.34** Verify: browser at `localhost:8080/docs` shows interactive API docs
 
 ### Milestone 2.8: Bruno Test Collection
 

@@ -71,7 +71,7 @@ func LoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			path := r.URL.Path
-			if path == "/health" || path == "/metrics" {
+			if path == "/health" || path == "/metrics" || path == "/docs" || path == "/docs/openapi.yaml" {
 				next.ServeHTTP(w, r)
 				return
 			}

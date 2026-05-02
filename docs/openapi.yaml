@@ -1,0 +1,415 @@
+openapi: 3.1.0
+info:
+  title: GoShort API
+  version: 0.2.0
+  description: |
+    Self-hosted URL shortener API.
+
+    **Auth:** All write endpoints require `X-API-Key` header (Phase 3).
+    Public endpoints: `GET /{code}`, `GET /health`, `GET /metrics`, `GET /docs`.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+security: []
+
+paths:
+  /api/v1/urls:
+    post:
+      summary: Create short URL
+      operationId: createURL
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateURLRequest"
+            example:
+              url: "https://example.com/very/long/path?with=params"
+              custom_alias: "my-link"
+              expires_in: "30d"
+      responses:
+        "201":
+          description: Short URL created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateURLResponse"
+              example:
+                short_code: "my-link"
+                short_url: "http://localhost:8080/my-link"
+                original_url: "https://example.com/very/long/path?with=params"
+                expires_at: "2025-07-01T00:00:00Z"
+                created_at: "2025-06-01T12:00:00Z"
+        "400":
+          description: Invalid URL or expires_in format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid_url:
+                  value:
+                    error:
+                      code: invalid_url
+                      message: The URL format is invalid
+                invalid_expires:
+                  value:
+                    error:
+                      code: invalid_expires
+                      message: The expires_in duration is invalid
+        "409":
+          description: Alias already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: alias_taken
+                  message: The requested alias is already in use
+        "422":
+          description: Alias validation failed or reserved path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid_alias:
+                  value:
+                    error:
+                      code: invalid_alias
+                      message: The alias format is invalid
+                reserved_path:
+                  value:
+                    error:
+                      code: reserved_path
+                      message: The alias is a reserved path
+
+    get:
+      summary: List URLs (paginated)
+      operationId: listURLs
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          example: 20
+      responses:
+        "200":
+          description: Paginated URL list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListURLsResponse"
+              example:
+                data:
+                  - short_code: k7Xm2p
+                    short_url: "http://localhost:8080/k7Xm2p"
+                    original_url: "https://example.com"
+                    is_custom: false
+                    expires_at: null
+                    created_at: "2025-06-01T12:00:00Z"
+                    click_count: 42
+                pagination:
+                  page: 1
+                  per_page: 20
+                  total: 156
+                  total_pages: 8
+
+  /api/v1/urls/{code}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        description: Short code or custom alias
+        schema:
+          type: string
+        example: k7Xm2p
+
+    get:
+      summary: Get URL details
+      operationId: getURL
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: URL details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/URL"
+              example:
+                short_code: k7Xm2p
+                short_url: "http://localhost:8080/k7Xm2p"
+                original_url: "https://example.com"
+                is_custom: false
+                expires_at: null
+                created_at: "2025-06-01T12:00:00Z"
+                click_count: 42
+        "404":
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: not_found
+                  message: Short URL not found
+
+    delete:
+      summary: Delete short URL
+      operationId: deleteURL
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "204":
+          description: Deleted successfully
+        "404":
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: not_found
+                  message: Short URL not found
+
+  /{code}:
+    get:
+      summary: Redirect to original URL
+      operationId: redirect
+      tags: [Redirect]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Short code or custom alias
+          schema:
+            type: string
+          example: k7Xm2p
+      responses:
+        "302":
+          description: Redirect to original URL
+          headers:
+            Location:
+              description: The original URL
+              schema:
+                type: string
+                format: uri
+              example: "https://example.com/very/long/path"
+        "404":
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: not_found
+                  message: Short URL not found
+        "410":
+          description: Short URL has expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: expired
+                  message: This short URL has expired
+
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags: [System]
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+              example:
+                status: ok
+
+components:
+  schemas:
+    CreateURLRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: The long URL to shorten (http/https only, max 2048 chars)
+          example: "https://example.com/very/long/path?with=params"
+        custom_alias:
+          type: string
+          description: |
+            Optional custom alias (3–30 chars, `[a-zA-Z0-9-]`, no leading/trailing hyphens).
+            If omitted, a short code is generated automatically.
+          example: my-link
+          minLength: 3
+          maxLength: 30
+        expires_in:
+          type: string
+          description: |
+            Optional expiry duration. Accepted values: `1h`, `7d`, `30d`, `90d`, `365d`.
+            Omit or use `"0"` for no expiry.
+          example: 30d
+
+    CreateURLResponse:
+      type: object
+      required: [short_code, short_url, original_url, created_at]
+      properties:
+        short_code:
+          type: string
+          description: The generated or custom short code
+          example: k7Xm2p
+        short_url:
+          type: string
+          format: uri
+          description: Full short URL (base_url + short_code)
+          example: "http://localhost:8080/k7Xm2p"
+        original_url:
+          type: string
+          format: uri
+          description: The original long URL
+          example: "https://example.com/very/long/path?with=params"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiry timestamp in RFC3339 format, null if no expiry
+          example: "2025-07-01T00:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp in RFC3339 format
+          example: "2025-06-01T12:00:00Z"
+
+    URL:
+      type: object
+      required: [short_code, short_url, original_url, is_custom, created_at, click_count]
+      properties:
+        short_code:
+          type: string
+          example: k7Xm2p
+        short_url:
+          type: string
+          format: uri
+          example: "http://localhost:8080/k7Xm2p"
+        original_url:
+          type: string
+          format: uri
+          example: "https://example.com"
+        is_custom:
+          type: boolean
+          description: True if the short code was user-specified
+          example: false
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-06-01T12:00:00Z"
+        click_count:
+          type: integer
+          format: int64
+          description: Number of times this short URL was accessed
+          example: 42
+
+    ListURLsResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/URL"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    Pagination:
+      type: object
+      required: [page, per_page, total, total_pages]
+      properties:
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          description: Total number of URLs
+          example: 156
+        total_pages:
+          type: integer
+          example: 8
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+              enum:
+                - invalid_url
+                - invalid_expires
+                - invalid_body
+                - invalid_alias
+                - alias_taken
+                - reserved_path
+                - not_found
+                - expired
+                - internal_error
+              example: invalid_url
+            message:
+              type: string
+              description: Human-readable error description
+              example: The URL format is invalid
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication (added in Phase 3)
