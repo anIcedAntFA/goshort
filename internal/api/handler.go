@@ -107,7 +107,11 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	if cached, ok := h.cache.Get(r.Context(), "short:"+code); ok {
 		redirectsTotal.WithLabelValues("302").Inc()
 		clickCtx := context.WithoutCancel(r.Context())
-		go func() { _ = h.svc.IncrementClicks(clickCtx, code) }()
+		go func() {
+			if err := h.svc.IncrementClicks(clickCtx, code); err != nil {
+				h.logger.Warn("increment clicks failed", "code", code, "error", err)
+			}
+		}()
 		w.Header().Set("Cache-Control", "private, max-age=0, no-cache")
 		http.Redirect(w, r, cached, http.StatusFound) //nolint:gosec // URL validated on creation
 		return
@@ -131,7 +135,11 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 
 	// Fire-and-forget: detach from request context so cancellation on response send doesn't abort the write.
 	clickCtx := context.WithoutCancel(r.Context())
-	go func() { _ = h.svc.IncrementClicks(clickCtx, code) }()
+	go func() {
+		if err := h.svc.IncrementClicks(clickCtx, code); err != nil {
+			h.logger.Warn("increment clicks failed", "code", code, "error", err)
+		}
+	}()
 
 	w.Header().Set("Cache-Control", "private, max-age=0, no-cache")
 	http.Redirect(w, r, url.OriginalURL, http.StatusFound) //nolint:gosec // URL validated on creation
