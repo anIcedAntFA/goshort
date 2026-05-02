@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -82,6 +83,12 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	urlType := "generated"
+	if url.IsCustom {
+		urlType = "custom"
+	}
+	urlsCreatedTotal.WithLabelValues(urlType).Inc()
+
 	respondJSON(w, http.StatusCreated, createURLResponse{
 		ShortCode:   url.ShortCode,
 		ShortURL:    fmt.Sprintf("%s/%s", h.baseURL, url.ShortCode),
@@ -97,9 +104,16 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 
 	url, err := h.svc.GetByCode(r.Context(), code)
 	if err != nil {
+		if errors.Is(err, shortener.ErrExpired) {
+			redirectsTotal.WithLabelValues("410").Inc()
+		} else {
+			redirectsTotal.WithLabelValues("404").Inc()
+		}
 		respondError(w, err)
 		return
 	}
+
+	redirectsTotal.WithLabelValues("302").Inc()
 
 	// Fire-and-forget: detach from request context so cancellation on response send doesn't abort the write.
 	clickCtx := context.WithoutCancel(r.Context())

@@ -140,3 +140,14 @@ format = "json"
 
 - `docs/DESIGN.md` — Full system design, API spec, data model, scaling rationale, risk table
 - `docs/LEARNING.md` — Go philosophy, patterns, and GoShort-specific knowledge map with code location annotations
+
+## Current State (update after each milestone)
+
+Phase 2 in progress.
+
+- ✅ 2.1: Chi router + handlers
+- ✅ 2.2: HTTP tests (httptest)  
+- ✅ 2.3: Server wiring (main.go, graceful shutdown, cleanup job)
+- ✅ 2.4: Logging + Metrics (slog + Prometheus)
+- 🔲 2.5: Caching layers (next)
+- 🔲 2.6: Configuration (Viper)
