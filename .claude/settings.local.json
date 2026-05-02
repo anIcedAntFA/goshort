@@ -15,7 +15,8 @@
       "Bash(go mod *)",
       "Bash(make test *)",
       "Bash(make lint *)",
-      "Bash(go tool *)"
+      "Bash(go tool *)",
+      "Bash(go list *)"
     ]
   }
 }

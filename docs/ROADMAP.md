@@ -463,7 +463,7 @@ changelog:
 
 ### Milestone 1.6: Service Implementation (TDD)
 
-- [ ] **T1.28** Write failing tests: `internal/shortener/service_test.go`
+- [x] **T1.28** Write failing tests: `internal/shortener/service_test.go`
   - Create URL: returns valid short code
   - Create with custom alias: returns alias as short code
   - Create with duplicate alias: returns ErrAliasTaken
@@ -473,12 +473,12 @@ changelog:
   - GetByCode expired: returns ErrExpired
   - Delete: removes URL
   - List: returns paginated results
-- [ ] **T1.29** Implement `internal/shortener/service_impl.go` — make tests pass
-- [ ] **T1.30** `make test` — all pass
-- [ ] **T1.31** `make test-cover` — verify 90%+ on core packages
-- [ ] **T1.32** `make lint` — no issues
-- [ ] **T1.33** Commit: `feat: implement core library with TDD`
-- [ ] **T1.34** Tag: `git tag v0.1.0`
+- [x] **T1.29** Implement `internal/shortener/service_impl.go` — make tests pass
+- [x] **T1.30** `make test` — all pass
+- [x] **T1.31** `make test-cover` — verify 90%+ on core packages
+- [x] **T1.32** `make lint` — no issues
+- [x] **T1.33** Commit: `feat: implement core library with TDD`
+- [x] **T1.34** Tag: `git tag v0.1.0`
 
 ---
 
