@@ -438,11 +438,11 @@ changelog:
 
 ### Milestone 1.4: SQLite Storage (TDD)
 
-- [ ] **T1.17** Configure sqlc: create `db/sqlc.yaml`, `db/schema.sql`, `db/queries.sql`
-- [ ] **T1.18** Run `sqlc generate` — verify generated Go code
-- [ ] **T1.19** Install SQLite driver: `go get modernc.org/sqlite`
-- [ ] **T1.20** Implement `internal/storage/sqlite.go` — wraps sqlc-generated queries
-- [ ] **T1.21** Write integration tests: `internal/storage/sqlite_test.go`
+- [x] **T1.17** Configure sqlc: create `db/sqlc.yaml`, `db/schema.sql`, `db/queries.sql`
+- [x] **T1.18** Run `sqlc generate` — verify generated Go code
+- [x] **T1.19** Install SQLite driver: `go get modernc.org/sqlite`
+- [x] **T1.20** Implement `internal/storage/sqlite.go` — wraps sqlc-generated queries
+- [x] **T1.21** Write integration tests: `internal/storage/sqlite_test.go`
   - Create URL → GetByCode returns it
   - Create with custom alias → GetByCode returns it
   - GetByCode for non-existent → ErrNotFound
@@ -451,8 +451,8 @@ changelog:
   - IncrementClicks
   - DeleteExpired removes only expired rows
   - Counter increments atomically
-- [ ] **T1.22** Compile-time interface check: `var _ storage.Storage = (*SQLiteStorage)(nil)`
-- [ ] **T1.23** `make test` — all pass
+- [x] **T1.22** Compile-time interface check: `var _ storage.Storage = (*SQLiteStorage)(nil)`
+- [x] **T1.23** `make test` — all pass
 
 ### Milestone 1.5: Cache Layer
 
