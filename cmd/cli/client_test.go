@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -154,6 +155,41 @@ func TestAPIClient_DeleteURL(t *testing.T) {
 	}
 	if !called {
 		t.Error("handler was not called")
+	}
+}
+
+func TestAPIClient_ConnectionError(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+	srv.Close() // closed immediately — all connections will be refused
+
+	client := NewAPIClient(srv.URL, "")
+	_, err := client.CreateURL(context.Background(), CreateRequest{URL: "https://example.com"})
+	if err == nil {
+		t.Fatal("expected error for closed server")
+	}
+	if !strings.Contains(err.Error(), "request failed") {
+		t.Errorf("error = %q, want containing 'request failed'", err.Error())
+	}
+}
+
+func TestAPIClient_NonJSONError(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = io.WriteString(w, "internal server error")
+	}))
+	defer srv.Close()
+
+	client := NewAPIClient(srv.URL, "")
+	_, err := client.CreateURL(context.Background(), CreateRequest{URL: "https://example.com"})
+	if err == nil {
+		t.Fatal("expected error for 500 response with non-JSON body")
+	}
+	if !strings.Contains(err.Error(), "500") {
+		t.Errorf("error = %q, want containing '500'", err.Error())
 	}
 }
 
