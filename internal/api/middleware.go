@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -102,6 +103,36 @@ func LoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			default:
 				logger.Info("request", attrs...)
 			}
+		})
+	}
+}
+
+// AuthMiddleware enforces X-API-Key authentication on protected routes.
+// When apiKey is empty the middleware is a no-op, preserving backward compatibility
+// for deployments that have not configured auth.
+func AuthMiddleware(apiKey string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if apiKey == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			header := r.Header.Get("X-API-Key")
+			if header == "" {
+				respondJSON(w, http.StatusUnauthorized, errorResponse{Error: errorDetail{
+					Code:    "unauthorized",
+					Message: "API key is required",
+				}})
+				return
+			}
+			if subtle.ConstantTimeCompare([]byte(header), []byte(apiKey)) != 1 {
+				respondJSON(w, http.StatusUnauthorized, errorResponse{Error: errorDetail{
+					Code:    "unauthorized",
+					Message: "Invalid API key",
+				}})
+				return
+			}
+			next.ServeHTTP(w, r)
 		})
 	}
 }

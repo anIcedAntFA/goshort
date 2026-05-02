@@ -593,11 +593,11 @@ changelog:
 
 ### Milestone 3.1: Authentication
 
-- [ ] **T3.1** Implement API key auth middleware
-- [ ] **T3.2** Config: `auth.api_key` from TOML/env
-- [ ] **T3.3** Skip auth for public routes: `GET /{code}`, `/health`, `/docs`
-- [ ] **T3.4** Write tests: 401 without key, 403 wrong key, 200 correct key
-- [ ] **T3.5** Update Bruno tests with API key in environment
+- [x] **T3.1** Implement API key auth middleware
+- [x] **T3.2** Config: `auth.api_key` from TOML/env
+- [x] **T3.3** Skip auth for public routes: `GET /{code}`, `/health`, `/docs`
+- [x] **T3.4** Write tests: 401 without key, 403 wrong key, 200 correct key
+- [x] **T3.5** Update Bruno tests with API key in environment
 
 ### Milestone 3.2: Rate Limiting
 

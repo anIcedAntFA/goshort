@@ -38,7 +38,25 @@ func setupTestDeps(t *testing.T) testDeps {
 
 	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
-	return testDeps{router: api.NewRouter(h), store: store}
+	return testDeps{router: api.NewRouter(h, ""), store: store}
+}
+
+func setupTestDepsWithAuth(t *testing.T, apiKey string) testDeps {
+	t.Helper()
+	store, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
+	if err != nil {
+		t.Fatalf("create storage: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	enc, err := encoder.NewSqidsEncoder(4)
+	if err != nil {
+		t.Fatalf("create encoder: %v", err)
+	}
+
+	svc := shortener.NewService(store, enc)
+	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
+	return testDeps{router: api.NewRouter(h, apiKey), store: store}
 }
 
 // Response structs for decoding test responses.
@@ -561,7 +579,7 @@ func TestRedirect_CacheHit(t *testing.T) {
 	mc := cache.NewMemoryCache()
 	svc := shortener.NewService(store, enc)
 	h := api.NewHandler(svc, mc, slog.Default(), "http://localhost:8080")
-	router := api.NewRouter(h)
+	router := api.NewRouter(h, "")
 
 	// Pre-populate cache — the code does not exist in the DB.
 	if err := mc.Set(context.Background(), "short:cached-code", "https://cached.example.com", time.Hour); err != nil {
@@ -574,5 +592,86 @@ func TestRedirect_CacheHit(t *testing.T) {
 	}
 	if loc := rec.Header().Get("Location"); loc != "https://cached.example.com" {
 		t.Errorf("Location = %q, want %q", loc, "https://cached.example.com")
+	}
+}
+
+func TestAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		apiKey      string
+		headerKey   string
+		method      string
+		path        string
+		wantStatus  int
+		wantErrCode string
+	}{
+		{
+			name:   "no header on protected route returns 401",
+			apiKey: "test-key", headerKey: "",
+			method: http.MethodGet, path: "/api/v1/urls",
+			wantStatus: http.StatusUnauthorized, wantErrCode: "unauthorized",
+		},
+		{
+			name:   "wrong key on protected route returns 401",
+			apiKey: "test-key", headerKey: "wrong-key",
+			method: http.MethodGet, path: "/api/v1/urls",
+			wantStatus: http.StatusUnauthorized, wantErrCode: "unauthorized",
+		},
+		{
+			name:   "correct key on protected route returns 200",
+			apiKey: "test-key", headerKey: "test-key",
+			method: http.MethodGet, path: "/api/v1/urls",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:   "correct key on POST returns 400 not 401",
+			apiKey: "test-key", headerKey: "test-key",
+			method: http.MethodPost, path: "/api/v1/urls",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "redirect without key returns 404 not 401",
+			apiKey: "test-key", headerKey: "",
+			method: http.MethodGet, path: "/some-code",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:   "health without key returns 200",
+			apiKey: "test-key", headerKey: "",
+			method: http.MethodGet, path: "/health",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:   "auth disabled allows request without key",
+			apiKey: "", headerKey: "",
+			method: http.MethodGet, path: "/api/v1/urls",
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			deps := setupTestDepsWithAuth(t, tc.apiKey)
+
+			req := httptest.NewRequest(tc.method, tc.path, http.NoBody)
+			if tc.headerKey != "" {
+				req.Header.Set("X-API-Key", tc.headerKey)
+			}
+			rec := httptest.NewRecorder()
+			deps.router.ServeHTTP(rec, req)
+
+			if rec.Code != tc.wantStatus {
+				t.Fatalf("status = %d, want %d; body: %s", rec.Code, tc.wantStatus, rec.Body.String())
+			}
+			if tc.wantErrCode != "" {
+				resp := decodeJSON[errResp](t, rec)
+				if resp.Error.Code != tc.wantErrCode {
+					t.Errorf("error.code = %q, want %q", resp.Error.Code, tc.wantErrCode)
+				}
+			}
+		})
 	}
 }

@@ -8,6 +8,10 @@ delete {
   url: {{base_url}}/api/v1/urls/{{short_code}}
 }
 
+headers {
+  X-API-Key: {{api_key}}
+}
+
 assert {
   res.status: eq 204
 }
