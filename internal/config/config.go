@@ -74,6 +74,7 @@ var defaults = map[string]any{
 	"storage.sqlite_path":            "./data/goshort.db",
 	"cache.driver":                   "none",
 	"cache.redis_url":                "redis://localhost:6379",
+	"auth.api_key":                   "",
 	"shortener.code_length":          6,
 	"shortener.default_expiry":       "0",
 	"logging.level":                  "info",
@@ -86,8 +87,9 @@ var defaults = map[string]any{
 //
 // path is the explicit config file. If empty, Load auto-discovers goshort.toml
 // in the current directory (silently skipped when absent).
-// Env vars are prefixed GOSHORT_ with _ as the level separator:
+// Env vars are prefixed GOSHORT_ with _ as a segment separator:
 // GOSHORT_SERVER_PORT=9090 overrides server.port.
+// Multi-word field names use a single underscore: GOSHORT_CACHE_REDIS_URL → cache.redis_url.
 func Load(path string) (*Config, error) {
 	k := koanf.New(".")
 
@@ -106,6 +108,40 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 	return &cfg, nil
+}
+
+// Validate returns an error if any config field is outside its valid range or set.
+func (c *Config) Validate() error {
+	if c.Server.Port < 0 || c.Server.Port > 65535 {
+		return fmt.Errorf("server.port %d out of range [0, 65535]", c.Server.Port)
+	}
+	if c.Server.BaseURL == "" {
+		return fmt.Errorf("server.base_url must not be empty")
+	}
+	if c.Shortener.CodeLength < 1 || c.Shortener.CodeLength > 255 {
+		return fmt.Errorf("shortener.code_length %d out of range [1, 255]", c.Shortener.CodeLength)
+	}
+	switch c.Cache.Driver {
+	case "none", "memory", "redis":
+	default:
+		return fmt.Errorf("cache.driver %q must be one of: none, memory, redis", c.Cache.Driver)
+	}
+	switch c.Storage.Driver {
+	case "sqlite":
+	default:
+		return fmt.Errorf("storage.driver %q must be one of: sqlite", c.Storage.Driver)
+	}
+	switch c.Logging.Level {
+	case "debug", "info", "warn", "error":
+	default:
+		return fmt.Errorf("logging.level %q must be one of: debug, info, warn, error", c.Logging.Level)
+	}
+	switch c.Logging.Format {
+	case "json", "text":
+	default:
+		return fmt.Errorf("logging.format %q must be one of: json, text", c.Logging.Format)
+	}
+	return nil
 }
 
 // resolveConfigPath returns the file path to load.
@@ -133,17 +169,30 @@ func loadTOML(k *koanf.Koanf, path string) error {
 }
 
 // envOpts returns the provider options for GOSHORT_ env vars.
-// GOSHORT_SERVER_PORT → server.port (strip prefix, lowercase, _ → .)
+// Uses an explicit suffix→key map derived from defaults so that underscores
+// within field names (e.g. redis_url) are preserved, while section separators
+// are converted to dots: GOSHORT_CACHE_REDIS_URL → cache.redis_url.
 func envOpts() env.Opt {
+	envMap := buildEnvKeyMap(defaults)
 	return env.Opt{
-		Prefix:        "GOSHORT_",
-		TransformFunc: envKeyTransform,
+		Prefix: "GOSHORT_",
+		TransformFunc: func(k, v string) (string, any) {
+			suffix := strings.ToLower(strings.TrimPrefix(k, "GOSHORT_"))
+			if mapped, ok := envMap[suffix]; ok {
+				return mapped, v
+			}
+			return suffix, v // unknown env var — stored under orphan key, ignored at unmarshal
+		},
 	}
 }
 
-func envKeyTransform(k, v string) (string, any) { //nolint:gocritic // plain types are clearer than named returns here
-	return strings.ReplaceAll(
-		strings.ToLower(strings.TrimPrefix(k, "GOSHORT_")),
-		"_", ".",
-	), v
+// buildEnvKeyMap builds a suffix→koanf-key lookup from the defaults map.
+// For example: "cache.redis_url" produces the entry "cache_redis_url"→"cache.redis_url".
+func buildEnvKeyMap(m map[string]any) map[string]string {
+	result := make(map[string]string, len(m))
+	for key := range m {
+		envSuffix := strings.ReplaceAll(key, ".", "_")
+		result[envSuffix] = key
+	}
+	return result
 }

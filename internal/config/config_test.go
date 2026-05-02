@@ -129,6 +129,42 @@ func TestLoad_EnvPrefix(t *testing.T) {
 	}
 }
 
+func TestLoad_EnvOverride_MultiWordField(t *testing.T) {
+	t.Setenv("GOSHORT_CACHE_REDIS_URL", "redis://custom:6380")
+	t.Setenv("GOSHORT_STORAGE_SQLITE_PATH", "/tmp/custom.db")
+	t.Setenv("GOSHORT_SHORTENER_CODE_LENGTH", "8")
+	t.Setenv("GOSHORT_SHORTENER_DEFAULT_EXPIRY", "30d")
+	t.Setenv("GOSHORT_RATE_LIMIT_REQUESTS_PER_MINUTE", "120")
+	t.Setenv("GOSHORT_AUTH_API_KEY", "sk_test_123")
+	t.Setenv("GOSHORT_SERVER_BASE_URL", "https://short.example.com")
+
+	cfg, err := config.Load("")
+	if err != nil {
+		t.Fatalf("Load error: %v", err)
+	}
+
+	tests := []struct {
+		name string
+		got  any
+		want any
+	}{
+		{"cache.redis_url", cfg.Cache.RedisURL, "redis://custom:6380"},
+		{"storage.sqlite_path", cfg.Storage.SQLitePath, "/tmp/custom.db"},
+		{"shortener.code_length", cfg.Shortener.CodeLength, 8},
+		{"shortener.default_expiry", cfg.Shortener.DefaultExpiry, "30d"},
+		{"rate_limit.requests_per_minute", cfg.RateLimit.RequestsPerMinute, 120},
+		{"auth.api_key", cfg.Auth.APIKey, "sk_test_123"},
+		{"server.base_url", cfg.Server.BaseURL, "https://short.example.com"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.got != tc.want {
+				t.Errorf("got %v, want %v", tc.got, tc.want)
+			}
+		})
+	}
+}
+
 func TestLoad_AutoDiscover(t *testing.T) {
 	dir := t.TempDir()
 	tomlContent := `[server]
@@ -182,5 +218,49 @@ func TestLoad_FileNotFound(t *testing.T) {
 	_, err := config.Load("nonexistent.toml")
 	if err == nil {
 		t.Error("expected error for nonexistent file, got nil")
+	}
+}
+
+func TestConfig_Validate(t *testing.T) {
+	t.Parallel()
+
+	validConfig := func() *config.Config {
+		t.Helper()
+		cfg, err := config.Load("")
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		return cfg
+	}
+
+	tests := []struct {
+		name    string
+		mutate  func(*config.Config)
+		wantErr bool
+	}{
+		{"defaults are valid", func(_ *config.Config) {}, false},
+		{"invalid cache driver", func(c *config.Config) { c.Cache.Driver = "memcached" }, true},
+		{"empty base_url", func(c *config.Config) { c.Server.BaseURL = "" }, true},
+		{"code_length zero", func(c *config.Config) { c.Shortener.CodeLength = 0 }, true},
+		{"code_length too large", func(c *config.Config) { c.Shortener.CodeLength = 256 }, true},
+		{"negative port", func(c *config.Config) { c.Server.Port = -1 }, true},
+		{"port too large", func(c *config.Config) { c.Server.Port = 65536 }, true},
+		{"invalid storage driver", func(c *config.Config) { c.Storage.Driver = "postgres" }, true},
+		{"invalid logging level", func(c *config.Config) { c.Logging.Level = "trace" }, true},
+		{"invalid logging format", func(c *config.Config) { c.Logging.Format = "xml" }, true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cfg := validConfig()
+			tc.mutate(cfg)
+			err := cfg.Validate()
+			if tc.wantErr && err == nil {
+				t.Error("expected error, got nil")
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
 	}
 }
