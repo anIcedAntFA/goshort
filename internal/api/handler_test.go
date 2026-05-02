@@ -37,7 +37,7 @@ func setupTestDeps(t *testing.T) testDeps {
 	}
 
 	svc := shortener.NewService(store, cache.NewNoopCache(), enc)
-	h := api.NewHandler(svc, slog.Default(), "http://localhost:8080")
+	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
 	return testDeps{router: api.NewRouter(h), store: store}
 }
 
@@ -541,5 +541,38 @@ func TestHealthCheck(t *testing.T) {
 	}
 	if resp["status"] != "ok" {
 		t.Errorf("status = %q, want %q", resp["status"], "ok")
+	}
+}
+
+func TestRedirect_CacheHit(t *testing.T) {
+	t.Parallel()
+
+	store, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
+	if err != nil {
+		t.Fatalf("create storage: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	enc, err := encoder.NewSqidsEncoder(4)
+	if err != nil {
+		t.Fatalf("create encoder: %v", err)
+	}
+
+	mc := cache.NewMemoryCache()
+	svc := shortener.NewService(store, mc, enc)
+	h := api.NewHandler(svc, mc, slog.Default(), "http://localhost:8080")
+	router := api.NewRouter(h)
+
+	// Pre-populate cache — the code does not exist in the DB.
+	if err := mc.Set(context.Background(), "short:cached-code", "https://cached.example.com", time.Hour); err != nil {
+		t.Fatalf("cache set: %v", err)
+	}
+
+	rec := serve(t, router, http.MethodGet, "/cached-code", nil)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("status = %d, want 302; body: %s", rec.Code, rec.Body.String())
+	}
+	if loc := rec.Header().Get("Location"); loc != "https://cached.example.com" {
+		t.Errorf("Location = %q, want %q", loc, "https://cached.example.com")
 	}
 }

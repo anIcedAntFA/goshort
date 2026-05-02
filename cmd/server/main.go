@@ -54,12 +54,21 @@ func main() {
 	switch cacheDriver {
 	case "memory":
 		c = cache.NewMemoryCache()
+	case "redis":
+		redisAddr := envOr("GOSHORT_REDIS_URL", "localhost:6379")
+		rc, rcErr := cache.NewRedisCache(redisAddr)
+		if rcErr != nil {
+			slog.Warn("redis unavailable, falling back to noop cache", "error", rcErr)
+			c = cache.NewNoopCache()
+		} else {
+			c = rc
+		}
 	default:
 		c = cache.NewNoopCache()
 	}
 
 	svc := shortener.NewService(store, c, enc)
-	h := api.NewHandler(svc, logger, baseURL)
+	h := api.NewHandler(svc, c, logger, baseURL)
 	router := api.NewRouter(h)
 
 	srv := &http.Server{

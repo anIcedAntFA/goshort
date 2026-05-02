@@ -17,13 +17,14 @@ import (
 // Handler holds the HTTP handler dependencies.
 type Handler struct {
 	svc     shortener.Service
+	cache   shortener.Cache
 	logger  *slog.Logger
 	baseURL string
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(svc shortener.Service, logger *slog.Logger, baseURL string) *Handler {
-	return &Handler{svc: svc, logger: logger, baseURL: baseURL}
+func NewHandler(svc shortener.Service, c shortener.Cache, logger *slog.Logger, baseURL string) *Handler {
+	return &Handler{svc: svc, cache: c, logger: logger, baseURL: baseURL}
 }
 
 type createURLRequest struct {
@@ -98,9 +99,19 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Redirect handles GET /{code}.
+// Redirect handles GET /{code} using cache-aside pattern.
 func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
+
+	// Cache hit — skip DB entirely.
+	if cached, ok := h.cache.Get(r.Context(), "short:"+code); ok {
+		redirectsTotal.WithLabelValues("302").Inc()
+		clickCtx := context.WithoutCancel(r.Context())
+		go func() { _ = h.svc.IncrementClicks(clickCtx, code) }()
+		w.Header().Set("Cache-Control", "private, max-age=0, no-cache")
+		http.Redirect(w, r, cached, http.StatusFound)
+		return
+	}
 
 	url, err := h.svc.GetByCode(r.Context(), code)
 	if err != nil {
@@ -113,13 +124,14 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Populate cache for subsequent requests.
+	_ = h.cache.Set(r.Context(), "short:"+code, url.OriginalURL, cacheTTL(url))
+
 	redirectsTotal.WithLabelValues("302").Inc()
 
 	// Fire-and-forget: detach from request context so cancellation on response send doesn't abort the write.
 	clickCtx := context.WithoutCancel(r.Context())
-	go func() {
-		_ = h.svc.IncrementClicks(clickCtx, code)
-	}()
+	go func() { _ = h.svc.IncrementClicks(clickCtx, code) }()
 
 	w.Header().Set("Cache-Control", "private, max-age=0, no-cache")
 	http.Redirect(w, r, url.OriginalURL, http.StatusFound)
@@ -182,6 +194,7 @@ func (h *Handler) DeleteURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_ = h.cache.Delete(r.Context(), "short:"+code)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -220,4 +233,22 @@ func formatTimePtr(t *time.Time) *string {
 	}
 	s := t.Format(time.RFC3339)
 	return &s
+}
+
+// cacheTTL returns how long to cache a URL.
+// The TTL is capped at 24 hours and aligned to the URL's expiry so we never
+// serve an expired URL from cache.
+func cacheTTL(u *shortener.URL) time.Duration {
+	const defaultTTL = 24 * time.Hour
+	if u.ExpiresAt == nil {
+		return defaultTTL
+	}
+	remaining := time.Until(*u.ExpiresAt)
+	if remaining <= 0 {
+		return 0
+	}
+	if remaining > defaultTTL {
+		return defaultTTL
+	}
+	return remaining
 }

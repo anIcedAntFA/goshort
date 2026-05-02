@@ -532,13 +532,13 @@ changelog:
 
 ### Milestone 2.5: Caching Layers
 
-- [ ] **T2.21** Integrate cache into redirect handler (cache-aside pattern)
-- [ ] **T2.22** Implement cache TTL alignment (match URL expiry)
-- [ ] **T2.23** Implement cache invalidation on DELETE
-- [ ] **T2.24** Install Redis client: `go get github.com/redis/go-redis/v9`
-- [ ] **T2.25** Implement `internal/cache/redis.go`
-- [ ] **T2.26** Write tests for Redis cache (with real Redis via Docker)
-- [ ] **T2.27** Config flag: `cache.driver = "none" | "memory" | "redis"`
+- [x] **T2.21** Integrate cache into redirect handler (cache-aside pattern)
+- [x] **T2.22** Implement cache TTL alignment (match URL expiry)
+- [x] **T2.23** Implement cache invalidation on DELETE
+- [x] **T2.24** Install Redis client: `go get github.com/redis/go-redis/v9`
+- [x] **T2.25** Implement `internal/cache/redis.go`
+- [x] **T2.26** Write tests for Redis cache (with real Redis via Docker)
+- [x] **T2.27** Config flag: `cache.driver = "none" | "memory" | "redis"`
 
 ### Milestone 2.6: Configuration
 
