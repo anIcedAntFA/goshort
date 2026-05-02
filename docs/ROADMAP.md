@@ -609,15 +609,15 @@ changelog:
 
 ### Milestone 3.3: CLI Client
 
-- [ ] **T3.11** Install cobra: `go get github.com/spf13/cobra`
-- [ ] **T3.12** Implement `cmd/cli/main.go` with root command
-- [ ] **T3.13** `goshort-cli shorten <url> [--alias] [--expires]`
-- [ ] **T3.14** `goshort-cli list [--page] [--per-page]`
-- [ ] **T3.15** `goshort-cli delete <code>`
-- [ ] **T3.16** `goshort-cli stats <code>`
-- [ ] **T3.17** Config file: `~/.goshort.toml` (server URL, API key)
-- [ ] **T3.18** Pipe support: `echo "https://example.com" | goshort-cli shorten`
-- [ ] **T3.19** Write CLI tests
+- [x] **T3.11** Install cobra: `go get github.com/spf13/cobra`
+- [x] **T3.12** Implement `cmd/cli/main.go` with root command
+- [x] **T3.13** `goshort-cli shorten <url> [--alias] [--expires]`
+- [x] **T3.14** `goshort-cli list [--page] [--per-page]`
+- [x] **T3.15** `goshort-cli delete <code>`
+- [x] **T3.16** `goshort-cli stats <code>`
+- [x] **T3.17** Config file: `~/.goshort.toml` (server URL, API key)
+- [x] **T3.18** Pipe support: `echo "https://example.com" | goshort-cli shorten`
+- [x] **T3.19** Write CLI tests
 
 ### Milestone 3.4: Docker
 
