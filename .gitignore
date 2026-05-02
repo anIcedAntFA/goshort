@@ -32,6 +32,3 @@ CLAUDE.local.md
 # Test output
 test_output/
 coverage.out
-
-# build artifacts
-server

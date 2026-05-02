@@ -542,24 +542,24 @@ changelog:
 
 ### Milestone 2.6: Configuration (Koanf)
 
-- [ ] **T2.28** Install koanf:
+- [x] **T2.28** Install koanf:
   ```bash
   go get -u github.com/knadh/koanf/v2
   go get -u github.com/knadh/koanf/providers/file
   go get -u github.com/knadh/koanf/providers/env/v2
   go get -u github.com/knadh/koanf/parsers/toml/v2
   ```
-- [ ] **T2.29** Implement `internal/config/config.go`:
+- [x] **T2.29** Implement `internal/config/config.go`:
   - Config struct with `koanf:"field"` tags
   - Load() function: TOML file → env vars (GOSHORT_ prefix) → defaults
   - Env var transform: GOSHORT_SERVER_PORT → server.port
-- [ ] **T2.30** Create default `goshort.toml` with all options documented
-- [ ] **T2.31** Write `internal/config/config_test.go`:
+- [x] **T2.30** Create default `goshort.toml` with all options documented
+- [x] **T2.31** Write `internal/config/config_test.go`:
   - Test defaults when no file/env
   - Test TOML file parsing
   - Test env var override
-- [ ] **T2.32** Update `cmd/server/main.go` to use config.Load()
-- [ ] **T2.33** Verify: all config options work via file and env vars
+- [x] **T2.32** Update `cmd/server/main.go` to use config.Load()
+- [x] **T2.33** Verify: all config options work via file and env vars
 
 ### Milestone 2.7: API Documentation
 

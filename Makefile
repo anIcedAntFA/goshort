@@ -24,9 +24,11 @@ build/server: ## Build the server binary (goshort)
 build/cli: ## Build the CLI binary (goshort-cli)
 	go build $(LDFLAGS) -o $(BINARY_CLI) $(CMD_CLI)
 
+CONFIG ?=
+
 .PHONY: run
-run:
-	go run $(CMD_SERVER)
+run: ## Run the server (CONFIG=goshort.toml to load a file; Ctrl+C exit is expected)
+	go run $(CMD_SERVER) $(if $(CONFIG),--config $(CONFIG),)
 
 .PHONY: test
 test: ## Run all tests
@@ -69,3 +71,4 @@ docker/down: ## Stop Docker Compose services
 clean: ## Remove binaries, dist/, coverage.out
 	rm -f $(BINARY_SERVER) $(BINARY_CLI) coverage.out
 	rm -rf dist/
+
