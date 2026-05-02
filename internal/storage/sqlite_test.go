@@ -199,14 +199,13 @@ func TestSQLiteStorage_ListURLs_Pagination(t *testing.T) {
 	s := newTestStorage(t)
 	ctx := context.Background()
 
-	// Insert 5 records. CreatedAt uses datetime('now') which has 1-second resolution,
-	// so we sleep briefly between inserts to guarantee ordering.
+	// Insert 5 records. Ordering relies on AUTOINCREMENT id (ORDER BY id DESC),
+	// so no sleep needed between inserts.
 	codes := []string{"code1", "code2", "code3", "code4", "code5"}
 	for _, code := range codes {
 		if _, err := s.CreateURL(ctx, sampleParams(code, "https://example.com/"+code)); err != nil {
 			t.Fatalf("CreateURL(%s): %v", code, err)
 		}
-		time.Sleep(1100 * time.Millisecond)
 	}
 
 	// Page 1: first 3 (most recent).

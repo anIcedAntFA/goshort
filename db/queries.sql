@@ -10,7 +10,7 @@ SELECT * FROM urls WHERE short_code = ?;
 DELETE FROM urls WHERE short_code = ?;
 
 -- name: ListURLs :many
-SELECT * FROM urls ORDER BY created_at DESC LIMIT ? OFFSET ?;
+SELECT * FROM urls ORDER BY id DESC LIMIT ? OFFSET ?;
 
 -- name: CountURLs :one
 SELECT COUNT(*) FROM urls;
