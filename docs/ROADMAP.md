@@ -503,13 +503,13 @@ changelog:
 
 ### Milestone 2.2: HTTP Tests
 
-- [ ] **T2.11** Write httptest tests for every endpoint + error case
+- [x] **T2.11** Write httptest tests for every endpoint + error case
   - POST: 201, 400 (bad URL), 409 (alias taken), 422 (invalid alias, reserved path)
   - GET redirect: 302, 404, 410 (expired)
   - GET list: 200 with pagination
   - DELETE: 204, 404
   - Health: 200
-- [ ] **T2.12** `make test` — all pass
+- [x] **T2.12** `make test` — all pass
 
 ### Milestone 2.3: Server Wiring
 
