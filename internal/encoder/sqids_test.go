@@ -1,4 +1,4 @@
-package shortener_test
+package encoder_test
 
 import (
 	"errors"
@@ -7,13 +7,13 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/anIcedAntFA/goshort/internal/shortener"
+	"github.com/anIcedAntFA/goshort/internal/encoder"
 )
 
-func newTestEncoder(t *testing.T) *shortener.SqidsEncoder {
+func newTestEncoder(t *testing.T) *encoder.SqidsEncoder {
 	t.Helper()
 
-	enc, err := shortener.NewSqidsEncoder(6)
+	enc, err := encoder.NewSqidsEncoder(6)
 	if err != nil {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
@@ -164,7 +164,7 @@ func TestSqidsEncoder_Encode_NegativeIDReturnsError(t *testing.T) {
 		t.Fatal("Encode(-1) must return an error")
 	}
 
-	if !errors.Is(err, shortener.ErrNegativeID) {
+	if !errors.Is(err, encoder.ErrNegativeID) {
 		t.Errorf("Encode(-1) error = %v, want wrapping ErrNegativeID", err)
 	}
 }
@@ -194,7 +194,7 @@ func TestSqidsEncoder_Decode_InvalidCodeReturnsError(t *testing.T) {
 				t.Errorf("Decode(%q) must return an error for invalid code", tc.code)
 			}
 
-			if !errors.Is(err, shortener.ErrInvalidCode) {
+			if !errors.Is(err, encoder.ErrInvalidCode) {
 				t.Errorf("Decode(%q) error = %v, want wrapping ErrInvalidCode", tc.code, err)
 			}
 		})
@@ -202,7 +202,7 @@ func TestSqidsEncoder_Decode_InvalidCodeReturnsError(t *testing.T) {
 }
 
 func FuzzSqidsEncoder_Encode(f *testing.F) {
-	enc, err := shortener.NewSqidsEncoder(6)
+	enc, err := encoder.NewSqidsEncoder(6)
 	if err != nil {
 		f.Fatalf("NewSqidsEncoder: %v", err)
 	}

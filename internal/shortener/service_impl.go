@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/anIcedAntFA/goshort/internal/cache"
 )
 
 // ServiceImpl implements the Service interface.
 type ServiceImpl struct {
 	store   Storage
-	cache   cache.Cache
+	cache   Cache
 	encoder Encoder
 }
 
@@ -21,7 +19,7 @@ type ServiceImpl struct {
 var _ Service = (*ServiceImpl)(nil)
 
 // NewService creates a new Service backed by the provided storage, cache, and encoder.
-func NewService(store Storage, c cache.Cache, enc Encoder) Service {
+func NewService(store Storage, c Cache, enc Encoder) *ServiceImpl {
 	return &ServiceImpl{store: store, cache: c, encoder: enc}
 }
 
@@ -36,7 +34,11 @@ func (s *ServiceImpl) Create(ctx context.Context, req CreateRequest) (*URL, erro
 		if err := ValidateExpiresIn(req.ExpiresIn); err != nil {
 			return nil, err
 		}
-		t := time.Now().Add(parseExpiresIn(req.ExpiresIn))
+		dur, err := parseExpiresIn(req.ExpiresIn)
+		if err != nil {
+			return nil, err
+		}
+		t := time.Now().Add(dur)
 		expiresAt = &t
 	}
 
@@ -149,22 +151,19 @@ func (s *ServiceImpl) IncrementClicks(ctx context.Context, code string) error {
 	return nil
 }
 
-// parseExpiresIn converts a validated duration string (e.g. "7d", "24h") to a time.Duration.
-// Precondition: the caller must have verified the input with ValidateExpiresIn.
-func parseExpiresIn(expiresIn string) time.Duration {
-	unit := expiresIn[len(expiresIn)-1]
-	n, err := strconv.ParseInt(expiresIn[:len(expiresIn)-1], 10, 64)
-
+func parseExpiresIn(s string) (time.Duration, error) {
+	unit := s[len(s)-1]
+	n, err := strconv.ParseInt(s[:len(s)-1], 10, 64)
 	if err != nil || n <= 0 {
-		return 0
+		return 0, fmt.Errorf("parse expires_in %q: %w", s, ErrInvalidExpires)
 	}
 
 	switch unit {
 	case 'h':
-		return time.Duration(n) * time.Hour
+		return time.Duration(n) * time.Hour, nil
 	case 'd':
-		return time.Duration(n) * 24 * time.Hour
+		return time.Duration(n) * 24 * time.Hour, nil
 	default:
-		return 0
+		return 0, fmt.Errorf("parse expires_in %q: unsupported unit %q: %w", s, string(unit), ErrInvalidExpires)
 	}
 }

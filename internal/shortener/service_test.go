@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/anIcedAntFA/goshort/internal/cache"
+	"github.com/anIcedAntFA/goshort/internal/encoder"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 )
 
@@ -189,7 +190,7 @@ func newTestService(t *testing.T) (shortener.Service, *mockStorage) {
 
 	store := newMockStorage()
 
-	enc, err := shortener.NewSqidsEncoder(4)
+	enc, err := encoder.NewSqidsEncoder(4)
 	if err != nil {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
