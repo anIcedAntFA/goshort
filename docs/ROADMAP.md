@@ -523,12 +523,12 @@ changelog:
 
 ### Milestone 2.4: Logging + Metrics
 
-- [ ] **T2.15** Create `internal/api/middleware.go` — logging middleware (slog)
-- [ ] **T2.16** Add request duration, method, path, status to logs
-- [ ] **T2.17** Install Prometheus: `go get github.com/prometheus/client_golang`
-- [ ] **T2.18** Add metrics middleware: request count, duration histogram
-- [ ] **T2.19** Implement `GET /metrics` endpoint
-- [ ] **T2.20** Verify: `curl localhost:8080/metrics` shows Prometheus output
+- [x] **T2.15** Create `internal/api/middleware.go` — logging middleware (slog)
+- [x] **T2.16** Add request duration, method, path, status to logs
+- [x] **T2.17** Install Prometheus: `go get github.com/prometheus/client_golang`
+- [x] **T2.18** Add metrics middleware: request count, duration histogram
+- [x] **T2.19** Implement `GET /metrics` endpoint
+- [x] **T2.20** Verify: `curl localhost:8080/metrics` shows Prometheus output
 
 ### Milestone 2.5: Caching Layers
 
