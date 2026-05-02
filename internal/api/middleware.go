@@ -117,7 +117,7 @@ func MetricsMiddleware() func(http.Handler) http.Handler {
 			// Use the route pattern to avoid high cardinality from real short codes.
 			pattern := chi.RouteContext(r.Context()).RoutePattern()
 			if pattern == "" {
-				pattern = r.URL.Path
+				pattern = "unmatched"
 			}
 
 			statusStr := fmt.Sprintf("%d", rw.statusCode)
