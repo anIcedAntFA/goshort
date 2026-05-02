@@ -1,5 +1,10 @@
 # GoShort
 
+[![CI](https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml/badge.svg)](https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/anIcedAntFA/goshort/graph/badge.svg)](https://codecov.io/gh/anIcedAntFA/goshort)
+[![Go Report Card](https://goreportcard.com/badge/github.com/anIcedAntFA/goshort)](https://goreportcard.com/report/github.com/anIcedAntFA/goshort)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A self-hosted URL shortener written in Go. Single binary, SQLite-backed, zero external dependencies required to run.
 
 ```
