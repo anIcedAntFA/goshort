@@ -629,14 +629,14 @@ changelog:
 
 ### Milestone 3.5: Release Infrastructure
 
-- [ ] **T3.25** Create `.goreleaser.yml`
-- [ ] **T3.26** Create `.github/workflows/release.yml`
-- [ ] **T3.27** Verify: `goreleaser release --snapshot --clean` builds all platforms
-- [ ] **T3.28** Create `CHANGELOG.md` (initial entry)
-- [ ] **T3.29** Create `SECURITY.md`
-- [ ] **T3.30** Create `.github/CODEOWNERS`
-- [ ] **T3.31** Create `.github/ISSUE_TEMPLATE/bug_report.yml`
-- [ ] **T3.32** Create `.github/ISSUE_TEMPLATE/feature_request.yml`
+- [x] **T3.25** Create `.goreleaser.yml`
+- [x] **T3.26** Create `.github/workflows/release.yml`
+- [x] **T3.27** Verify: `goreleaser release --snapshot --clean` builds all platforms
+- [x] **T3.28** Create `CHANGELOG.md` (initial entry)
+- [x] **T3.29** Create `SECURITY.md`
+- [x] **T3.30** Create `.github/CODEOWNERS`
+- [x] **T3.31** Create `.github/ISSUE_TEMPLATE/bug_report.yml`
+- [x] **T3.32** Create `.github/ISSUE_TEMPLATE/feature_request.yml`
 
 ### Milestone 3.6: README + Opensource
 
