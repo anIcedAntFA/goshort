@@ -1,0 +1,6 @@
+# Default: maintainer reviews everything
+* @anIcedAntFA
+
+# Security-sensitive paths
+SECURITY.md @anIcedAntFA
+internal/api/middleware.go @anIcedAntFA
