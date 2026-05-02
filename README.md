@@ -50,18 +50,18 @@
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Language | Go 1.26 |
-| HTTP | [Chi](https://go-chi.io) v5 |
-| Database | SQLite via [sqlc](https://sqlc.dev) (pure Go, no CGO) |
-| Encoding | [Sqids](https://sqids.org) (zero-collision, non-sequential) |
-| CLI | [Cobra](https://cobra.dev) |
-| Config | [Koanf](https://github.com/knadh/koanf) v2 (TOML + env vars) |
-| Metrics | Prometheus |
-| Rate Limit | `golang.org/x/time/rate` (token bucket) |
-| Reverse Proxy | Caddy (Docker Compose) |
-| Release | GoReleaser + GitHub Actions |
+| Component      | Technology                                                                 |
+|----------------|----------------------------------------------------------------------------|
+| Language       | Go 1.26                                                                    |
+| HTTP           | [Chi](https://go-chi.io) v5                                                |
+| Database       | SQLite via [sqlc](https://sqlc.dev) (pure Go, no CGO)                      |
+| Encoding       | [Sqids](https://sqids.org) (zero-collision, non-sequential)                |
+| CLI            | [Cobra](https://cobra.dev)                                                 |
+| Config         | [Koanf](https://github.com/knadh/koanf) v2 (TOML + env vars)               |
+| Metrics        | [Prometheus](https://github.com/prometheus/prometheus)                     |
+| Rate Limit     | [rate](https://pkg.go.dev/golang.org/x/time/rate) (token bucket)           |
+| Reverse Proxy  | [Caddy](https://github.com/caddyserver/caddy) (Docker Compose)             |
+| Release        | [GoReleaser](https://github.com/goreleaser/goreleaser) + [GitHub Actions](https://github.com/features/actions) |
 
 ---
 
@@ -212,8 +212,8 @@ Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT
 | Field          | Type   | Required | Notes                                      |
 |----------------|--------|----------|--------------------------------------------|
 | `url`          | string | Yes      | Max 2048 chars                             |
-| `custom_alias` | string | No       | `^[a-zA-Z0-9-]{3,30}$`                    |
-| `expires_in`   | string | No       | `1h`, `7d`, `30d`, `90d`, `365d`, `never` |
+| `custom_alias` | string | No       | `^[a-zA-Z0-9-]{3,30}$`                     |
+| `expires_in`   | string | No       | `1h`, `7d`, `30d`, `90d`, `365d`, `never`  |
 
 Interactive docs at [http://localhost:8080/docs](http://localhost:8080/docs).
 
@@ -321,14 +321,14 @@ fly launch && fly volumes create data --size 1 && fly deploy
 
 ## Roadmap
 
-| Phase | Focus | Status |
-|-------|-------|--------|
-| 1 | Core library — SQLite, sqlc, Sqids, TDD | ✅ v0.1.0 |
-| 2 | HTTP API, caching, config, Prometheus | ✅ v0.2.0 |
-| 3 | Auth, rate limiting, CLI, Docker, release infra | ✅ v0.3.0 ← current |
-| 3.5 | Bare VPS ops — Nginx, systemd, Certbot | 🔲 |
-| 4 | MCP server — Claude / Cursor integration | 🔲 |
-| 5+ | Analytics, PostgreSQL, Redis counter, AI agent | 🔲 |
+| Phase | Focus                                           | Status             |
+|-------|-------------------------------------------------|--------------------|
+| 1     | Core library — SQLite, sqlc, Sqids, TDD         | ✅ v0.1.0          |
+| 2     | HTTP API, caching, config, Prometheus           | ✅ v0.2.0          |
+| 3     | Auth, rate limiting, CLI, Docker, release infra | ✅ v0.3.0 (current)|
+| 3.5   | Bare VPS ops — Nginx, systemd, Certbot          | 🔲                 |
+| 4     | MCP server — Claude / Cursor integration        | 🔲                 |
+| 5+    | Analytics, PostgreSQL, Redis counter, AI agent  | 🔲                 |
 
 Each phase ships a working, deployable product.
 
