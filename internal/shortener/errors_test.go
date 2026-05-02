@@ -20,6 +20,8 @@ func TestSentinelErrorsIdentity(t *testing.T) {
 		{"ErrAliasTaken", shortener.ErrAliasTaken},
 		{"ErrReservedPath", shortener.ErrReservedPath},
 		{"ErrInvalidURL", shortener.ErrInvalidURL},
+		{"ErrInvalidAlias", shortener.ErrInvalidAlias},
+		{"ErrInvalidExpires", shortener.ErrInvalidExpires},
 	}
 
 	for _, tc := range cases {
@@ -54,6 +56,8 @@ func TestErrorsAreDistinct(t *testing.T) {
 		{"ErrAliasTaken", shortener.ErrAliasTaken},
 		{"ErrReservedPath", shortener.ErrReservedPath},
 		{"ErrInvalidURL", shortener.ErrInvalidURL},
+		{"ErrInvalidAlias", shortener.ErrInvalidAlias},
+		{"ErrInvalidExpires", shortener.ErrInvalidExpires},
 	}
 
 	for i, a := range errs {

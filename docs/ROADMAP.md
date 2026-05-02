@@ -428,13 +428,13 @@ changelog:
 
 ### Milestone 1.3: URL Validator (TDD)
 
-- [ ] **T1.13** Write failing tests: `internal/shortener/validator_test.go`
+- [x] **T1.13** Write failing tests: `internal/shortener/validator_test.go`
   - ValidateURL: valid HTTP/HTTPS, reject FTP/empty/no-scheme/too-long/private-IPs
   - ValidateAlias: valid chars, length 3-30, reject hyphens at start/end, reject reserved paths
   - ValidateExpiresIn: valid durations (1h, 7d, 30d), reject invalid formats, min/max bounds
-- [ ] **T1.14** Implement validators — make tests pass
-- [ ] **T1.15** Write fuzz test: `FuzzValidateURL` — never panics
-- [ ] **T1.16** `make test` — all pass
+- [x] **T1.14** Implement validators — make tests pass
+- [x] **T1.15** Write fuzz test: `FuzzValidateURL` — never panics
+- [x] **T1.16** `make test` — all pass
 
 ### Milestone 1.4: SQLite Storage (TDD)
 
