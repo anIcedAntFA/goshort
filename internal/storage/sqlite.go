@@ -47,7 +47,7 @@ type SQLiteStorage struct {
 }
 
 // compile-time interface check.
-var _ Storage = (*SQLiteStorage)(nil)
+var _ shortener.Storage = (*SQLiteStorage)(nil)
 
 // NewSQLiteStorage opens (or creates) the database at dsn, applies the schema, and
 // returns a ready-to-use SQLiteStorage. Caller must call Close when done.
@@ -79,7 +79,7 @@ func (s *SQLiteStorage) Close() error {
 }
 
 // CreateURL inserts a new URL record and returns the created row.
-func (s *SQLiteStorage) CreateURL(ctx context.Context, params CreateParams) (shortener.URL, error) {
+func (s *SQLiteStorage) CreateURL(ctx context.Context, params shortener.CreateParams) (shortener.URL, error) {
 	row, err := s.q.CreateURL(ctx, idb.CreateURLParams{
 		ShortCode:   params.ShortCode,
 		OriginalUrl: params.OriginalURL,
