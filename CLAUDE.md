@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Phase 3.5 — deployed to production at https://goshort.app
+**Current state:** Phase 4 complete — MCP server shipped (stdio + Streamable HTTP, 5 tools, 2 resources, 2 prompts).
 
 ## Commands
 
@@ -87,7 +87,7 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | 2 | HTTP API (Chi), caching, slog, Prometheus | `internal/api/` |
 | 3 | Auth, CLI (Cobra), rate limiting, Docker, Fly.io | `cmd/cli/`, `internal/config/` |
 | 3.5 | Bare VPS ops: Nginx, systemd, Certbot | Infrastructure only |
-| 4 | MCP server (mcp-go), Claude/Cursor integration | `internal/mcp/` |
+| 4 | MCP server (go-sdk), Claude/Cursor integration | `internal/mcp/` |
 | 5+ | Analytics, spam detection, PostgreSQL, Redis counter | Incremental |
 
 Implement phases in order — each phase is a deployable milestone.
@@ -104,7 +104,7 @@ Implement phases in order — each phase is a deployable milestone.
 | Cache (Redis) | `redis/go-redis/v9` |
 | Metrics | `prometheus/client_golang` |
 | Rate limiting | `golang.org/x/time/rate` |
-| MCP server | `mark3labs/mcp-go` |
+| MCP server | `modelcontextprotocol/go-sdk` (official, v1.6.0) |
 | API testing | Bruno (`.bru` files in `api-tests/`) |
 
 ## Configuration
@@ -152,12 +152,12 @@ format = "json"
 
 ## Current State
 
-Phase 3.5 partially complete. Next: Phase 4 (MCP server).
+Phase 4 complete. Next: Phase 5+ (analytics, PostgreSQL).
 
 - ✅ Phase 1: Core library (shortener, storage, cache, encoder)
 - ✅ Phase 2: HTTP API, caching, config, monitoring, docs
 - ✅ Phase 3: Auth, rate limiting, CLI, Docker, release infra
 - ✅ Phase 3.5: Fly.io deploy + Cloudflare DNS/CDN (goshort.app live)
 - 🔲 Phase 3.5b: Bare VPS ops (deferred — optional learning exercise)
-- 🔲 Phase 4: MCP server (NEXT)
+- ✅ Phase 4: MCP server (official Go SDK, stdio + Streamable HTTP)
 - 🔲 Phase 5+: Analytics, PostgreSQL, Redis counter, AI agent

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-03
+
+### Added
+
+- **MCP server** — AI agent integration via [Model Context Protocol](https://modelcontextprotocol.io)
+  using the official [`modelcontextprotocol/go-sdk`](https://github.com/modelcontextprotocol/go-sdk) v1.6.0
+  - **Dual transport** — stdio (`--mcp` flag for local Claude Code / Cursor) and
+    Streamable HTTP (`--mcp-http :9090` for remote agents)
+  - **5 tools** — `shorten_url`, `list_urls`, `get_url_stats`, `delete_url`, `lookup_url`
+  - **2 resources** — `goshort://stats/summary` (total count + top URLs),
+    `goshort://urls/{code}` (full details for a short code)
+  - **2 prompts** — `shorten_and_share` (platform-aware sharing copy),
+    `batch_shorten` (multi-URL workflow)
+  - **API key auth** — `APIKeyMiddleware` wraps the HTTP transport with constant-time
+    `X-API-Key` comparison; auth disabled when key is empty
+- **`.mcp.json`** — ready-to-use MCP config for Claude Code (local stdio + remote HTTP)
+- **`[mcp]` config section** — `mcp.base_url` override (falls back to `server.base_url`)
+  configurable via `GOSHORT_MCP_BASE_URL` env var
+
+### Changed
+
+- `cmd/server/main.go` — extracted `runMCPMode` and `runHTTPServer` helpers to keep
+  cyclomatic complexity within lint limits (gocognit ≤ 15)
+
 ## [0.3.1] - 2026-05-03
 
 ### Fixed
@@ -120,7 +144,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.3.1...HEAD
+[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/anIcedAntFA/goshort/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/anIcedAntFA/goshort/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/anIcedAntFA/goshort/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/anIcedAntFA/goshort/compare/v0.2.0...v0.2.1

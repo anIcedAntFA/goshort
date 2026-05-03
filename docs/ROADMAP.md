@@ -700,23 +700,23 @@ changelog:
 
 ### Milestone 4.1: MCP Implementation
 
-- [ ] **T4.1** Install mcp-go: `go get github.com/mark3labs/mcp-go`
-- [ ] **T4.2** Create `internal/mcp/server.go` — MCP server setup (stdio transport)
-- [ ] **T4.3** Create `internal/mcp/tools.go` — tool definitions:
+- [x] **T4.1** Install mcp-go: `go get github.com/mark3labs/mcp-go`
+- [x] **T4.2** Create `internal/mcp/server.go` — MCP server setup (stdio transport)
+- [x] **T4.3** Create `internal/mcp/tools.go` — tool definitions:
   - `shorten_url(url, alias?, expires_in?)`
   - `list_urls(page?, per_page?)`
   - `get_stats(code)`
   - `delete_url(code)`
-- [ ] **T4.4** Add `mcp` subcommand to `cmd/server/main.go`
-- [ ] **T4.5** Create `.mcp.json` config for Claude Code
+- [x] **T4.4** Add `mcp` subcommand to `cmd/server/main.go`
+- [x] **T4.5** Create `.mcp.json` config for Claude Code
 
 ### Milestone 4.2: Test + Verify
 
-- [ ] **T4.6** Write tests for MCP tool handlers
-- [ ] **T4.7** Manual test: connect Claude Code, run `shorten_url`
-- [ ] **T4.8** Update README with MCP setup instructions
-- [ ] **T4.9** Commit: `feat: MCP server for AI agent integration`
-- [ ] **T4.10** Tag: `git tag v1.1.0`
+- [x] **T4.6** Write tests for MCP tool handlers
+- [x] **T4.7** Manual test: connect Claude Code, run `shorten_url`
+- [x] **T4.8** Update README with MCP setup instructions
+- [x] **T4.9** Commit: `feat: MCP server for AI agent integration`
+- [x] **T4.10** Tag: `git tag v0.4.0`
 
 ---
 

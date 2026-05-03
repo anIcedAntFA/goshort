@@ -165,6 +165,64 @@ Per-command overrides (precedence: flag > env > config):
 
 ---
 
+## MCP (AI Agent Integration)
+
+GoShort ships an [MCP](https://modelcontextprotocol.io) server so AI agents like
+Claude Code and Cursor can shorten, list, and manage URLs directly.
+
+### Local — stdio
+
+```bash
+make build
+
+# .mcp.json (already included in repo):
+{
+  "mcpServers": {
+    "goshort": {
+      "command": "./bin/goshort",
+      "args": ["--mcp"],
+      "env": { "GOSHORT_STORAGE_SQLITE_PATH": "./data/goshort.db" }
+    }
+  }
+}
+```
+
+### Remote — Streamable HTTP
+
+```bash
+GOSHORT_AUTH_API_KEY=your-key ./bin/goshort --mcp-http :9090
+```
+
+```json
+{
+  "mcpServers": {
+    "goshort": {
+      "url": "https://goshort.app/mcp",
+      "headers": { "X-API-Key": "your-api-key" }
+    }
+  }
+}
+```
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `shorten_url` | Create a short URL (alias + expiry optional) |
+| `list_urls` | List URLs with pagination |
+| `get_url_stats` | Click count and full details for a URL |
+| `delete_url` | Delete a short URL |
+| `lookup_url` | Resolve a short code to its original URL |
+
+### Resources
+
+| URI | Description |
+|-----|-------------|
+| `goshort://stats/summary` | Total URL count and top URLs by clicks |
+| `goshort://urls/{code}` | Full details for a specific short code |
+
+---
+
 ## Configuration
 
 ```toml
