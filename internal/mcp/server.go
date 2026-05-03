@@ -119,6 +119,16 @@ func (s *Server) RunHTTP(ctx context.Context, addr, apiKey string) error {
 	return nil
 }
 
+// HTTPHandler returns an http.Handler serving the MCP Streamable HTTP protocol.
+// Mount it on any router (e.g. r.Handle("/mcp", srv.HTTPHandler(apiKey))).
+// When apiKey is non-empty, requests must include X-API-Key.
+func (s *Server) HTTPHandler(apiKey string) http.Handler {
+	handler := sdkmcp.NewStreamableHTTPHandler(func(_ *http.Request) *sdkmcp.Server {
+		return s.server
+	}, nil)
+	return APIKeyMiddleware(apiKey, handler)
+}
+
 // MCPServer returns the underlying sdkmcp.Server (for in-process testing or router mounting).
 func (s *Server) MCPServer() *sdkmcp.Server {
 	return s.server

@@ -106,6 +106,13 @@ func runHTTPServer(ctx context.Context, cfg *config.Config, svc shortener.Servic
 		RateLimitRPM:     cfg.RateLimit.RequestsPerMinute,
 	})
 
+	mcpBaseURL := cfg.MCP.BaseURL
+	if mcpBaseURL == "" {
+		mcpBaseURL = cfg.Server.BaseURL
+	}
+	mcpSrv := mcpserver.NewServer(svc, mcpBaseURL)
+	router.Handle("/mcp", mcpSrv.HTTPHandler(cfg.Auth.APIKey))
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler:      router,
