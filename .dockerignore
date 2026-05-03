@@ -8,8 +8,7 @@ data/
 *.db
 
 # Binaries
-goshort
-goshort-cli
+bin/
 dist/
 
 # IDE
