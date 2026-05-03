@@ -4,7 +4,11 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/anIcedAntFA/goshort/internal/shortener"
 )
+
+var _ shortener.Cache = (*MemoryCache)(nil)
 
 type entry struct {
 	value     string

@@ -18,10 +18,16 @@ type RedisCache struct {
 // compile-time interface check.
 var _ shortener.Cache = (*RedisCache)(nil)
 
-// NewRedisCache connects to Redis at addr and verifies connectivity via Ping.
-// Returns an error if Redis is unreachable.
+// NewRedisCache connects to Redis and verifies connectivity via Ping.
+// addr accepts either a redis:// URL (e.g. "redis://localhost:6379") or
+// a plain host:port string (e.g. "localhost:6379").
 func NewRedisCache(addr string) (*RedisCache, error) {
-	client := redis.NewClient(&redis.Options{Addr: addr})
+	opts, err := redis.ParseURL(addr)
+	if err != nil {
+		// Fall back to plain host:port format.
+		opts = &redis.Options{Addr: addr}
+	}
+	client := redis.NewClient(opts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
