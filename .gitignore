@@ -1,6 +1,5 @@
 # Binaries
-goshort
-goshort-cli
+bin/
 dist/
 
 # Data

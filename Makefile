@@ -1,11 +1,14 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 
-BINARY_SERVER := goshort
-BINARY_CLI    := goshort-cli
+BIN_DIR       := bin
+BINARY_SERVER := $(BIN_DIR)/goshort
+BINARY_CLI    := $(BIN_DIR)/goshort-cli
 LDFLAGS       := -ldflags="-s -w -X main.version=$(VERSION)"
 
 CMD_SERVER := ./cmd/server
 CMD_CLI    := ./cmd/cli
+
+$(shell mkdir -p $(BIN_DIR))
 
 .DEFAULT_GOAL := help
 
@@ -59,6 +62,30 @@ sqlc: ## Generate type-safe Go from SQL
 tidy: ## Tidy go.mod and go.sum
 	go mod tidy
 
+.PHONY: dev/redis
+dev/redis: ## Start Redis for local development
+	docker compose -f docker-compose.dev.yml up -d
+	@echo "Redis running at localhost:6379"
+
+.PHONY: dev/redis/stop
+dev/redis/stop: ## Stop local Redis
+	docker compose -f docker-compose.dev.yml down
+
+.PHONY: test/redis
+test/redis: ## Run all tests including Redis integration tests
+	go test -race -tags redis -count=1 ./...
+
+.PHONY: test/all
+test/all: ## Run all tests (unit + Redis integration, auto-detects Redis)
+	@if docker compose -f docker-compose.dev.yml ps --status running 2>/dev/null | grep -q redis; then \
+		echo "Redis detected — running with -tags redis"; \
+		go test -race -tags redis -count=1 ./...; \
+	else \
+		echo "Redis not running — skipping Redis tests"; \
+		echo "Start Redis with: make dev/redis"; \
+		go test -race -count=1 ./...; \
+	fi
+
 .PHONY: docker/up
 docker/up: ## Start services with Docker Compose
 	docker compose up -d
@@ -68,7 +95,6 @@ docker/down: ## Stop Docker Compose services
 	docker compose down
 
 .PHONY: clean
-clean: ## Remove binaries, dist/, coverage.out
-	rm -f $(BINARY_SERVER) $(BINARY_CLI) coverage.out
-	rm -rf dist/
+clean: ## Remove bin/, dist/, coverage.out
+	rm -rf $(BIN_DIR)/ dist/ coverage.out
 
