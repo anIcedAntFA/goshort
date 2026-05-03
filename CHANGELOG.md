@@ -22,7 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `batch_shorten` (multi-URL workflow)
   - **API key auth** — `APIKeyMiddleware` wraps the HTTP transport with constant-time
     `X-API-Key` comparison; auth disabled when key is empty
-- **`.mcp.json`** — ready-to-use MCP config for Claude Code (local stdio + remote HTTP)
+  - **MCP on main port** — `/mcp` now served on the main HTTP server (port 8080)
+    alongside the REST API via `mcp.Server.HTTPHandler(apiKey)`; auth is handled
+    inside the handler — `/mcp` intentionally bypasses Chi's rate-limit middleware
+    (MCP sessions are long-lived; per-request rate limiting would break them)
+- **`.mcp.json`** — ready-to-use MCP config for Claude Code (stdio only; remote HTTP
+  now uses the main server at `https://goshort.app/mcp`)
 - **`[mcp]` config section** — `mcp.base_url` override (falls back to `server.base_url`)
   configurable via `GOSHORT_MCP_BASE_URL` env var
 
@@ -30,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `cmd/server/main.go` — extracted `runMCPMode` and `runHTTPServer` helpers to keep
   cyclomatic complexity within lint limits (gocognit ≤ 15)
+- Cloudflare cache Rule 2 updated to bypass `/mcp` — long-lived MCP SSE sessions
+  must not be served from CDN cache
+- `.mcp.json` remote entry removed — `url`+`headers` format is Claude Desktop only
+  (not supported in Claude Code project `.mcp.json`)
 
 ## [0.3.1] - 2026-05-03
 
