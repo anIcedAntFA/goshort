@@ -5,6 +5,7 @@ package cache_test
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func TestRedisCache_SetGet(t *testing.T) {
 	c := newTestRedis(t)
 	ctx := context.Background()
 
-	key := "test:redis:setget"
+	key := "test:redis:setget:" + t.Name()
 	if err := c.Set(ctx, key, "hello", time.Minute); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
@@ -53,7 +54,7 @@ func TestRedisCache_Delete(t *testing.T) {
 	c := newTestRedis(t)
 	ctx := context.Background()
 
-	key := "test:redis:delete"
+	key := "test:redis:delete:" + t.Name()
 	if err := c.Set(ctx, key, "value", time.Minute); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
@@ -70,7 +71,7 @@ func TestRedisCache_MissOnNonExistentKey(t *testing.T) {
 	c := newTestRedis(t)
 	ctx := context.Background()
 
-	if _, ok := c.Get(ctx, "test:redis:nonexistent"); ok {
+	if _, ok := c.Get(ctx, "test:redis:nonexistent:"+t.Name()); ok {
 		t.Error("expected miss for nonexistent key")
 	}
 }
@@ -80,7 +81,7 @@ func TestRedisCache_TTLExpiry(t *testing.T) {
 	c := newTestRedis(t)
 	ctx := context.Background()
 
-	key := "test:redis:ttl"
+	key := "test:redis:ttl:" + t.Name()
 	if err := c.Set(ctx, key, "value", 50*time.Millisecond); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
@@ -95,11 +96,117 @@ func TestRedisCache_ZeroTTLIsNoop(t *testing.T) {
 	c := newTestRedis(t)
 	ctx := context.Background()
 
-	key := "test:redis:zerott"
+	key := "test:redis:zerott:" + t.Name()
 	if err := c.Set(ctx, key, "value", 0); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
 	if _, ok := c.Get(ctx, key); ok {
 		t.Error("expected miss for zero-TTL set")
+	}
+}
+
+func TestRedisCache_SetGet_Overwrite(t *testing.T) {
+	t.Parallel()
+	c := newTestRedis(t)
+	ctx := context.Background()
+
+	key := "test:redis:overwrite:" + t.Name()
+	if err := c.Set(ctx, key, "first", time.Minute); err != nil {
+		t.Fatalf("Set first: %v", err)
+	}
+	if err := c.Set(ctx, key, "second", time.Minute); err != nil {
+		t.Fatalf("Set second: %v", err)
+	}
+
+	val, ok := c.Get(ctx, key)
+	if !ok {
+		t.Fatal("expected cache hit")
+	}
+	if val != "second" {
+		t.Errorf("val = %q, want %q", val, "second")
+	}
+}
+
+func TestRedisCache_Delete_Idempotent(t *testing.T) {
+	t.Parallel()
+	c := newTestRedis(t)
+	ctx := context.Background()
+
+	// Delete a key that was never set — should not error.
+	key := "test:redis:delete-idempotent:" + t.Name()
+	if err := c.Delete(ctx, key); err != nil {
+		t.Errorf("Delete(nonexistent) = %v, want nil", err)
+	}
+}
+
+func TestRedisCache_Close(t *testing.T) {
+	// Not parallel — we close the client directly without cleanup registration.
+	c, err := cache.NewRedisCache(redisAddr(t))
+	if err != nil {
+		t.Skip("Redis not available:", err)
+	}
+	ctx := context.Background()
+
+	key := "test:redis:close:" + t.Name()
+	if err := c.Set(ctx, key, "value", time.Minute); err != nil {
+		t.Fatalf("Set: %v", err)
+	}
+	if err := c.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	// Operations after close should not panic.
+	_, _ = c.Get(ctx, key)
+}
+
+func TestRedisCache_LargeValue(t *testing.T) {
+	t.Parallel()
+	c := newTestRedis(t)
+	ctx := context.Background()
+
+	key := "test:redis:large:" + t.Name()
+	large := strings.Repeat("x", 1024*1024) // 1 MB
+	if err := c.Set(ctx, key, large, time.Minute); err != nil {
+		t.Fatalf("Set large value: %v", err)
+	}
+
+	val, ok := c.Get(ctx, key)
+	if !ok {
+		t.Fatal("expected cache hit for large value")
+	}
+	if len(val) != len(large) {
+		t.Errorf("retrieved value length = %d, want %d", len(val), len(large))
+	}
+}
+
+func TestRedisCache_ContextCancellation(t *testing.T) {
+	t.Parallel()
+	c := newTestRedis(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	// Operations with cancelled context should not panic.
+	_, _ = c.Get(ctx, "test:redis:cancelled:"+t.Name())
+	_ = c.Set(ctx, "test:redis:cancelled:"+t.Name(), "v", time.Minute)
+	_ = c.Delete(ctx, "test:redis:cancelled:"+t.Name())
+}
+
+func TestNewRedisCache_URLFormat(t *testing.T) {
+	t.Parallel()
+	c, err := cache.NewRedisCache("redis://localhost:6379")
+	if err != nil {
+		t.Skip("Redis not available:", err)
+	}
+	defer func() { _ = c.Close() }()
+
+	ctx := context.Background()
+	key := "test:redis:urlformat:" + t.Name()
+	if err := c.Set(ctx, key, "works", time.Minute); err != nil {
+		t.Fatalf("Set via URL format: %v", err)
+	}
+	val, ok := c.Get(ctx, key)
+	if !ok || val != "works" {
+		t.Errorf("Get = (%q, %v), want (\"works\", true)", val, ok)
 	}
 }
