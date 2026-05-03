@@ -9,7 +9,7 @@ import (
 )
 
 type shortenInput struct {
-	URL       string `json:"url"                  jsonschema:"The URL to shorten (http/https, max 2048 chars)"`
+	URL       string `json:"url"                  jsonschema:"required,The URL to shorten (http/https, max 2048 chars)"`
 	Alias     string `json:"alias,omitempty"      jsonschema:"Custom alias (3-30 chars, letters/digits/hyphens)"`
 	ExpiresIn string `json:"expires_in,omitempty" jsonschema:"Expiration duration e.g. 1h 7d 30d 365d"`
 }
@@ -127,7 +127,7 @@ func (s *Server) handleListURLs(
 }
 
 type codeInput struct {
-	Code string `json:"code" jsonschema:"Short code or custom alias"`
+	Code string `json:"code" jsonschema:"required,Short code or custom alias"`
 }
 
 type statsOutput struct {

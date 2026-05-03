@@ -41,3 +41,8 @@ default_expiry = "0"
 level = "info"
 # Log format: "json" | "text"
 format = "json"
+
+[mcp]
+# Base URL used in MCP tool responses when constructing short URLs.
+# Falls back to server.base_url when empty.
+base_url = ""

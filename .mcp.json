@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "goshort": {
-      "command": "./bin/goshort-server",
+      "command": "./bin/goshort",
       "args": ["--mcp"],
       "env": {
         "GOSHORT_STORAGE_SQLITE_PATH": "./data/goshort.db"

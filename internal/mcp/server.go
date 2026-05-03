@@ -98,7 +98,7 @@ func (s *Server) RunHTTP(ctx context.Context, addr, apiKey string) error {
 	}, nil)
 
 	mux := http.NewServeMux()
-	mux.Handle("/mcp", apiKeyMiddleware(apiKey, handler))
+	mux.Handle("/mcp", APIKeyMiddleware(apiKey, handler))
 
 	srv := &http.Server{
 		Addr:              addr,
