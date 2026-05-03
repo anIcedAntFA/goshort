@@ -1,0 +1,24 @@
+{
+  "gopls": {
+    "buildFlags": ["-tags=redis"],
+    "ui.semanticTokens": true
+  },
+
+  // Format + organize imports on save via gopls
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "golang.go",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  // Run golangci-lint on save (requires vscode-go extension)
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "file",
+  "go.lintFlags": ["--fast"],
+
+  // Show test coverage after running tests
+  "go.coverOnSave": false,
+  "go.coverOnTestPackage": true
+}

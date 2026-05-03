@@ -19,7 +19,11 @@
       "Bash(go list *)",
       "Bash(GOSHORT_CACHE_DRIVER=memory go run ./cmd/server)",
       "Bash(curl -s -X POST http://localhost:8080/api/v1/urls -H 'Content-Type: application/json' -d '{\"url\":\"https://example.com\"}')",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "mcp__goshort__delete_url"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "goshort"
+  ]
 }

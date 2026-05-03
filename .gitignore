@@ -12,7 +12,7 @@ goshort.local.toml
 
 # IDE
 .idea/
-.vscode/
+# .vscode/
 *.swp
 *.swo
 
