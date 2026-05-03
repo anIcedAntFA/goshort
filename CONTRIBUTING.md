@@ -38,17 +38,9 @@ make build
 
 - **Go style:** follow `gofmt`, `golangci-lint`, and `.editorconfig` (tabs for Go, 2-space for YAML/JSON/Markdown)
 - **Error handling:** wrap with `fmt.Errorf("context: %w", err)`, handle errors once
-- **Testing:** table-driven tests with `t.Run`, `t.Parallel()` where possible, `httptest` for HTTP handlers
-- **Interfaces:** defined in the consumer package, not the implementation package
+- **Testing:** table-driven tests with `t.Run`, `t.Parallel()` where possible, `httptest` for HTTP handlers, `mcp.NewInMemoryTransports()` for MCP tool tests
+- **Interfaces:** defined in the consumer package (`shortener/`), not the implementation package
 - **Commits:** Conventional Commits with gitmoji: `✨ feat(api): add URL expiration support`
-
-## What Makes a Good PR
-
-- Solves one thing (don't mix features with refactors)
-- Includes tests for new behavior
-- Passes `make lint && make test`
-- Has a clear description of what and why
-- References the related issue
 
 ## Architecture
 
@@ -57,12 +49,32 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full system design.
 **Key rule:** dependencies point inward.
 
 ```
-api/ → shortener/ ← storage/
-              ↑
-           cache/
+         ┌──────────────┐
+         │  Delivery    │
+         │  api/ + mcp/ │
+         └──────┬───────┘
+                │ calls Service interface
+         ┌──────▼───────┐
+         │  Service     │
+         │  shortener/  │  ← defines Storage, Cache, Encoder interfaces
+         └──┬───────┬───┘
+            │       │ satisfies interfaces
+     ┌──────▼──┐ ┌──▼────────┐
+     │ storage/│ │ cache/    │
+     │ encoder/│ │ noop/mem/ │
+     └─────────┘ │ redis     │
+                 └───────────┘
 ```
 
-The `shortener/` package defines the `Storage` and `Cache` interfaces. The `api/` package calls the service. Never bypass the interface.
+Cache-aside logic lives in the delivery layer (`api/handler.go`), not in the service. The `cmd/server/main.go` is the only file that knows all concrete types — it wires everything together via constructor injection.
+
+## What Makes a Good PR
+
+- Solves one thing (don't mix features with refactors)
+- Includes tests for new behavior
+- Passes `make lint && make test`
+- Has a clear description of what and why
+- References the related issue
 
 ## Running CI Locally
 

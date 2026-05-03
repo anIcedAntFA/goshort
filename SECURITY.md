@@ -4,6 +4,7 @@
 
 | Version | Supported          |
 |---------|--------------------|
+| 0.4.x   | ✅ Active support  |
 | 0.3.x   | ✅ Active support  |
 | < 0.3   | ❌ No patches      |
 
@@ -24,14 +25,17 @@ A fix will be developed privately and released as a patch version.
 ## Scope
 
 In scope:
-- Authentication bypass
+
+- Authentication bypass (API key or MCP auth)
 - SQL injection
 - Server-side request forgery (SSRF)
 - Denial of service via resource exhaustion
 - Information disclosure (API key leakage, etc.)
 - Open redirect abuse
+- MCP tool abuse (unauthorized operations via MCP endpoint)
 
 Out of scope:
+
 - Self-hosted instances with intentionally disabled auth
 - Vulnerabilities in dependencies (report upstream)
 - Social engineering

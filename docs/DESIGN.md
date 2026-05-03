@@ -81,7 +81,7 @@ Phase 5+:   Optional hosted service (free tier + paid for heavy use)
 | D15 | Scaling reads | Skip, Some layers, All 3 | **All 3 layers** | Learning exercise — Index → Redis → CDN |
 | D16 | Scaling writes | Now, Later | **Later (Phase 5+)** | 1000 users ≈ <1 write/sec; trivial |
 | D17 | DB replication | Now, Later, Never | **Later (Phase 5+)** | Learning exercise only; no practical need at this scale |
-| D18 | MCP runtime | Cloudflare Workers, Go | **Go (mcp-go)** | Same language; `github.com/mark3labs/mcp-go` production-ready |
+| D18 | MCP runtime | Cloudflare Workers, Go | **Go (go-sdk)** | Same language; official `modelcontextprotocol/go-sdk` v1.6, stable v1, generics-based |
 | D19 | Containers | Docker only, Compose, Swarm, K8s | **Docker + Compose** | K8s/Swarm = separate learning project |
 | D20 | API docs | swaggo, Huma, Manual OpenAPI | **OpenAPI YAML + Scalar UI** | Learn OpenAPI standard; 5 endpoints = manageable; serve at /docs |
 | D21 | API testing | Postman, Bruno, Hoppscotch, curl | **Bruno + curl + Go httptest** | Bruno = Git-native; httptest = automated TDD; curl = quick |
@@ -459,11 +459,15 @@ goshort/
 
 ### Interface Evolution Strategy
 
-The `Service` interface currently has 5 methods (Create, GetByCode, Delete, List, IncrementClicks).
-This is appropriate for Phase 1–3 where a single consumer (HTTP handler) uses all methods.
+The `Service` interface has 5 methods (Create, GetByCode, Delete, List, IncrementClicks).
 
-**Split point: Phase 4 (MCP server).** When the MCP server arrives as a second consumer
-with different needs, split `Service` into composable interfaces:
+**Phase 4 outcome:** The MCP server (second consumer alongside the HTTP handler) uses
+the full `Service` interface — the same 5 methods the HTTP handler uses. Both consumers
+need read + write + click tracking, so splitting the interface would create ceremony
+without benefit. The interface stays unified.
+
+**Future split point: Phase 5+ (analytics).** When a read-only analytics consumer arrives
+that only needs `GetByCode` and `List`, split `Service` into composable interfaces:
 
 ```go
 type URLReader interface {
@@ -480,7 +484,7 @@ type ClickTracker interface {
     IncrementClicks(ctx context.Context, code string) error
 }
 
-// Full service composes all three.
+// Full service composes all three — existing consumers unchanged.
 type Service interface {
     URLReader
     URLWriter
@@ -490,11 +494,15 @@ type Service interface {
 
 Because Go interfaces are satisfied implicitly, `ServiceImpl` will satisfy both the old
 `Service` and the new split interfaces with zero code changes. The split only affects
-consumers: each declares the minimal interface it needs.
+consumers: analytics declares `URLReader`, while `api/` and `mcp/` keep using `Service`.
 
-**Cache placement:** Cache-aside logic lives in the delivery layer (HTTP handler, MCP handler),
-not in the service. The service operates on storage directly. This keeps the service testable
-without cache concerns and lets each delivery layer manage its own caching strategy.
+**Principle:** Don't split interfaces until a consumer actually needs a subset. Two consumers
+using the same 5 methods is not a reason to split — that's YAGNI.
+
+**Cache placement:** Cache-aside logic lives in the delivery layer (`api/handler.go`),
+not in the service or in MCP handlers. The service operates on storage directly.
+This keeps the service testable without cache concerns. MCP tools don't use cache
+because they call the service for single operations, not hot-path redirects.
 
 **`Encoder` interface:** Contains only `Encode`. The `Decode` method exists on the concrete
 `SqidsEncoder` for testing and potential future use, but is not part of the interface because
@@ -517,7 +525,7 @@ no consumer calls it.
 | `github.com/knadh/koanf/providers/file` | Config from TOML file | 2 |
 | `github.com/knadh/koanf/providers/env/v2` | Config from env vars | 2 |
 | `github.com/knadh/koanf/parsers/toml/v2` | TOML parser | 2 |
-| `github.com/mark3labs/mcp-go` | MCP server | 4 |
+| `github.com/modelcontextprotocol/go-sdk` | MCP server (official) | 4 |
 | `golang.org/x/time/rate` | Rate limiting | 3 |
 | `log/slog` | Structured logging (stdlib) | 2 |
 
@@ -544,7 +552,7 @@ no consumer calls it.
                           │  │           │    └─────────────┘  │
 ┌──────────┐   stdio      │  │           │                     │
 │ Claude / │ ──────────▶  │  │ MCP Server│    ┌─────────────┐  │
-│ Cursor   │ ◀──────────  │  │ (mcp-go)  │    │ Cache (opt) │  │
+│ Cursor   │ ◀──────────  │  │ (go-sdk)  │    │ Cache (opt) │  │
 └──────────┘              │  └───────────┘    │ noop/mem/   │  │
                           │                   │ redis       │  │
                           └───────────────────┴─────────────┘  │
@@ -1092,7 +1100,7 @@ go test passes     curl works           v1.0 release          infra knowledge
 Phase 4 (1w)                    Phase 5+ (ongoing)
 ──────────────               ──────────────────────────
 MCP Server                    Analytics, Spam Detection
-(mcp-go, stdio)               AI Agent (smart slug)
+(go-sdk, stdio + HTTP)    AI Agent (smart slug)
 + Tool defs                   PostgreSQL + Redis counter
 + Claude/Cursor               DB Replication (learning)
 ──────────────               ──────────────────────────
