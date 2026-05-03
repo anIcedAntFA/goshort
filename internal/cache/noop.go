@@ -3,7 +3,11 @@ package cache
 import (
 	"context"
 	"time"
+
+	"github.com/anIcedAntFA/goshort/internal/shortener"
 )
+
+var _ shortener.Cache = (*NoopCache)(nil)
 
 // NoopCache is a cache implementation that never stores anything.
 // It is used when caching is disabled (cache.driver = "none").
