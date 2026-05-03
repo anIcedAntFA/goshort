@@ -965,6 +965,9 @@ Bruno `.bru` files commit alongside code — other contributors have test reques
 
 ## 16. 🚀 Deployment Strategy
 
+> **Current production:** GoShort is deployed on Fly.io (Singapore)
+> with Cloudflare CDN. See `docs/DEPLOYMENT.md` for the full operations guide.
+
 ### Overview: Ship First, Learn Second
 
 ```
