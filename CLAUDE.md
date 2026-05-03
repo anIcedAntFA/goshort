@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Design/planning phase. The architecture is fully documented in `docs/DESIGN.md`; no Go source files exist yet.
+**Current state:** Phase 3.5 — deployed to production at https://goshort.app
 
 ## Commands
 
@@ -148,13 +148,16 @@ format = "json"
 
 - `docs/DESIGN.md` — Full system design, API spec, data model, scaling rationale, risk table
 - `docs/LEARNING.md` — Go philosophy, patterns, and GoShort-specific knowledge map with code location annotations
+- `docs/DEPLOYMENT.md` — Fly.io, Cloudflare, Docker Compose deployment guide
 
 ## Current State
 
-Phase 3 complete. Preparing v0.3.0 release.
+Phase 3.5 partially complete. Next: Phase 4 (MCP server).
 
 - ✅ Phase 1: Core library (shortener, storage, cache, encoder)
 - ✅ Phase 2: HTTP API, caching, config, monitoring, docs
 - ✅ Phase 3: Auth, rate limiting, CLI, Docker, release infra
-- 🔲 Phase 3.5: Deploy (Fly.io, bare VPS)
-- 🔲 Phase 4: MCP server
+- ✅ Phase 3.5: Fly.io deploy + Cloudflare DNS/CDN (goshort.app live)
+- 🔲 Phase 3.5b: Bare VPS ops (deferred — optional learning exercise)
+- 🔲 Phase 4: MCP server (NEXT)
+- 🔲 Phase 5+: Analytics, PostgreSQL, Redis counter, AI agent
