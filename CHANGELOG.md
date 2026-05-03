@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-03
+
+### Fixed
+
+- **Redis URL format** — `NewRedisCache` now accepts both `redis://localhost:6379` (URL scheme)
+  and plain `host:port` — fixes a bug where the config default (`cache.redis_url = "redis://localhost:6379"`)
+  was rejected by the Redis client which expected bare `host:port` format
+
+### Added
+
+- **Local Redis dev setup** — `docker-compose.dev.yml` with a throwaway Redis container
+  (no persistence, pure in-memory) for running integration tests locally
+  - `make dev/redis` / `make dev/redis/stop` — start/stop the container
+  - `make test/redis` — run the full suite with `-tags redis`
+  - `make test/all` — auto-detects a running Redis instance and adjusts test tags accordingly
+- **Compile-time interface checks** — `var _ Cache = (*T)(nil)` assertions added to
+  `MemoryCache` and `NoopCache` (already present in `RedisCache`)
+- **Binaries output to `bin/`** — `make build` now places `bin/goshort` and `bin/goshort-cli`
+  in a dedicated subdirectory instead of the project root
+
+### Changed
+
+- Redis integration tests append `t.Name()` to all cache keys to prevent collisions under `-race`
+- CLI documentation corrected: `shorten` takes a URL argument directly — stdin piping is not supported
+- Demo tape fixed: binary paths updated to `bin/`, build step hidden with `Hide`/`Show`, server logs
+  redirected to `/tmp/goshort.log` to avoid interleaving with recorded output
+
 ## [0.3.0] - 2026-05-03
 
 ### Added
@@ -93,7 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/anIcedAntFA/goshort/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/anIcedAntFA/goshort/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/anIcedAntFA/goshort/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/anIcedAntFA/goshort/compare/v0.1.0...v0.2.0
