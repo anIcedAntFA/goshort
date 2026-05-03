@@ -6,37 +6,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Phase 4 complete — MCP server shipped (stdio + Streamable HTTP, 5 tools, 2 resources, 2 prompts).
+**Current state:** Phase 4 complete — MCP server shipped (stdio + Streamable HTTP on `/mcp`, 5 tools, 2 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
 
 ## Commands
 
-These commands are planned but not yet implemented. Update this section as the project progresses.
-
 ```bash
 # Build
-go build ./cmd/server/...
-go build ./cmd/cli/...
+make build                           # Build bin/goshort + bin/goshort-cli
+go build ./cmd/server/...            # Server only
+go build ./cmd/cli/...               # CLI only
 
-# Test (table-driven, TDD approach)
-go test ./...
-go test ./internal/shortener/...     # Run a single package
-go test -run TestServiceCreate ./... # Run a single test
+# Test
+make test                            # go test ./...
+make test/race                       # With race detector
+make test/cover                      # HTML coverage report
+make test/redis                      # Include Redis integration tests (-tags redis)
+make test/all                        # Auto-detect Redis, run accordingly
+go test -run TestServiceCreate ./... # Single test
 go test -fuzz FuzzValidator ./...    # Fuzz testing
 
-# Lint (when .golangci.yml is added)
-golangci-lint run
+# Lint
+make lint                            # golangci-lint run
+make lint/fix                        # With auto-fix
 
-# sqlc code generation
-sqlc generate
+# Code generation
+sqlc generate                        # Regenerate type-safe Go from SQL
 
 # Docker
-docker compose up -d
+docker compose up -d                 # Production stack (GoShort + Caddy)
+make dev/redis                       # Throwaway Redis for integration tests
+make dev/redis/stop                  # Stop Redis
 
-# Local Redis (for integration tests)
-make dev/redis          # Start Redis container
-make dev/redis/stop     # Stop Redis container
-make test/redis         # Run tests with Redis integration tests
-make test/all           # Auto-detect Redis and run accordingly
+# Deploy
+fly deploy                           # Deploy to Fly.io
 ```
 
 ## Architecture
@@ -45,52 +47,50 @@ Three-layer pragmatic structure — avoid over-engineering:
 
 ```
 cmd/
-├── server/main.go     # HTTP server entry point
-└── cli/main.go        # CLI entry point (Phase 3)
+├── server/main.go     # HTTP server + MCP wiring entry point
+└── cli/main.go        # CLI entry point (Cobra)
 
 internal/
-├── shortener/         # Core business logic (service, encoder, validator)
+├── shortener/         # Core business logic (service, validator, model, errors)
+├── encoder/           # Sqids-based short code generation
 ├── storage/           # Storage interface + SQLite (sqlc) implementation
 ├── cache/             # Cache interface + noop/memory/redis implementations
 ├── api/               # Chi HTTP handlers, router, middleware, error types
-├── mcp/               # MCP server tools (Phase 4)
-└── config/            # Koanf config loading (goshort.toml + env vars)
+├── mcp/               # MCP server: tools, resources, prompts, auth
+├── config/            # Koanf config loading (goshort.toml + env vars)
+└── db/                # sqlc-generated code (DO NOT EDIT)
 
 db/
-├── schema.sql
-├── queries.sql
-└── sqlc.yaml
-
-api-tests/             # Bruno API tests (.bru files, not Postman)
+├── schema.sql         # Table definitions
+├── queries.sql        # All SQL queries (sqlc input)
+└── sqlc.yaml          # sqlc config
 ```
 
-**Layer boundaries:** `api/` and `mcp/` call `shortener/`; `shortener/` calls `storage/` and `cache/` interfaces only — never concrete types.
+**Layer boundaries:** `api/` and `mcp/` call `shortener.Service` interface; `shortener/` calls `Storage` and `Encoder` interfaces only — never concrete types. Cache-aside is a delivery-layer concern (in `api/handler.go`), not in the service. `cmd/server/main.go` is the only file that knows all concrete types (DI wiring point).
 
 ## Key Design Decisions
 
 Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 
-- **Short code generation:** Counter + Sqids library (zero collision, non-sequential). Generated codes use `[a-zA-Z0-9]` only; custom aliases allow hyphens (`my-link`) — this distinction avoids collision between generated and custom codes.
+- **Short code generation:** Counter + Sqids library (zero collision, non-sequential). Generated codes use `[a-zA-Z0-9]` only; custom aliases allow hyphens (`my-link`) — charset differentiation prevents collision.
 - **Database:** SQLite via sqlc (Phases 1–4), PostgreSQL (Phase 5+). Two tables: `urls` and `counter`.
-- **Caching:** Cache-aside pattern. `cache.driver` config: `none | memory | redis`. Interface must be satisfied by all three; never bypass the interface.
+- **Caching:** Cache-aside pattern in delivery layer. `cache.driver` config: `none | memory | redis`. Interface must be satisfied by all three.
 - **Redirect strategy:** 302 (temporary) not 301 — 301 is browser-cached permanently and kills click analytics.
 - **HTTP router:** Chi v5 (stdlib-compatible, no lock-in).
 - **Logging:** `slog` stdlib only — zero dependencies.
-- **Auth:** API key (Phase 3). MCP tools require auth to be implemented first (Phase 3 before Phase 4).
-- **Scaling:** All three layers are intentional learning exercises — DB index (always on) → in-process cache → CDN edge cache.
+- **Auth:** API key with constant-time comparison (Phase 3). MCP `/mcp` endpoint uses its own `APIKeyMiddleware`, bypasses Chi rate limit middleware (MCP sessions are long-lived).
+- **MCP:** Official `modelcontextprotocol/go-sdk` v1.6. Dual transport: stdio (`--mcp`) for local Claude Code/Cursor, Streamable HTTP on `/mcp` (same port as REST API) for remote agents.
 
 ## Phased Roadmap
 
-| Phase | Focus | Entry Point |
-|-------|-------|-------------|
-| 1 | Core library: SQLite, sqlc, Sqids, TDD | `internal/shortener/` |
-| 2 | HTTP API (Chi), caching, slog, Prometheus | `internal/api/` |
-| 3 | Auth, CLI (Cobra), rate limiting, Docker, Fly.io | `cmd/cli/`, `internal/config/` |
-| 3.5 | Bare VPS ops: Nginx, systemd, Certbot | Infrastructure only |
-| 4 | MCP server (go-sdk), Claude/Cursor integration | `internal/mcp/` |
-| 5+ | Analytics, spam detection, PostgreSQL, Redis counter | Incremental |
-
-Implement phases in order — each phase is a deployable milestone.
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 1 | Core library: SQLite, sqlc, Sqids, TDD | ✅ v0.1.0 |
+| 2 | HTTP API (Chi), caching, slog, Prometheus | ✅ v0.2.0 |
+| 3 | Auth, CLI (Cobra), rate limiting, Docker, Fly.io | ✅ v0.3.0 |
+| 3.5 | Fly.io deploy + Cloudflare DNS/CDN | ✅ goshort.app |
+| 4 | MCP server (official Go SDK, stdio + HTTP) | ✅ v0.4.0 |
+| 5+ | Analytics, spam detection, PostgreSQL, Redis counter | 🔲 |
 
 ## Technology Stack
 
@@ -130,34 +130,30 @@ api_key = ""
 enabled = false
 requests_per_minute = 60
 
+[shortener]
+code_length = 6
+default_expiry = "0"
+
 [logging]
 level = "info"
 format = "json"
+
+[mcp]
+base_url = ""     # override for MCP responses; falls back to server.base_url
 ```
 
 ## Code Conventions
 
 - Tabs for Go files, 2-space spaces for YAML/JSON/Markdown (enforced by `.editorconfig`)
 - Error handling: wrap with `%w` for `errors.Is/As`; handle errors once, don't log-then-return
-- Interfaces defined in the consumer package (`storage.Storage`, `cache.Cache`) — not in the implementation package
-- Table-driven tests with `t.Run` subtests; use `httptest` for HTTP handler tests
+- Interfaces defined in the consumer package (`shortener.Storage`, `shortener.Cache`, `shortener.Encoder`) — not in the implementation package
+- Table-driven tests with `t.Run` subtests; use `httptest` for HTTP handler tests; MCP tests use `mcp.NewInMemoryTransports()` for in-process testing
 - All SQL lives in `db/queries.sql`; never write raw SQL strings in Go code
 - Config struct tags use `koanf:"field_name"` (not `mapstructure`)
 
 ## Reference Documentation
 
 - `docs/DESIGN.md` — Full system design, API spec, data model, scaling rationale, risk table
-- `docs/LEARNING.md` — Go philosophy, patterns, and GoShort-specific knowledge map with code location annotations
+- `docs/LEARNING.md` — Go philosophy, patterns, and GoShort-specific knowledge map
 - `docs/DEPLOYMENT.md` — Fly.io, Cloudflare, Docker Compose deployment guide
-
-## Current State
-
-Phase 4 complete. Next: Phase 5+ (analytics, PostgreSQL).
-
-- ✅ Phase 1: Core library (shortener, storage, cache, encoder)
-- ✅ Phase 2: HTTP API, caching, config, monitoring, docs
-- ✅ Phase 3: Auth, rate limiting, CLI, Docker, release infra
-- ✅ Phase 3.5: Fly.io deploy + Cloudflare DNS/CDN (goshort.app live)
-- 🔲 Phase 3.5b: Bare VPS ops (deferred — optional learning exercise)
-- ✅ Phase 4: MCP server (official Go SDK, stdio + Streamable HTTP)
-- 🔲 Phase 5+: Analytics, PostgreSQL, Redis counter, AI agent
+- `docs/ROADMAP.md` — Task-level roadmap with checkboxes

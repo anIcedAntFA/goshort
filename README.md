@@ -1,11 +1,11 @@
-<h1 align="center">GoShort</h1>
+<h1 align="center">🔗 GoShort</h1>
 
 <p align="center">
   Self-hosted URL shortener — single binary, SQLite-backed, zero config to start.
 </p>
 
 <p align="center">
-  <sub>Turn long URLs into short, shareable links with click tracking and custom aliases.</sub>
+  <sub>Turn long URLs into short, shareable links with click tracking, custom aliases, and AI agent integration.</sub>
 </p>
 
 <p align="center">
@@ -30,47 +30,53 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="GoShort Demo" width="800">
-</p>
-
-<p align="center">
-  <strong>API docs:</strong> <a href="https://goshort.app/docs">goshort.app/docs</a>
+  <img src="docs/demo.gif" alt="GoShort Demo" width="1200" height="auto">
 </p>
 
 ---
 
-## Features
+## ✨ Features
 
 - **Zero-collision codes** — atomic SQLite counter + [Sqids](https://sqids.org): non-sequential, bijective, no retry loops
 - **Custom aliases** — bring your own slug (`/my-link`); charset isolation prevents collision with generated codes
-- **URL expiration** — configurable TTL; lazy expiry on read + hourly background cleanup
+- **URL expiration** — configurable TTL with lazy expiry on read + hourly background cleanup
 - **Switchable cache** — `none | memory | redis` at config time; cache-aside with TTL capped to remaining expiry
 - **API key auth** — constant-time comparison; per-IP token bucket rate limiting
 - **CLI client** — `goshort-cli` for shorten, list, stats, delete from the terminal
-- **Prometheus metrics + structured logs** — `/metrics`, `slog` throughout, no extra dependencies
-- **Self-documenting API** — OpenAPI spec + interactive Scalar UI at `/docs`
+- **MCP server** — AI agents (Claude Code, Cursor) can shorten, list, and manage URLs via [Model Context Protocol](https://modelcontextprotocol.io)
+- **Prometheus metrics + structured logs** — `/metrics` endpoint, `slog` throughout, no extra dependencies
+- **Self-documenting API** — OpenAPI 3.1 spec + interactive Scalar UI at `/docs`
 
 ---
 
-## Tech Stack
+## 🏗️ Architecture
 
-| Component      | Technology                                                                 |
-|----------------|----------------------------------------------------------------------------|
-| Language       | Go 1.26                                                                    |
-| HTTP           | [Chi](https://go-chi.io) v5                                                |
-| Database       | SQLite via [sqlc](https://sqlc.dev) (pure Go, no CGO)                      |
-| Encoding       | [Sqids](https://sqids.org) (zero-collision, non-sequential)                |
-| CLI            | [Cobra](https://cobra.dev)                                                 |
-| Config         | [Koanf](https://github.com/knadh/koanf) v2 (TOML + env vars)               |
-| Cache (Redis)  | [go-redis](https://github.com/redis/go-redis) v9                           |
-| Metrics        | [Prometheus](https://github.com/prometheus/prometheus)                     |
-| Rate Limit     | [rate](https://pkg.go.dev/golang.org/x/time/rate) (token bucket)           |
-| Reverse Proxy  | [Caddy](https://github.com/caddyserver/caddy) (Docker Compose)             |
+![GoShort Architecture](docs/sys-arch.png)
+
+Full architecture diagrams: [high-level](docs/sys-arch.png), [request flow](docs/request-flow.excalidraw), [layer boundaries](docs/layers.excalidraw).
+
+---
+
+## 🛠️ Tech Stack
+
+| Component      | Technology                                                    |
+|----------------|---------------------------------------------------------------|
+| Language       | Go 1.26                                                       |
+| HTTP           | [Chi](https://go-chi.io) v5                                   |
+| Database       | SQLite via [sqlc](https://sqlc.dev) (pure Go, no CGO)         |
+| Encoding       | [Sqids](https://sqids.org) (zero-collision, non-sequential)   |
+| CLI            | [Cobra](https://cobra.dev)                                    |
+| Config         | [Koanf](https://github.com/knadh/koanf) v2 (TOML + env vars) |
+| Cache          | [go-redis](https://github.com/redis/go-redis) v9              |
+| Metrics        | [Prometheus](https://github.com/prometheus/prometheus)        |
+| Rate Limit     | [rate](https://pkg.go.dev/golang.org/x/time/rate) (token bucket) |
+| MCP            | [go-sdk](https://github.com/modelcontextprotocol/go-sdk) v1.6 (official) |
+| Reverse Proxy  | [Caddy](https://github.com/caddyserver/caddy) (Docker Compose) |
 | Release        | [GoReleaser](https://github.com/goreleaser/goreleaser) + [GitHub Actions](https://github.com/features/actions) |
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### a. Docker Compose (recommended)
 
@@ -100,7 +106,7 @@ goshort
 
 ---
 
-## Usage
+## 📡 Usage
 
 **Create a short URL:**
 
@@ -129,7 +135,7 @@ curl -L http://localhost:8080/k7Xm2p
 
 ---
 
-## CLI
+## 💻 CLI
 
 ```bash
 # Install
@@ -165,17 +171,19 @@ Per-command overrides (precedence: flag > env > config):
 
 ---
 
-## MCP (AI Agent Integration)
+## 🤖 MCP (AI Agent Integration)
 
-GoShort ships an [MCP](https://modelcontextprotocol.io) server so AI agents like
-Claude Code and Cursor can shorten, list, and manage URLs directly.
+GoShort ships an [MCP](https://modelcontextprotocol.io) server so AI agents like Claude Code and Cursor can shorten, list, and manage URLs directly.
 
 ### Local — stdio
 
 ```bash
 make build
+```
 
-# .mcp.json (already included in repo):
+`.mcp.json` (already included in repo):
+
+```json
 {
   "mcpServers": {
     "goshort": {
@@ -189,20 +197,15 @@ make build
 
 ### Remote — Streamable HTTP
 
-`/mcp` is served on the main port — no separate server needed:
+The `/mcp` endpoint is served on the main port alongside the REST API. No separate server needed.
 
-```json
-{
-  "mcpServers": {
-    "goshort": {
-      "url": "https://goshort.app/mcp",
-      "headers": { "X-API-Key": "your-api-key" }
-    }
-  }
-}
+```bash
+# Connect Claude Code to deployed instance
+claude mcp add goshort-remote \
+  --transport http \
+  https://goshort.app/mcp \
+  --header "X-API-Key: your-api-key"
 ```
-
-For a dedicated MCP port (optional), use `--mcp-http :9090`.
 
 ### Tools
 
@@ -221,9 +224,16 @@ For a dedicated MCP port (optional), use `--mcp-http :9090`.
 | `goshort://stats/summary` | Total URL count and top URLs by clicks |
 | `goshort://urls/{code}` | Full details for a specific short code |
 
+### Prompts
+
+| Prompt | Description |
+|--------|-------------|
+| `shorten_and_share` | Shorten + format for sharing (platform-aware) |
+| `batch_shorten` | Shorten multiple URLs and return a table |
+
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 ```toml
 [server]
@@ -252,13 +262,16 @@ default_expiry = "0"                # "0" = no expiry; or "30d", "1h"
 [logging]
 level  = "info"                     # debug | info | warn | error
 format = "json"                     # json | text
+
+[mcp]
+base_url = ""                       # override base URL for MCP responses; falls back to server.base_url
 ```
 
 Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT_SERVER_PORT=9090`, `GOSHORT_AUTH_API_KEY=secret`.
 
 ---
 
-## API
+## 📋 API
 
 | Method   | Path                  | Auth | Description           |
 |----------|-----------------------|------|-----------------------|
@@ -270,6 +283,7 @@ Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT
 | `GET`    | `/health`             | No   | Health check          |
 | `GET`    | `/metrics`            | No   | Prometheus metrics    |
 | `GET`    | `/docs`               | No   | Interactive API docs  |
+| `POST`   | `/mcp`                | Yes  | MCP Streamable HTTP   |
 
 **Auth:** `X-API-Key: <key>` header. **Redirect codes:** `302 Found`, `404 Not Found`, `410 Gone` (expired).
 
@@ -281,73 +295,64 @@ Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT
 | `custom_alias` | string | No       | `^[a-zA-Z0-9-]{3,30}$`                     |
 | `expires_in`   | string | No       | `1h`, `7d`, `30d`, `90d`, `365d`, `never`  |
 
-Interactive docs at [http://localhost:8080/docs](http://localhost:8080/docs).
+Interactive docs at [goshort.app/docs](https://goshort.app/docs).
 
 ---
 
-## Architecture
-
-```
-Request
-  │
-  ▼
-┌─────────────────────────────────────┐
-│  Delivery   api/     Chi handlers   │  ← auth, rate-limit, logging, metrics
-│             mcp/     MCP tools      │    (Phase 4)
-│             cli/     Cobra commands │
-└────────────────────┬────────────────┘
-                     │
-┌────────────────────▼────────────────┐
-│  Service    shortener/              │  ← validate URL, generate/decode code,
-│                                     │    expiry, business rules
-└──────────┬──────────────────────────┘
-           │                 │
-┌──────────▼──────┐  ┌───────▼───────┐
-│  Storage        │  │  Cache        │
-│  storage/       │  │  cache/       │  ← none | memory | redis
-│  SQLite (sqlc)  │  │  cache-aside  │
-└─────────────────┘  └───────────────┘
-```
-
-Layer boundaries: `api/` and `mcp/` call `shortener/`; `shortener/` calls `storage/` and `cache/` interfaces only — never concrete types. Full rationale in [`docs/DESIGN.md`](docs/DESIGN.md).
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 cmd/
-├── server/main.go       # HTTP server entry point
-└── cli/                 # CLI entry point + subcommands (Cobra)
+├── server/main.go          # HTTP server + MCP wiring entry point
+└── cli/                    # CLI entry point + subcommands (Cobra)
 
 internal/
-├── api/                 # Chi router, handlers, middleware, error types
-├── shortener/           # Core business logic (service, validator)
-├── encoder/             # Sqids-based short code generation
-├── storage/             # Storage interface + SQLite (sqlc) implementation
-├── cache/               # Cache interface + noop / memory / Redis
-├── config/              # Koanf config loading (TOML + env vars)
-└── mcp/                 # MCP server tools (Phase 4)
+├── api/                    # Chi router, handlers, middleware, error types
+│   ├── router.go           #   route definitions, Scalar docs
+│   ├── handler.go          #   CRUD handlers + redirect + cache-aside
+│   ├── middleware.go        #   auth, rate limit, logging, metrics
+│   └── errors.go           #   error → HTTP status mapping
+├── mcp/                    # MCP server (Phase 4)
+│   ├── server.go           #   server setup, RunStdio, RunHTTP, HTTPHandler
+│   ├── tools.go            #   5 tool handlers (shorten, list, stats, delete, lookup)
+│   ├── resources.go        #   stats summary + URL detail resources
+│   ├── prompts.go          #   shorten_and_share, batch_shorten
+│   └── auth.go             #   APIKeyMiddleware for /mcp endpoint
+├── shortener/              # Core business logic
+│   ├── service.go          #   Service interface (5 methods)
+│   ├── service_impl.go     #   ServiceImpl struct + business rules
+│   ├── storage.go          #   Storage interface (consumer-defined)
+│   ├── cache.go            #   Cache interface (consumer-defined)
+│   ├── encoder.go          #   Encoder interface (consumer-defined)
+│   ├── validator.go        #   URL, alias, expiry validation
+│   ├── model.go            #   URL struct, CreateRequest, ListOptions
+│   └── errors.go           #   sentinel errors (ErrNotFound, ErrExpired, ...)
+├── encoder/                # Sqids-based short code generation
+├── storage/                # SQLite storage (sqlc-generated queries)
+├── cache/                  # noop, memory (sync.Map), Redis implementations
+└── config/                 # Koanf config loading (TOML + env vars)
 
 db/
-├── schema.sql           # Table definitions
-├── queries.sql          # All SQL queries (sqlc input)
-└── sqlc.yaml            # sqlc code generation config
+├── schema.sql              # Table definitions (urls, counter)
+├── queries.sql             # All SQL queries (sqlc input)
+└── sqlc.yaml               # sqlc code generation config
 
 docs/
-├── DESIGN.md            # Full system design and architecture rationale
-├── LEARNING.md          # Go patterns and GoShort-specific knowledge map
-└── openapi.yaml         # OpenAPI 3.1 spec (served at /docs)
+├── DESIGN.md               # Full system design and architecture rationale
+├── LEARNING.md             # Go patterns and GoShort-specific knowledge map
+├── DEPLOYMENT.md           # Fly.io, Cloudflare, Docker Compose deployment guide
+├── ROADMAP.md              # Task-level roadmap with checkboxes
+└── openapi.yaml            # OpenAPI 3.1 spec (served at /docs)
 
-api-tests/               # Bruno API tests (.bru files)
-docker-compose.yml       # Production: GoShort + Caddy (auto-TLS)
-docker-compose.dev.yml   # Development: Redis only (throwaway, no persistence)
-goshort.toml             # Example server config
+api-tests/                  # Bruno API tests (.bru files)
+docker-compose.yml          # Production: GoShort + Caddy (auto-TLS)
+docker-compose.dev.yml      # Development: Redis only (throwaway, no persistence)
+goshort.toml                # Example server config
 ```
 
 ---
 
-## Development
+## 🧑‍💻 Development
 
 ```bash
 git clone https://github.com/anIcedAntFA/goshort
@@ -371,14 +376,12 @@ make help               # list all targets
 | `make lint/fix`       | Lint + auto-fix                                     |
 | `make sqlc`           | Regenerate type-safe Go from SQL                    |
 | `make dev/redis`      | Start throwaway Redis container on `localhost:6379` |
-| `make dev/redis/stop` | Stop local Redis                                    |  
+| `make dev/redis/stop` | Stop local Redis                                    |
 | `make docker/up`      | `docker compose up -d` (production stack)           |
 | `make docker/down`    | Stop production stack                               |
 | `make clean`          | Remove binaries and coverage artifacts              |
 
 ### Redis integration tests
-
-The Redis tests are guarded by a build tag and require a running Redis instance:
 
 ```bash
 make dev/redis          # start throwaway Redis (Docker)
@@ -386,15 +389,15 @@ make test/redis         # run all tests including Redis
 make dev/redis/stop     # stop when done
 ```
 
-`make test/all` auto-detects whether Redis is running and adjusts accordingly — safe to run at any time.
+`make test/all` auto-detects whether Redis is running and adjusts accordingly.
 
-**Git hooks (lefthook):** `pre-commit` lints staged files + secrets scan; `pre-push` runs full test suite with race detector; `commit-msg` enforces [Conventional Commits](https://www.conventionalcommits.org).
+**Git hooks (lefthook):** `pre-commit` lints staged files + secrets scan; `pre-push` runs full test suite with race detector; `commit-msg` enforces [Conventional Commits](https://www.conventionalcommits.org) with gitmoji.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ---
 
-## Deployment
+## 🚢 Deployment
 
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for comprehensive guides.
 
@@ -414,27 +417,27 @@ fly launch && fly deploy
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
 | Phase | Focus                                           | Status             |
 |-------|-------------------------------------------------|--------------------|
 | 1     | Core library — SQLite, sqlc, Sqids, TDD         | ✅ v0.1.0          |
 | 2     | HTTP API, caching, config, Prometheus           | ✅ v0.2.0          |
-| 3     | Auth, rate limiting, CLI, Docker, release infra | ✅ v0.3.0 (current)|
+| 3     | Auth, rate limiting, CLI, Docker, release infra | ✅ v0.3.0          |
 | 3.5   | Deploy — Fly.io + Cloudflare CDN                | ✅ [goshort.app](https://goshort.app) |
-| 4     | MCP server — Claude / Cursor integration        | 🔲                 |
+| 4     | MCP server — Claude / Cursor integration        | ✅ v0.4.0          |
 | 5+    | Analytics, PostgreSQL, Redis counter, AI agent  | 🔲                 |
 
 Each phase ships a working, deployable product.
 
 ---
 
-## Star History
+## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=anIcedAntFA/goshort&type=Date)](https://star-history.com/#anIcedAntFA/goshort&Date)
 
 ---
 
-## License
+## 📄 License
 
 MIT — see [LICENSE](LICENSE).
