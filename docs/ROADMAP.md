@@ -661,21 +661,23 @@ changelog:
 
 ### Milestone 3.5.1: Fly.io Deploy (Ship Fast)
 
-- [ ] **T3.38** Install flyctl: `brew install flyctl`
-- [ ] **T3.39** `fly launch` — configure app
-- [ ] **T3.40** `fly volumes create data --size 1` — persistent storage
-- [ ] **T3.41** `fly deploy` — verify app is live
-- [ ] **T3.42** Configure custom domain in Fly.io dashboard
-- [ ] **T3.43** Test: short URL creation + redirect works on live URL
+- [x] **T3.38** Install flyctl
+- [x] **T3.39** `fly launch` — configure app (goshort-api, sin region)
+- [x] **T3.40** Volume: goshort_data (1GB, auto-created via fly.toml mounts)
+- [x] **T3.41** `fly deploy` — app live at goshort-api.fly.dev
+- [x] **T3.42** Custom domain: goshort.app (Cloudflare DNS → Fly.io)
+- [x] **T3.43** Verified: create URL + redirect works on live domain
 
 ### Milestone 3.5.2: Cloudflare DNS + CDN
 
-- [ ] **T3.44** Point domain DNS to Fly.io (or VPS) via Cloudflare
-- [ ] **T3.45** Enable Cloudflare proxy (orange cloud)
-- [ ] **T3.46** Configure Cache Rules for redirect responses
-- [ ] **T3.47** Verify: CDN caching works (check `cf-cache-status` header)
+- [x] **T3.44** DNS: A + AAAA + CNAME records pointing to Fly.io
+- [x] **T3.45** Cloudflare proxy enabled (orange cloud)
+- [x] **T3.46** Cache Rules: cache redirects (5min edge TTL), bypass API paths
+- [x] **T3.47** Verified: cf-cache-status MISS → HIT on second request
 
-### Milestone 3.5.3: Bare VPS Deploy (Learn)
+### Milestone 3.5.3: Bare VPS Deploy (Deferred)
+
+> Moved after Phase 4. VPS ops is a learning exercise, not blocking MCP.
 
 - [ ] **T3.48** Buy VPS (Hetzner CX22 ~$4/mo)
 - [ ] **T3.49** SSH in, create non-root user, setup SSH keys
