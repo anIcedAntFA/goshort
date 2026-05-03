@@ -89,6 +89,7 @@ var defaults = map[string]any{
 	"logging.format":                 "json",
 	"rate_limit.enabled":             false,
 	"rate_limit.requests_per_minute": 60,
+	"mcp.base_url":                   "",
 }
 
 // Load builds a Config by layering: defaults → TOML file → env vars.

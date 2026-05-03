@@ -264,3 +264,27 @@ func TestConfig_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestLoad_MCPConfig_Default(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := config.Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.MCP.BaseURL != "" {
+		t.Errorf("mcp.base_url default = %q, want empty string", cfg.MCP.BaseURL)
+	}
+}
+
+func TestLoad_MCPConfig_EnvVar(t *testing.T) {
+	t.Setenv("GOSHORT_MCP_BASE_URL", "https://mcp.example.com")
+
+	cfg, err := config.Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.MCP.BaseURL != "https://mcp.example.com" {
+		t.Errorf("mcp.base_url = %q, want https://mcp.example.com", cfg.MCP.BaseURL)
+	}
+}
