@@ -412,6 +412,51 @@ func TestSQLiteStorage_Counter(t *testing.T) {
 	}
 }
 
+// TestSQLiteStorage_OperationsAfterClose verifies every method returns an error on a closed DB.
+// The storage is created without t.Cleanup — closing is part of the test itself.
+func TestSQLiteStorage_OperationsAfterClose(t *testing.T) {
+	t.Parallel()
+
+	s, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
+	if err != nil {
+		t.Fatalf("NewSQLiteStorage: %v", err)
+	}
+
+	if err := s.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	ctx := context.Background()
+
+	if _, err := s.CreateURL(ctx, sampleParams("x", "https://example.com")); err == nil {
+		t.Error("CreateURL after close should error")
+	}
+	if _, err := s.GetByCode(ctx, "x"); err == nil {
+		t.Error("GetByCode after close should error")
+	}
+	if err := s.DeleteByCode(ctx, "x"); err == nil {
+		t.Error("DeleteByCode after close should error")
+	}
+	if _, err := s.ListURLs(ctx, 10, 0); err == nil {
+		t.Error("ListURLs after close should error")
+	}
+	if _, err := s.CountURLs(ctx); err == nil {
+		t.Error("CountURLs after close should error")
+	}
+	if err := s.IncrementClicks(ctx, "x"); err == nil {
+		t.Error("IncrementClicks after close should error")
+	}
+	if _, err := s.DeleteExpired(ctx, 10); err == nil {
+		t.Error("DeleteExpired after close should error")
+	}
+	if _, err := s.GetCounter(ctx); err == nil {
+		t.Error("GetCounter after close should error")
+	}
+	if _, err := s.IncrementCounter(ctx); err == nil {
+		t.Error("IncrementCounter after close should error")
+	}
+}
+
 // TestSQLiteStorage_Counter_Concurrent verifies IncrementCounter is safe under concurrent access.
 func TestSQLiteStorage_Counter_Concurrent(t *testing.T) {
 	t.Parallel()

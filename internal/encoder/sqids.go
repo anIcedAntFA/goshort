@@ -17,6 +17,8 @@ type SqidsEncoder struct {
 var _ shortener.Encoder = (*SqidsEncoder)(nil)
 
 // NewSqidsEncoder creates a SqidsEncoder that produces codes of at least minLength characters.
+// sqids.New only errors for invalid alphabets; with the default alphabet and uint8 minLength
+// (0–255) the constructor never fails in practice — the branch is kept for safety.
 func NewSqidsEncoder(minLength uint8) (*SqidsEncoder, error) {
 	s, err := sqids.New(sqids.Options{
 		MinLength: minLength,
@@ -34,6 +36,8 @@ func (e *SqidsEncoder) Encode(id int64) (string, error) {
 		return "", fmt.Errorf("encode: %w", ErrNegativeID)
 	}
 
+	// sqids.Encode only errors when every permutation of the code is on the blocklist;
+	// with the default blocklist and valid uint64 input this never happens in practice.
 	code, err := e.s.Encode([]uint64{uint64(id)})
 	if err != nil {
 		return "", fmt.Errorf("encode: %w", err)
