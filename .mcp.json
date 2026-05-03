@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "goshort": {
+      "command": "./bin/goshort-server",
+      "args": ["--mcp"],
+      "env": {
+        "GOSHORT_STORAGE_SQLITE_PATH": "./data/goshort.db"
+      }
+    },
+    "goshort-remote": {
+      "url": "https://goshort.app/mcp",
+      "headers": {
+        "X-API-Key": "your-api-key"
+      }
+    }
+  }
+}
