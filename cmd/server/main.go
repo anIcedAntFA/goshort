@@ -17,12 +17,15 @@ import (
 	"github.com/anIcedAntFA/goshort/internal/cache"
 	"github.com/anIcedAntFA/goshort/internal/config"
 	"github.com/anIcedAntFA/goshort/internal/encoder"
+	mcpserver "github.com/anIcedAntFA/goshort/internal/mcp"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 	"github.com/anIcedAntFA/goshort/internal/storage"
 )
 
 func main() {
 	configPath := flag.String("config", "", "path to TOML config file (default: env vars + built-in defaults)")
+	mcpMode := flag.Bool("mcp", false, "run as MCP server over stdio")
+	mcpHTTP := flag.String("mcp-http", "", "run MCP server over Streamable HTTP on this address (e.g. :9090)")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)
@@ -63,8 +66,39 @@ func main() {
 		slog.Warn("API key auth disabled — all endpoints are public")
 	}
 
-	c := buildCache(cfg.Cache)
 	svc := shortener.NewService(store, enc)
+
+	if *mcpMode || *mcpHTTP != "" {
+		if err := runMCPMode(ctx, cfg, svc, *mcpHTTP); err != nil {
+			slog.Error("mcp server error", "error", err)
+		}
+		return
+	}
+
+	go startCleanupJob(ctx, store)
+	runHTTPServer(ctx, cfg, svc)
+
+	if err := store.Close(); err != nil {
+		slog.Error("close storage", "error", err)
+	}
+	slog.Info("server stopped")
+}
+
+func runMCPMode(ctx context.Context, cfg *config.Config, svc shortener.Service, httpAddr string) error {
+	baseURL := cfg.MCP.BaseURL
+	if baseURL == "" {
+		baseURL = cfg.Server.BaseURL
+	}
+	srv := mcpserver.NewServer(svc, baseURL)
+	if httpAddr != "" {
+		slog.Info("mcp server starting (http)", "addr", httpAddr)
+		return srv.RunHTTP(ctx, httpAddr, cfg.Auth.APIKey)
+	}
+	return srv.RunStdio(ctx)
+}
+
+func runHTTPServer(ctx context.Context, cfg *config.Config, svc shortener.Service) {
+	c := buildCache(cfg.Cache)
 	h := api.NewHandler(svc, c, slog.Default(), cfg.Server.BaseURL)
 	router := api.NewRouter(h, api.RouterConfig{
 		APIKey:           cfg.Auth.APIKey,
@@ -79,8 +113,6 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
-
-	go startCleanupJob(ctx, store)
 
 	go func() {
 		slog.Info("server starting", "addr", srv.Addr, "base_url", cfg.Server.BaseURL)
@@ -99,10 +131,6 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("shutdown error", "error", err)
 	}
-	if err := store.Close(); err != nil {
-		slog.Error("close storage", "error", err)
-	}
-	slog.Info("server stopped")
 }
 
 func setupLogger(cfg config.LoggingConfig) {

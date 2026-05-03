@@ -22,6 +22,14 @@ type Config struct {
 	RateLimit RateLimitConfig `koanf:"rate_limit"`
 	Shortener ShortenerConfig `koanf:"shortener"`
 	Logging   LoggingConfig   `koanf:"logging"`
+	MCP       MCPConfig       `koanf:"mcp"`
+}
+
+// MCPConfig holds MCP server settings.
+type MCPConfig struct {
+	// BaseURL overrides server.base_url for short URLs returned by MCP tools.
+	// Falls back to server.base_url when empty.
+	BaseURL string `koanf:"base_url"`
 }
 
 // ServerConfig holds HTTP server settings.
