@@ -189,9 +189,7 @@ make build
 
 ### Remote — Streamable HTTP
 
-```bash
-GOSHORT_AUTH_API_KEY=your-key ./bin/goshort --mcp-http :9090
-```
+`/mcp` is served on the main port — no separate server needed:
 
 ```json
 {
@@ -203,6 +201,8 @@ GOSHORT_AUTH_API_KEY=your-key ./bin/goshort --mcp-http :9090
   }
 }
 ```
+
+For a dedicated MCP port (optional), use `--mcp-http :9090`.
 
 ### Tools
 

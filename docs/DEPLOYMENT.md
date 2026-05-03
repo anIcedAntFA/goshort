@@ -120,7 +120,7 @@ until Fly.io cert is verified. Then switch to Proxied.
 
 **Rule 2 (bottom): Bypass API and admin paths**
 - Match: URI Path starts with `/api` OR equals `/health` OR
-  equals `/metrics` OR starts with `/docs`
+  equals `/metrics` OR starts with `/docs` OR starts with `/mcp`
 - Action: Bypass cache
 
 Rule 2 is evaluated last and overrides Rule 1 for matching paths.
