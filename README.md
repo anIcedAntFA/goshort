@@ -58,6 +58,7 @@
 | Encoding       | [Sqids](https://sqids.org) (zero-collision, non-sequential)                |
 | CLI            | [Cobra](https://cobra.dev)                                                 |
 | Config         | [Koanf](https://github.com/knadh/koanf) v2 (TOML + env vars)               |
+| Cache (Redis)  | [go-redis](https://github.com/redis/go-redis) v9                           |
 | Metrics        | [Prometheus](https://github.com/prometheus/prometheus)                     |
 | Rate Limit     | [rate](https://pkg.go.dev/golang.org/x/time/rate) (token bucket)           |
 | Reverse Proxy  | [Caddy](https://github.com/caddyserver/caddy) (Docker Compose)             |
@@ -130,30 +131,33 @@ curl -L http://localhost:8080/k7Xm2p
 # Install
 go install github.com/anIcedAntFA/goshort/cmd/cli@latest
 
-# Shorten
+# Shorten a URL
 goshort-cli shorten https://example.com/long --alias my-link --expires 7d
 
-# Pipe input
-echo "https://example.com/long" | goshort-cli shorten
+# List all URLs (paginated)
+goshort-cli list --page 1 --per-page 20
 
-# List all URLs
-goshort-cli list
-
-# Inspect a code
+# Inspect a short code or alias
 goshort-cli stats k7Xm2p
 
-# Delete
+# Delete a short URL
 goshort-cli delete k7Xm2p
 ```
 
-Config (`~/.goshort.toml`):
+Config file (`~/.goshort.toml`):
 
 ```toml
 server_url = "http://localhost:8080"
 api_key    = "your-api-key"
 ```
 
-Override per-command: `--server-url`, `--api-key`, or env vars `GOSHORT_SERVER_URL` / `GOSHORT_API_KEY`.
+Per-command overrides (precedence: flag > env > config):
+
+| Flag         | Env var              |
+|--------------|----------------------|
+| `--server`   | `GOSHORT_SERVER_URL` |
+| `--api-key`  | `GOSHORT_API_KEY`    |
+| `--json`     | —                    |
 
 ---
 
@@ -219,8 +223,7 @@ Interactive docs at [http://localhost:8080/docs](http://localhost:8080/docs).
 
 ---
 
-<details>
-<summary>🏗️ Architecture</summary>
+## Architecture
 
 ```
 Request
@@ -244,61 +247,84 @@ Request
 └─────────────────┘  └───────────────┘
 ```
 
-Layer boundaries: `api/` and `mcp/` call `shortener/`; `shortener/` calls `storage/` and `cache/` interfaces only — never concrete types. Full design rationale in [`docs/DESIGN.md`](docs/DESIGN.md).
+Layer boundaries: `api/` and `mcp/` call `shortener/`; `shortener/` calls `storage/` and `cache/` interfaces only — never concrete types. Full rationale in [`docs/DESIGN.md`](docs/DESIGN.md).
 
-</details>
+---
 
-<details>
-<summary>📁 Project Structure</summary>
+## Project Structure
 
 ```
 cmd/
 ├── server/main.go       # HTTP server entry point
-└── cli/main.go          # CLI entry point
+└── cli/                 # CLI entry point + subcommands (Cobra)
 
 internal/
-├── api/                 # Chi handlers, router, middleware, error types
-├── shortener/           # Core business logic (service, encoder, validator)
+├── api/                 # Chi router, handlers, middleware, error types
+├── shortener/           # Core business logic (service, validator)
+├── encoder/             # Sqids-based short code generation
 ├── storage/             # Storage interface + SQLite (sqlc) implementation
 ├── cache/               # Cache interface + noop / memory / Redis
 ├── config/              # Koanf config loading (TOML + env vars)
 └── mcp/                 # MCP server tools (Phase 4)
 
 db/
-├── schema.sql
-├── queries.sql
-└── sqlc.yaml
+├── schema.sql           # Table definitions
+├── queries.sql          # All SQL queries (sqlc input)
+└── sqlc.yaml            # sqlc code generation config
 
 docs/
 ├── DESIGN.md            # Full system design and architecture rationale
-├── ROADMAP.md           # Phase-by-phase task tracking
+├── LEARNING.md          # Go patterns and GoShort-specific knowledge map
 └── openapi.yaml         # OpenAPI 3.1 spec (served at /docs)
 
 api-tests/               # Bruno API tests (.bru files)
+docker-compose.yml       # Production: GoShort + Caddy (auto-TLS)
+docker-compose.dev.yml   # Development: Redis only (throwaway, no persistence)
+goshort.toml             # Example server config
 ```
-
-</details>
 
 ---
 
 ## Development
 
 ```bash
+git clone https://github.com/anIcedAntFA/goshort
+cd goshort
 lefthook install        # install git hooks (once after clone)
 make help               # list all targets
 ```
 
-| Target           | What it does                          |
-|------------------|---------------------------------------|
-| `make build`     | Build server + CLI to `bin/`          |
-| `make test`      | `go test ./...`                       |
-| `make test/race` | Race-detector test run                |
-| `make test/cover`| Coverage report → `coverage.html`     |
-| `make lint`      | `golangci-lint run`                   |
-| `make lint/fix`  | Lint + auto-fix                       |
-| `make sqlc`      | Regenerate type-safe Go from SQL      |
-| `make docker/up` | `docker compose up -d`                |
-| `make clean`     | Remove `bin/` and coverage artifacts  |
+### Make targets
+
+| Target                | What it does                                        |
+|-----------------------|-----------------------------------------------------|
+| `make build`          | Build server + CLI binaries into `bin/`             |
+| `make run`            | Run the server (pass `CONFIG=goshort.toml` for file)|
+| `make test`           | `go test ./...` (unit tests only)                   |
+| `make test/race`      | Unit tests with race detector                       |
+| `make test/cover`     | Coverage report opened in browser                   |
+| `make test/redis`     | All tests including Redis integration tests         |
+| `make test/all`       | Auto-detect Redis and run unit + integration tests  |
+| `make lint`           | `golangci-lint run`                                 |
+| `make lint/fix`       | Lint + auto-fix                                     |
+| `make sqlc`           | Regenerate type-safe Go from SQL                    |
+| `make dev/redis`      | Start throwaway Redis container on `localhost:6379` |
+| `make dev/redis/stop` | Stop local Redis                                    |  
+| `make docker/up`      | `docker compose up -d` (production stack)           |
+| `make docker/down`    | Stop production stack                               |
+| `make clean`          | Remove binaries and coverage artifacts              |
+
+### Redis integration tests
+
+The Redis tests are guarded by a build tag and require a running Redis instance:
+
+```bash
+make dev/redis          # start throwaway Redis (Docker)
+make test/redis         # run all tests including Redis
+make dev/redis/stop     # stop when done
+```
+
+`make test/all` auto-detects whether Redis is running and adjusts accordingly — safe to run at any time.
 
 **Git hooks (lefthook):** `pre-commit` lints staged files + secrets scan; `pre-push` runs full test suite with race detector; `commit-msg` enforces [Conventional Commits](https://www.conventionalcommits.org).
 

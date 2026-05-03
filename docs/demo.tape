@@ -3,15 +3,24 @@
 
 Output docs/demo.gif
 
-Set FontSize 14
-Set Width 900
-Set Height 500
-Set Theme "Catppuccin Mocha"
+Set FontSize 16
+Set Width 1200
+Set Height 600
 Set TypingSpeed 40ms
 Set Padding 20
+Set BorderRadius 12
+Set WindowBar Colorful
+Set Theme "Catppuccin Mocha"
 
-# Start server
-Type "GOSHORT_CACHE_DRIVER=memory ./bin/goshort &"
+# Build binaries silently so the demo starts clean
+Hide
+Type "make build"
+Enter
+Sleep 8s
+Show
+
+# Start server — redirect logs so they don't interleave with demo output
+Type "GOSHORT_CACHE_DRIVER=memory ./bin/goshort > /tmp/goshort.log 2>&1 &"
 Enter
 Sleep 2s
 
@@ -26,17 +35,17 @@ Enter
 Sleep 3s
 
 # CLI — list URLs
-Type "goshort-cli list"
+Type "./bin/goshort-cli list"
 Enter
 Sleep 2s
 
-# CLI — stats
-Type "goshort-cli stats go-lang"
+# CLI — stats for a specific alias
+Type "./bin/goshort-cli stats go-lang"
 Enter
 Sleep 2s
 
-# CLI — pipe support
-Type "echo 'https://example.com/very/long/path' | goshort-cli shorten"
+# CLI — shorten a long URL directly
+Type "./bin/goshort-cli shorten https://example.com/very/long/path"
 Enter
 Sleep 2s
 
