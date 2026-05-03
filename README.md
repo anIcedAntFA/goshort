@@ -33,6 +33,10 @@
   <img src="docs/demo.gif" alt="GoShort Demo" width="800">
 </p>
 
+<p align="center">
+  <strong>API docs:</strong> <a href="https://goshort.app/docs">goshort.app/docs</a>
+</p>
+
 ---
 
 ## Features
@@ -334,14 +338,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ## Deployment
 
-**Docker Compose** — bundled `docker-compose.yml` includes GoShort + Caddy (auto-TLS). Mount `./data` for SQLite persistence.
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for comprehensive guides.
 
-**Fly.io** — 30 minutes:
+**Docker Compose** — GoShort + Caddy (auto-TLS):
+
 ```bash
-fly launch && fly volumes create data --size 1 && fly deploy
+docker compose up -d
 ```
 
-**Bare VPS** — SSH → systemd service → Nginx → Certbot. See [`docs/DESIGN.md` §16](docs/DESIGN.md#16-deployment-strategy) for the step-by-step.
+**Fly.io** — currently running at [goshort.app](https://goshort.app):
+
+```bash
+fly launch && fly deploy
+```
+
+**Bare VPS** — Nginx + systemd + Certbot (see DEPLOYMENT.md)
 
 ---
 
@@ -352,7 +363,7 @@ fly launch && fly volumes create data --size 1 && fly deploy
 | 1     | Core library — SQLite, sqlc, Sqids, TDD         | ✅ v0.1.0          |
 | 2     | HTTP API, caching, config, Prometheus           | ✅ v0.2.0          |
 | 3     | Auth, rate limiting, CLI, Docker, release infra | ✅ v0.3.0 (current)|
-| 3.5   | Bare VPS ops — Nginx, systemd, Certbot          | 🔲                 |
+| 3.5   | Deploy — Fly.io + Cloudflare CDN                | ✅ [goshort.app](https://goshort.app) |
 | 4     | MCP server — Claude / Cursor integration        | 🔲                 |
 | 5+    | Analytics, PostgreSQL, Redis counter, AI agent  | 🔲                 |
 
