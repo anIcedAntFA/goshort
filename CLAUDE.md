@@ -31,6 +31,12 @@ sqlc generate
 
 # Docker
 docker compose up -d
+
+# Local Redis (for integration tests)
+make dev/redis          # Start Redis container
+make dev/redis/stop     # Stop Redis container
+make test/redis         # Run tests with Redis integration tests
+make test/all           # Auto-detect Redis and run accordingly
 ```
 
 ## Architecture
