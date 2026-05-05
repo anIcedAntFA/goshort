@@ -31,3 +31,6 @@ CLAUDE.local.md
 # Test output
 test_output/
 coverage.out
+
+# Local documentation
+.docs
