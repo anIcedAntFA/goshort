@@ -4,11 +4,38 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/anIcedAntFA/goshort/internal/encoder"
+	mcpserver "github.com/anIcedAntFA/goshort/internal/mcp"
+	"github.com/anIcedAntFA/goshort/internal/shortener"
+	"github.com/anIcedAntFA/goshort/internal/storage"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// newTestMCPServer creates a GoShort MCP server for transport-level tests.
+func newTestMCPServer(t *testing.T) *mcpserver.Server {
+	t.Helper()
+	ctx := context.Background()
+
+	store, err := storage.NewSQLiteStorage(ctx, ":memory:")
+	if err != nil {
+		t.Fatalf("NewSQLiteStorage: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	enc, err := encoder.NewSqidsEncoder(4)
+	if err != nil {
+		t.Fatalf("NewSqidsEncoder: %v", err)
+	}
+
+	return mcpserver.NewServer(shortener.NewService(store, enc), testBaseURL)
+}
 
 func TestNewServer_ToolsRegistered(t *testing.T) {
 	cs := newTestClient(t)
@@ -213,5 +240,102 @@ func TestPrompt_BatchShorten(t *testing.T) {
 	}
 	if !strings.Contains(tc.Text, "https://a.com") {
 		t.Errorf("prompt text missing first URL, got: %s", tc.Text)
+	}
+}
+
+// TestServer_HTTPHandler verifies that HTTPHandler returns a working http.Handler
+// and that the internal `return s.server` closure is invoked on a request.
+func TestServer_HTTPHandler(t *testing.T) {
+	t.Parallel()
+
+	srv := newTestMCPServer(t)
+	h := srv.HTTPHandler("")
+	if h == nil {
+		t.Fatal("HTTPHandler returned nil")
+	}
+
+	// POST with the MCP-required Accept header so the request passes the
+	// streamable handler's validation and reaches the `return s.server` closure.
+	// A short context timeout ensures ServeHTTP returns even if the session blocks.
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{}"))
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json, text/event-stream")
+
+	h.ServeHTTP(httptest.NewRecorder(), req)
+}
+
+// TestServer_RunHTTP_GracefulShutdown starts the MCP HTTP server, sends one
+// request to invoke the internal `return s.server` closure, then cancels the
+// context and waits for a clean nil return.
+func TestServer_RunHTTP_GracefulShutdown(t *testing.T) {
+	// Reserve a random free port, release it, then hand the address to RunHTTP.
+	// Port reuse within tests on loopback is safe enough; the window is tiny.
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("pre-listen: %v", err)
+	}
+	addr := ln.Addr().String()
+	_ = ln.Close()
+
+	srv := newTestMCPServer(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- srv.RunHTTP(ctx, addr, "")
+	}()
+
+	// Retry until the server accepts a connection — this also invokes the closure.
+	// Both application/json and text/event-stream are required by the MCP
+	// streamable HTTP handler to pass Accept validation and reach getServer.
+	mcpURL := "http://" + addr + "/mcp"
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		httpReq, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, mcpURL, strings.NewReader("{}"))
+		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq.Header.Set("Accept", "application/json, text/event-stream")
+		resp, reqErr := http.DefaultClient.Do(httpReq)
+		if reqErr == nil {
+			_ = resp.Body.Close()
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	cancel()
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			t.Fatalf("RunHTTP after cancel: %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("RunHTTP did not stop after context cancellation")
+	}
+}
+
+// TestServer_RunHTTP_ListenError verifies the error return when the port is occupied.
+func TestServer_RunHTTP_ListenError(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("pre-listen: %v", err)
+	}
+	addr := ln.Addr().String()
+	defer ln.Close()
+
+	srv := newTestMCPServer(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = srv.RunHTTP(ctx, addr, "")
+	if err == nil {
+		t.Fatal("expected error for occupied port")
+	}
+	if !strings.Contains(err.Error(), "mcp http server:") {
+		t.Errorf("error = %q, want prefix 'mcp http server:'", err.Error())
 	}
 }

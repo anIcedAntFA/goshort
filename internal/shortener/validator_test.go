@@ -48,6 +48,9 @@ func TestValidateURL(t *testing.T) {
 		// --- too long ---
 		{name: "too_long", rawURL: tooLong, wantErr: shortener.ErrInvalidURL},
 
+		// --- malformed: url.Parse returns error ---
+		{name: "invalid_percent_encoding", rawURL: "https://example.com/%zz", wantErr: shortener.ErrInvalidURL},
+
 		// --- private / reserved hosts ---
 		{name: "localhost", rawURL: "http://localhost/path", wantErr: shortener.ErrInvalidURL},
 		{name: "localhost_upper", rawURL: "http://LOCALHOST/path", wantErr: shortener.ErrInvalidURL},

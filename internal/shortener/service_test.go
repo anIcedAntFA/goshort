@@ -26,8 +26,23 @@ type mockStorage struct {
 
 	// Per-method error injection: when set, the matching method returns this error
 	// instead of executing its normal logic.
-	errListURLs  error
-	errCountURLs error
+	errListURLs         error
+	errCountURLs        error
+	errCreateURL        error
+	errIncrementCounter error
+	errGetByCode        error
+}
+
+// mockEncoder is a controllable Encoder for error-path testing.
+type mockEncoder struct {
+	encodeErr error
+}
+
+func (m *mockEncoder) Encode(_ int64) (string, error) {
+	if m.encodeErr != nil {
+		return "", m.encodeErr
+	}
+	return "mocked-code", nil
 }
 
 func newMockStorage() *mockStorage {
@@ -46,6 +61,10 @@ func (m *mockStorage) insertDirect(u *shortener.URL) {
 func (m *mockStorage) CreateURL(_ context.Context, p shortener.CreateParams) (shortener.URL, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if m.errCreateURL != nil {
+		return shortener.URL{}, m.errCreateURL
+	}
 
 	if _, exists := m.urls[p.ShortCode]; exists {
 		return shortener.URL{}, errDuplicateCode
@@ -70,6 +89,10 @@ func (m *mockStorage) CreateURL(_ context.Context, p shortener.CreateParams) (sh
 func (m *mockStorage) GetByCode(_ context.Context, code string) (*shortener.URL, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if m.errGetByCode != nil {
+		return nil, m.errGetByCode
+	}
 
 	u, ok := m.urls[code]
 	if !ok {
@@ -178,6 +201,10 @@ func (m *mockStorage) GetCounter(_ context.Context) (int64, error) {
 func (m *mockStorage) IncrementCounter(_ context.Context) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if m.errIncrementCounter != nil {
+		return 0, m.errIncrementCounter
+	}
 
 	m.counter++
 	return m.counter, nil
@@ -579,5 +606,82 @@ func TestService_Create_WithHourExpiry(t *testing.T) {
 	diff := got.ExpiresAt.Sub(want)
 	if diff < -5*time.Second || diff > 5*time.Second {
 		t.Errorf("ExpiresAt = %v, want ~%v (±5s)", got.ExpiresAt, want)
+	}
+}
+
+// TestService_Create_IncrementCounterError verifies that a counter storage failure
+// is propagated when generating a short code.
+func TestService_Create_IncrementCounterError(t *testing.T) {
+	t.Parallel()
+
+	svc, store := newTestService(t)
+	store.errIncrementCounter = errors.New("counter db failed")
+
+	_, err := svc.Create(context.Background(), shortener.CreateRequest{
+		URL: "https://example.com",
+	})
+	if err == nil {
+		t.Fatal("Create must return an error when IncrementCounter fails")
+	}
+}
+
+// TestService_Create_EncodeCounterError verifies that an encoder failure is propagated.
+func TestService_Create_EncodeCounterError(t *testing.T) {
+	t.Parallel()
+
+	store := newMockStorage()
+	enc := &mockEncoder{encodeErr: errors.New("encode failed")}
+	svc := shortener.NewService(store, enc)
+
+	_, err := svc.Create(context.Background(), shortener.CreateRequest{
+		URL: "https://example.com",
+	})
+	if err == nil {
+		t.Fatal("Create must return an error when Encode fails")
+	}
+}
+
+// TestService_Create_StoreCreateError verifies that a CreateURL storage failure is propagated.
+func TestService_Create_StoreCreateError(t *testing.T) {
+	t.Parallel()
+
+	svc, store := newTestService(t)
+	store.errCreateURL = errors.New("db write failed")
+
+	_, err := svc.Create(context.Background(), shortener.CreateRequest{
+		URL: "https://example.com",
+	})
+	if err == nil {
+		t.Fatal("Create must return an error when CreateURL fails")
+	}
+}
+
+// TestService_Create_AliasCheckUnexpectedError verifies that a non-ErrNotFound error
+// from GetByCode during alias availability check is propagated.
+func TestService_Create_AliasCheckUnexpectedError(t *testing.T) {
+	t.Parallel()
+
+	svc, store := newTestService(t)
+	store.errGetByCode = errors.New("db connection lost")
+
+	_, err := svc.Create(context.Background(), shortener.CreateRequest{
+		URL:         "https://example.com",
+		CustomAlias: "my-alias",
+	})
+	if err == nil {
+		t.Fatal("Create must return an error when GetByCode returns an unexpected error")
+	}
+}
+
+// TestService_IncrementClicks_Error verifies that an IncrementClicks storage failure is propagated.
+func TestService_IncrementClicks_Error(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+
+	// Mock returns ErrNotFound for any unknown code, which is a non-nil error.
+	err := svc.IncrementClicks(context.Background(), "nonexistent")
+	if err == nil {
+		t.Fatal("IncrementClicks must return an error for a non-existent code")
 	}
 }
