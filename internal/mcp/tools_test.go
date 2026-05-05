@@ -79,6 +79,7 @@ func callTool(t *testing.T, cs *sdkmcp.ClientSession, name string, args map[stri
 }
 
 func TestShortenURL_Basic(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "shorten_url", map[string]any{"url": "https://example.com"})
@@ -107,6 +108,7 @@ func TestShortenURL_Basic(t *testing.T) {
 }
 
 func TestShortenURL_WithAlias(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "shorten_url", map[string]any{
@@ -130,6 +132,7 @@ func TestShortenURL_WithAlias(t *testing.T) {
 }
 
 func TestShortenURL_AliasTaken(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	callTool(t, cs, "shorten_url", map[string]any{
@@ -147,6 +150,7 @@ func TestShortenURL_AliasTaken(t *testing.T) {
 }
 
 func TestShortenURL_InvalidURL(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "shorten_url", map[string]any{"url": "not-a-url"})
@@ -156,6 +160,7 @@ func TestShortenURL_InvalidURL(t *testing.T) {
 }
 
 func TestShortenURL_InvalidExpiry(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "shorten_url", map[string]any{
@@ -168,6 +173,7 @@ func TestShortenURL_InvalidExpiry(t *testing.T) {
 }
 
 func TestListURLs_Empty(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "list_urls", map[string]any{})
@@ -193,6 +199,7 @@ func TestListURLs_Empty(t *testing.T) {
 }
 
 func TestListURLs_WithData(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	for i := range 3 {
@@ -224,6 +231,7 @@ func TestListURLs_WithData(t *testing.T) {
 }
 
 func TestListURLs_Pagination(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	for i := range 5 {
@@ -255,6 +263,7 @@ func TestListURLs_Pagination(t *testing.T) {
 }
 
 func TestGetURLStats_Existing(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	r := callTool(t, cs, "shorten_url", map[string]any{"url": "https://example.com"})
@@ -284,6 +293,7 @@ func TestGetURLStats_Existing(t *testing.T) {
 }
 
 func TestGetURLStats_NotFound(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "get_url_stats", map[string]any{"code": "nope"})
@@ -293,6 +303,7 @@ func TestGetURLStats_NotFound(t *testing.T) {
 }
 
 func TestDeleteURL_Existing(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	r := callTool(t, cs, "shorten_url", map[string]any{"url": "https://example.com"})
@@ -315,6 +326,7 @@ func TestDeleteURL_Existing(t *testing.T) {
 }
 
 func TestDeleteURL_NotFound(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "delete_url", map[string]any{"code": "ghost"})
@@ -324,6 +336,7 @@ func TestDeleteURL_NotFound(t *testing.T) {
 }
 
 func TestLookupURL_Existing(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	r := callTool(t, cs, "shorten_url", map[string]any{"url": "https://example.com"})
@@ -351,6 +364,7 @@ func TestLookupURL_Existing(t *testing.T) {
 }
 
 func TestLookupURL_NotFound(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res := callTool(t, cs, "lookup_url", map[string]any{"code": "missing"})

@@ -24,7 +24,7 @@ type testDeps struct {
 	store  *storage.SQLiteStorage
 }
 
-func setupTestDeps(t *testing.T) testDeps {
+func setupTestDeps(t testing.TB) testDeps {
 	return setupTestDepsWithConfig(t, api.RouterConfig{})
 }
 
@@ -32,7 +32,7 @@ func setupTestDepsWithAuth(t *testing.T, apiKey string) testDeps {
 	return setupTestDepsWithConfig(t, api.RouterConfig{APIKey: apiKey})
 }
 
-func setupTestDepsWithConfig(t *testing.T, rcfg api.RouterConfig) testDeps {
+func setupTestDepsWithConfig(t testing.TB, rcfg api.RouterConfig) testDeps {
 	t.Helper()
 	store, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
 	if err != nil {
@@ -92,7 +92,7 @@ type errDetail struct {
 }
 
 // serve executes a single request against the router and returns the recorder.
-func serve(t *testing.T, router http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
+func serve(t testing.TB, router http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
 	t.Helper()
 	var req *http.Request
 	if body != nil {
@@ -106,7 +106,7 @@ func serve(t *testing.T, router http.Handler, method, path string, body []byte) 
 	return rec
 }
 
-func mustMarshal(t *testing.T, v any) []byte {
+func mustMarshal(t testing.TB, v any) []byte {
 	t.Helper()
 	b, err := json.Marshal(v)
 	if err != nil {
@@ -115,7 +115,7 @@ func mustMarshal(t *testing.T, v any) []byte {
 	return b
 }
 
-func decodeJSON[T any](t *testing.T, rec *httptest.ResponseRecorder) T {
+func decodeJSON[T any](t testing.TB, rec *httptest.ResponseRecorder) T {
 	t.Helper()
 	var v T
 	if err := json.NewDecoder(rec.Body).Decode(&v); err != nil {
@@ -770,10 +770,87 @@ func TestServeDocs(t *testing.T) {
 	}
 }
 
+func TestRedirect_ClickCountIncrements(t *testing.T) {
+	t.Parallel()
+	deps := setupTestDeps(t)
+
+	body := mustMarshal(t, map[string]string{"url": "https://example.com/clicks"})
+	createRec := serve(t, deps.router, http.MethodPost, "/api/v1/urls", body)
+	if createRec.Code != http.StatusCreated {
+		t.Fatalf("create: %d; body: %s", createRec.Code, createRec.Body.String())
+	}
+	created := decodeJSON[createURLResp](t, createRec)
+
+	rec := serve(t, deps.router, http.MethodGet, "/"+created.ShortCode, nil)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("redirect: %d; body: %s", rec.Code, rec.Body.String())
+	}
+
+	// Allow the fire-and-forget IncrementClicks goroutine to complete.
+	time.Sleep(50 * time.Millisecond)
+
+	detailRec := serve(t, deps.router, http.MethodGet, "/api/v1/urls/"+created.ShortCode, nil)
+	if detailRec.Code != http.StatusOK {
+		t.Fatalf("get url: %d; body: %s", detailRec.Code, detailRec.Body.String())
+	}
+	detail := decodeJSON[urlResp](t, detailRec)
+	if detail.ClickCount < 1 {
+		t.Errorf("ClickCount = %d, want >= 1 after redirect", detail.ClickCount)
+	}
+}
+
+func TestCacheTTL(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	nearFuture := now.Add(30 * time.Minute)
+	farFuture := now.Add(48 * time.Hour)
+	past := now.Add(-time.Hour)
+
+	cases := []struct {
+		name    string
+		url     *shortener.URL
+		wantMin time.Duration
+		wantMax time.Duration
+	}{
+		{
+			name:    "no expiry returns 24h",
+			url:     &shortener.URL{ExpiresAt: nil},
+			wantMin: 23*time.Hour + 59*time.Minute,
+			wantMax: 24*time.Hour + time.Second,
+		},
+		{
+			name:    "expires in 30 min returns short TTL",
+			url:     &shortener.URL{ExpiresAt: &nearFuture},
+			wantMin: 29 * time.Minute,
+			wantMax: 31 * time.Minute,
+		},
+		{
+			name:    "expires in 48h is capped at 24h",
+			url:     &shortener.URL{ExpiresAt: &farFuture},
+			wantMin: 23*time.Hour + 59*time.Minute,
+			wantMax: 24*time.Hour + time.Second,
+		},
+		{
+			name:    "already expired returns zero TTL",
+			url:     &shortener.URL{ExpiresAt: &past},
+			wantMin: 0,
+			wantMax: 0,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := api.CacheTTL(tc.url)
+			if got < tc.wantMin || got > tc.wantMax {
+				t.Errorf("CacheTTL = %v, want [%v, %v]", got, tc.wantMin, tc.wantMax)
+			}
+		})
+	}
+}
+
 func TestServeOpenAPISpec(t *testing.T) {
-	// Not parallel: t.Chdir changes the process-wide working directory;
-	// parallel siblings must not run concurrently with this test.
-	t.Chdir("../..") // docs/openapi.yaml is at the project root
+	t.Parallel()
 	deps := setupTestDeps(t)
 
 	rec := serve(t, deps.router, http.MethodGet, "/docs/openapi.yaml", nil)

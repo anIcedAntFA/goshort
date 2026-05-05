@@ -227,3 +227,17 @@ func FuzzValidateURL(f *testing.F) {
 		_ = shortener.ValidateURL(rawURL)
 	})
 }
+
+func FuzzValidateAlias(f *testing.F) {
+	f.Add("my-link")
+	f.Add("abc")
+	f.Add("")
+	f.Add("-bad")
+	f.Add("api")
+	f.Add(strings.Repeat("a", 100))
+
+	f.Fuzz(func(_ *testing.T, alias string) {
+		// Must never panic regardless of input.
+		_ = shortener.ValidateAlias(alias)
+	})
+}

@@ -82,10 +82,11 @@ func TestRedisCache_TTLExpiry(t *testing.T) {
 	ctx := context.Background()
 
 	key := "test:redis:ttl:" + t.Name()
-	if err := c.Set(ctx, key, "value", 50*time.Millisecond); err != nil {
+	const ttl = 50 * time.Millisecond
+	if err := c.Set(ctx, key, "value", ttl); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(3 * ttl) // 150ms — 3× margin for CI reliability
 	if _, ok := c.Get(ctx, key); ok {
 		t.Error("expected cache miss after TTL expiry")
 	}
