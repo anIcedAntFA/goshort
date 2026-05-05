@@ -15,6 +15,7 @@ require (
 	github.com/redis/go-redis/v9 v9.19.0
 	github.com/spf13/cobra v1.10.2
 	github.com/sqids/sqids-go v0.4.1
+	go.uber.org/goleak v1.3.0
 	golang.org/x/time v0.15.0
 	modernc.org/sqlite v1.50.0
 )

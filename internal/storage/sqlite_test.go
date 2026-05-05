@@ -488,3 +488,18 @@ func TestSQLiteStorage_Counter_Concurrent(t *testing.T) {
 		t.Errorf("counter after %d concurrent increments = %d, want %d", goroutines, got, goroutines)
 	}
 }
+
+func TestSQLiteStorage_CreateURL_DuplicateShortCode(t *testing.T) {
+	t.Parallel()
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	if _, err := s.CreateURL(ctx, sampleParams("dup", "https://a.com")); err != nil {
+		t.Fatalf("first CreateURL: %v", err)
+	}
+
+	_, err := s.CreateURL(ctx, sampleParams("dup", "https://b.com"))
+	if err == nil {
+		t.Fatal("expected error for duplicate short_code, got nil")
+	}
+}

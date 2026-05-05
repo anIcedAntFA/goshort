@@ -74,11 +74,12 @@ func TestMemoryCache_Get_Expired(t *testing.T) {
 	c := cache.NewMemoryCache()
 	ctx := context.Background()
 
-	if err := c.Set(ctx, "exp", "value", 50*time.Millisecond); err != nil {
+	const ttl = 50 * time.Millisecond
+	if err := c.Set(ctx, "exp", "value", ttl); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(3 * ttl) // 150ms — 3× margin for CI reliability
 
 	got, ok := c.Get(ctx, "exp")
 	if ok {
@@ -153,6 +154,28 @@ func TestNoopCache_Get(t *testing.T) {
 	if got != "" {
 		t.Errorf("NoopCache.Get = %q, want empty string", got)
 	}
+}
+
+func TestMemoryCache_Concurrent(t *testing.T) {
+	t.Parallel()
+
+	c := cache.NewMemoryCache()
+	ctx := context.Background()
+
+	const goroutines = 50
+	done := make(chan struct{}, goroutines)
+	for range goroutines {
+		go func() {
+			_ = c.Set(ctx, "shared-key", "value", time.Minute)
+			_, _ = c.Get(ctx, "shared-key")
+			_ = c.Delete(ctx, "shared-key")
+			done <- struct{}{}
+		}()
+	}
+	for range goroutines {
+		<-done
+	}
+	// Race detector catches any unsynchronized access.
 }
 
 func TestNoopCache_Delete(t *testing.T) {
