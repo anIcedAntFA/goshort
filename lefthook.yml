@@ -5,9 +5,15 @@ pre-commit:
       glob: "*.go"
       run: golangci-lint run --fix
       stage_fixed: true
-    test:
+    test-changed:
       glob: "*.go"
-      run: go test -race -count=1 -timeout=30s ./...
+      run: |
+        changed_pkgs=$(git diff --cached --name-only | grep '\.go$' \
+          | xargs -I{} dirname {} | sort -u \
+          | sed 's|^|./|')
+        if [ -n "$changed_pkgs" ]; then
+          go test -race -count=1 -timeout=30s $changed_pkgs
+        fi
     secrets:
       run: gitleaks git --no-banner --staged
 

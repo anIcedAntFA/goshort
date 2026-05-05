@@ -86,6 +86,22 @@ test/all: ## Run all tests (unit + Redis integration, auto-detects Redis)
 		go test -race -count=1 ./...; \
 	fi
 
+.PHONY: test/bench
+test/bench: ## Run benchmarks with memory stats (3s per bench)
+	go test -bench=. -benchmem -benchtime=3s ./...
+
+.PHONY: test/fuzz/url
+test/fuzz/url: ## Fuzz URL validator for 30s
+	go test -fuzz=FuzzValidateURL -fuzztime=30s ./internal/shortener/
+
+.PHONY: test/fuzz/alias
+test/fuzz/alias: ## Fuzz alias validator for 30s
+	go test -fuzz=FuzzValidateAlias -fuzztime=30s ./internal/shortener/
+
+.PHONY: test/fuzz/encoder
+test/fuzz/encoder: ## Fuzz encoder for 30s
+	go test -fuzz=FuzzSqidsEncoder_Encode -fuzztime=30s ./internal/encoder/
+
 .PHONY: docker/up
 docker/up: ## Start services with Docker Compose
 	docker compose up -d

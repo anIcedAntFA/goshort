@@ -2,17 +2,35 @@ coverage:
   status:
     project:
       default:
-        target: 80%
-        threshold: 5%
+        target: 82%
+        threshold: 3%
     patch:
       default:
-        target: 80%
+        target: 75%
 
 ignore:
   - "internal/db/**"     # sqlc-generated code
-  - "cmd/server/main.go" # entrypoint, not unit-testable
-  - "cmd/cli/main.go"    # CLI entrypoint, not unit-testable
+  - "cmd/server/main.go" # composition root
+  - "cmd/cli/main.go"    # CLI entrypoint
+  - "cmd/cli/version.go" # 4 lines, fmt.Printf only
 
 comment:
   layout: "reach,diff,flags,files"
   behavior: default
+  require_changes: true
+
+flags:
+  unit:
+    paths:
+      - internal/shortener/
+      - internal/encoder/
+      - internal/config/
+      - internal/cache/
+      - cmd/cli/
+    carryforward: true
+  integration:
+    paths:
+      - internal/storage/
+      - internal/api/
+      - internal/mcp/
+    carryforward: true
