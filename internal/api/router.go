@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/anIcedAntFA/goshort/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -62,6 +63,7 @@ func serveDocs(w http.ResponseWriter, _ *http.Request) {
 </html>`))
 }
 
-func serveOpenAPISpec(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "docs/openapi.yaml")
+func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/yaml")
+	_, _ = w.Write(docs.OpenAPISpec)
 }
