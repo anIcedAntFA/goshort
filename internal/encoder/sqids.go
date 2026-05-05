@@ -20,9 +20,11 @@ var _ shortener.Encoder = (*SqidsEncoder)(nil)
 // sqids.New only errors for invalid alphabets; with the default alphabet and uint8 minLength
 // (0–255) the constructor never fails in practice — the branch is kept for safety.
 func NewSqidsEncoder(minLength uint8) (*SqidsEncoder, error) {
-	s, err := sqids.New(sqids.Options{
-		MinLength: minLength,
-	})
+	return newSqidsEncoder(sqids.Options{MinLength: minLength})
+}
+
+func newSqidsEncoder(opts sqids.Options) (*SqidsEncoder, error) {
+	s, err := sqids.New(opts)
 	if err != nil {
 		return nil, fmt.Errorf("create sqids encoder: %w", err)
 	}
