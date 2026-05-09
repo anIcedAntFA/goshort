@@ -720,30 +720,143 @@ changelog:
 
 ---
 
-## Phase 5+: Future
+## Phase 5: Core Improvements (~3 weeks)
 
-> Prioritized backlog. Tackle after Phase 4.
+> **Goal:** Fill product gaps, add schema migration tooling, and harden the API before building new surfaces (UI, docs site).
+> **Deliverable:** Batch creation, QR codes, link previews, URL update, spam detection — all tested and documented.
+> **Tag:** `v0.5.0`
 
-### Analytics & Dashboard
-- [ ] Click analytics (referrer, user-agent, timestamp)
-- [ ] Basic stats API endpoint
-- [ ] Simple HTML dashboard (or Grafana)
+### Milestone 5.0: Schema Migration Tooling (goose)
 
-### Security
-- [ ] Spam/malicious URL detection (blocklist)
-- [ ] URL content scanning
-- [ ] API key rotation support
+- [x] **T5.0.1** Install goose: `go install github.com/pressly/goose/v3/cmd/goose@latest`
+- [x] **T5.0.2** Add goose as library dependency: `go get github.com/pressly/goose/v3`
+- [x] **T5.0.3** Create `db/migrations/` directory for versioned SQL migration files
+- [x] **T5.0.4** Create initial migration `001_initial_schema.sql` from existing `db/schema.sql`
+- [x] **T5.0.5** Update `NewSQLiteStorage` to run goose migrations instead of raw `migrateSQL`
+- [x] **T5.0.6** Add `make migrate` and `make migrate/status` targets to Makefile
+- [x] **T5.0.7** Verify: existing tests pass unchanged (migration produces identical schema)
+- [x] **T5.0.8** Update `CLAUDE.md` and `CONTRIBUTING.md` with migration workflow
 
-### AI Agent
-- [ ] Smart slug generation (fetch page title → suggest alias)
-- [ ] Bulk URL categorization
-- [ ] Natural language CLI interface
+### Milestone 5.1: Batch URL Creation
 
-### Scale (Learning)
-- [ ] PostgreSQL storage backend
-- [ ] Redis distributed counter + counter batching
-- [ ] DB replication (primary-replica) via Docker Compose
-- [ ] singleflight for cache stampede prevention
+- [x] **T5.1.1** Define batch request/response types in `internal/api/handler.go`:
+  - Request: `{ "urls": [{ "url": "...", "custom_alias": "...", "expires_in": "..." }] }`
+  - Response: `{ "results": [{ "short_code": "...", ... } | { "error": { ... } }], "summary": { "success": N, "failed": M } }`
+- [x] **T5.1.2** Add `CreateBatch` method to `Service` interface and implement in `ServiceImpl`
+  - Loop over items calling existing validation + create logic
+  - Continue on per-item errors (partial success)
+  - Cap at 50 items — return 400 if exceeded
+- [x] **T5.1.3** Implement `POST /api/v1/urls/batch` handler
+  - Each URL in the batch counts as 1 request against the rate limiter
+- [x] **T5.1.4** Write handler tests: all succeed, partial failure, exceed cap, empty array, invalid JSON
+- [x] **T5.1.5** Update OpenAPI spec (`docs/openapi.yaml`) with batch endpoint
+- [x] **T5.1.6** Add Bruno test file `api-tests/create-url-batch.bru`
+- [x] **T5.1.7** Verify: `make test && make lint` pass
+
+### Milestone 5.2: MCP Batch Tool
+
+- [ ] **T5.2.1** Add `batch_shorten_urls` tool to `internal/mcp/tools.go`
+  - Input: `{ "urls": [{ "url": "...", "alias": "...", "expires_in": "..." }] }`
+  - Calls `Service.CreateBatch` directly (not HTTP)
+  - Returns structured JSON with per-URL results
+- [ ] **T5.2.2** Write MCP tool test using in-memory transport
+- [ ] **T5.2.3** Update MCP tool count assertion in `TestNewServer_ToolsRegistered` (5 → 6)
+- [ ] **T5.2.4** Verify: `make test` passes
+
+### Milestone 5.3: QR Code Generation
+
+- [ ] **T5.3.1** Install QR library: `go get github.com/skip2/go-qrcode`
+- [ ] **T5.3.2** Implement `GET /api/v1/urls/:code/qr` handler
+  - Returns `image/png` (256×256 default)
+  - Optional query param `?size=512` (min 128, max 1024)
+  - Generates QR code for the full short URL (`base_url + "/" + code`)
+  - Returns 404 if code does not exist
+- [ ] **T5.3.3** Add route to `internal/api/router.go` (under auth group)
+- [ ] **T5.3.4** Write handler tests: valid code returns PNG, invalid code returns 404, size param
+- [ ] **T5.3.5** Add MCP resource `goshort://urls/{code}/qr` returning base64-encoded PNG
+- [ ] **T5.3.6** Update OpenAPI spec with QR endpoint
+- [ ] **T5.3.7** Add Bruno test file `api-tests/qr-code.bru`
+- [ ] **T5.3.8** Verify: `make test && make lint` pass
+
+### Milestone 5.4: Link Preview Metadata
+
+- [ ] **T5.4.1** Create migration `002_add_url_metadata.sql`:
+  ```sql
+  ALTER TABLE urls ADD COLUMN title TEXT NOT NULL DEFAULT '';
+  ALTER TABLE urls ADD COLUMN description TEXT NOT NULL DEFAULT '';
+  ```
+- [ ] **T5.4.2** Add `title` and `description` fields to `shortener.URL` model
+- [ ] **T5.4.3** Update sqlc queries: `CreateURL` to accept title/description, `GetByCode` and `ListURLs` to return them
+- [ ] **T5.4.4** Run `sqlc generate`, verify generated code
+- [ ] **T5.4.5** Implement `internal/shortener/preview.go`:
+  - `FetchPreview(ctx, url) (title, description, error)` — GET the URL, parse `<title>` and `<meta name="description">`
+  - 3-second timeout, max 512KB body read, graceful fallback (empty strings on failure)
+  - Skip private/loopback IPs (reuse existing `isPrivateHost`)
+- [ ] **T5.4.6** Call `FetchPreview` in `Service.Create` after validation, before storage
+  - Preview fetch failure is non-fatal — store empty strings, log warning
+- [ ] **T5.4.7** Include `title` and `description` in API responses (create, get, list)
+- [ ] **T5.4.8** Write unit tests for preview parser (table-driven: valid HTML, missing tags, timeout, private IP)
+- [ ] **T5.4.9** Write integration test: create URL → response includes title
+- [ ] **T5.4.10** Update OpenAPI spec with new response fields
+- [ ] **T5.4.11** Update `SQLiteStorage` and tests to handle new columns
+- [ ] **T5.4.12** Verify: `make test && make lint` pass
+
+### Milestone 5.5: URL Expiry Update (PATCH)
+
+- [ ] **T5.5.1** Add sqlc query `UpdateExpiry`:
+  ```sql
+  -- name: UpdateExpiry :one
+  UPDATE urls SET expires_at = ? WHERE short_code = ? RETURNING *;
+  ```
+- [ ] **T5.5.2** Run `sqlc generate`
+- [ ] **T5.5.3** Add `UpdateExpiry(ctx, code, expiresAt) (*URL, error)` to `Storage` interface and `SQLiteStorage`
+- [ ] **T5.5.4** Add `Update(ctx, code, req UpdateRequest) (*URL, error)` to `Service` interface and `ServiceImpl`
+  - `UpdateRequest` contains only `ExpiresIn string` (destination is immutable)
+  - Validate `ExpiresIn` with existing validator
+  - Return `ErrNotFound` if code does not exist
+- [ ] **T5.5.5** Implement `PATCH /api/v1/urls/:code` handler
+  - Request body: `{ "expires_in": "30d" }` or `{ "expires_in": "0" }` to remove expiry
+  - Response: full URL detail (same as GET)
+  - Invalidate cache on update
+- [ ] **T5.5.6** Write handler tests: update expiry, remove expiry, not found, invalid expires_in
+- [ ] **T5.5.7** Write service tests: update, not found, invalid input
+- [ ] **T5.5.8** Write storage tests: update and retrieve roundtrip
+- [ ] **T5.5.9** Add MCP tool `update_url` with `code` and `expires_in` params
+- [ ] **T5.5.10** Update OpenAPI spec with PATCH endpoint
+- [ ] **T5.5.11** Add Bruno test file `api-tests/update-url.bru`
+- [ ] **T5.5.12** Verify: `make test && make lint` pass
+
+### Milestone 5.6: Spam Detection (Google Safe Browsing)
+
+- [ ] **T5.6.1** Add config section:
+  ```toml
+  [security]
+  safe_browsing_api_key = ""  # empty = disabled
+  ```
+- [ ] **T5.6.2** Update `config.go` with `SecurityConfig` struct, defaults, env var mapping (`GOSHORT_SECURITY_SAFE_BROWSING_API_KEY`)
+- [ ] **T5.6.3** Implement `internal/shortener/safebrowsing.go`:
+  - `URLChecker` interface: `Check(ctx, url) error` (returns `ErrUnsafeURL` if flagged)
+  - `SafeBrowsingChecker` struct: calls Google Safe Browsing Lookup API v4
+  - `NoopChecker` struct: always returns nil (when API key is empty)
+  - 2-second timeout per check
+- [ ] **T5.6.4** Add `ErrUnsafeURL` sentinel error to `errors.go`
+- [ ] **T5.6.5** Wire `URLChecker` into `Service` via constructor injection
+  - Check runs after URL validation, before storage
+  - Batch creation also checks each URL
+- [ ] **T5.6.6** Map `ErrUnsafeURL` to HTTP 422 in `respondError`
+- [ ] **T5.6.7** Write unit tests with mock checker (flagged URL, clean URL, checker disabled)
+- [ ] **T5.6.8** Write integration test: checker returns error → create fails with 422
+- [ ] **T5.6.9** Update OpenAPI spec with new error code `unsafe_url`
+- [ ] **T5.6.10** Update `CLAUDE.md` with new config section
+- [ ] **T5.6.11** Verify: `make test && make lint` pass
+
+### Milestone 5.7: Release
+
+- [ ] **T5.7.1** Update `CHANGELOG.md` with Phase 5 entries
+- [ ] **T5.7.2** Update `README.md` with new features (batch, QR, preview, update, spam detection)
+- [ ] **T5.7.3** Final `make lint && make test && make build`
+- [ ] **T5.7.4** Commit: `✨ feat: v0.5.0 — batch creation, QR codes, link previews, URL update, spam detection`
+- [ ] **T5.7.5** Tag: `git tag v0.5.0 && git push --tags`
 
 ---
 
