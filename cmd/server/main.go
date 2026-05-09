@@ -66,7 +66,15 @@ func main() {
 		slog.Warn("API key auth disabled — all endpoints are public")
 	}
 
-	svc := shortener.NewService(store, enc, shortener.NewHTTPPreviewFetcher())
+	var checker shortener.URLChecker
+	if cfg.Security.SafeBrowsingAPIKey != "" {
+		checker = shortener.NewSafeBrowsingChecker(cfg.Security.SafeBrowsingAPIKey)
+		slog.Info("safe browsing enabled")
+	} else {
+		checker = shortener.NoopChecker{}
+	}
+
+	svc := shortener.NewService(store, enc, shortener.NewHTTPPreviewFetcher(), checker)
 
 	if *mcpMode || *mcpHTTP != "" {
 		if err := runMCPMode(ctx, cfg, svc, *mcpHTTP); err != nil {

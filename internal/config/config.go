@@ -23,6 +23,14 @@ type Config struct {
 	Shortener ShortenerConfig `koanf:"shortener"`
 	Logging   LoggingConfig   `koanf:"logging"`
 	MCP       MCPConfig       `koanf:"mcp"`
+	Security  SecurityConfig  `koanf:"security"`
+}
+
+// SecurityConfig holds security-related settings.
+type SecurityConfig struct {
+	// SafeBrowsingAPIKey enables Google Safe Browsing checks when non-empty.
+	// When empty, all URL safety checks are skipped (fail-open by default).
+	SafeBrowsingAPIKey string `koanf:"safe_browsing_api_key"`
 }
 
 // MCPConfig holds MCP server settings.
@@ -90,6 +98,7 @@ var defaults = map[string]any{
 	"rate_limit.enabled":             false,
 	"rate_limit.requests_per_minute": 60,
 	"mcp.base_url":                   "",
+	"security.safe_browsing_api_key": "",
 }
 
 // Load builds a Config by layering: defaults → TOML file → env vars.

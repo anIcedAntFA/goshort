@@ -17,6 +17,13 @@ import (
 // errDuplicateCode is returned by mockStorage when a short code already exists.
 var errDuplicateCode = errors.New("short code already exists")
 
+// mockChecker is a controllable URLChecker for error-path testing.
+type mockChecker struct {
+	checkErr error
+}
+
+func (m *mockChecker) Check(_ context.Context, _ string) error { return m.checkErr }
+
 // mockStorage is an in-memory implementation of shortener.Storage for service tests.
 type mockStorage struct {
 	mu      sync.Mutex
@@ -236,7 +243,7 @@ func newTestService(t *testing.T) (shortener.Service, *mockStorage) {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
 
-	return shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}), store
+	return shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}, shortener.NoopChecker{}), store
 }
 
 // alphanumericRe matches codes produced by SqidsEncoder — no hyphens allowed.
@@ -646,7 +653,7 @@ func TestService_Create_EncodeCounterError(t *testing.T) {
 
 	store := newMockStorage()
 	enc := &mockEncoder{encodeErr: errors.New("encode failed")}
-	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{})
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}, shortener.NoopChecker{})
 
 	_, err := svc.Create(context.Background(), shortener.CreateRequest{
 		URL: "https://example.com",
@@ -781,5 +788,54 @@ func TestService_Update_InvalidExpiresIn(t *testing.T) {
 	_, err := svc.Update(context.Background(), "abc", shortener.UpdateRequest{ExpiresIn: "bad"})
 	if !errors.Is(err, shortener.ErrInvalidExpires) {
 		t.Errorf("want ErrInvalidExpires, got %v", err)
+	}
+}
+
+// --- Checker tests.
+
+func TestService_Create_UnsafeURL(t *testing.T) {
+	t.Parallel()
+
+	store := newMockStorage()
+	enc, err := encoder.NewSqidsEncoder(4)
+	if err != nil {
+		t.Fatalf("NewSqidsEncoder: %v", err)
+	}
+
+	checker := &mockChecker{checkErr: shortener.ErrUnsafeURL}
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}, checker)
+
+	_, err = svc.Create(context.Background(), shortener.CreateRequest{URL: "https://evil.example.com"})
+	if !errors.Is(err, shortener.ErrUnsafeURL) {
+		t.Errorf("Create(unsafe URL) = %v, want ErrUnsafeURL", err)
+	}
+}
+
+func TestService_CreateBatch_UnsafeURL(t *testing.T) {
+	t.Parallel()
+
+	store := newMockStorage()
+	enc, err := encoder.NewSqidsEncoder(4)
+	if err != nil {
+		t.Fatalf("NewSqidsEncoder: %v", err)
+	}
+
+	checker := &mockChecker{checkErr: shortener.ErrUnsafeURL}
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}, checker)
+
+	results, err := svc.CreateBatch(context.Background(), []shortener.CreateRequest{
+		{URL: "https://evil.example.com"},
+		{URL: "https://also-evil.example.com"},
+	})
+	if err != nil {
+		t.Fatalf("CreateBatch returned top-level error: %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("len(results) = %d, want 2", len(results))
+	}
+	for i, r := range results {
+		if !errors.Is(r.Error, shortener.ErrUnsafeURL) {
+			t.Errorf("results[%d].Error = %v, want ErrUnsafeURL", i, r.Error)
+		}
 	}
 }

@@ -13,19 +13,25 @@ type ServiceImpl struct {
 	store   Storage
 	encoder Encoder
 	preview PreviewFetcher
+	checker URLChecker
 }
 
 // compile-time interface check.
 var _ Service = (*ServiceImpl)(nil)
 
-// NewService creates a new Service backed by the provided storage, encoder, and preview fetcher.
-func NewService(store Storage, enc Encoder, preview PreviewFetcher) *ServiceImpl {
-	return &ServiceImpl{store: store, encoder: enc, preview: preview}
+// NewService creates a new Service backed by the provided storage, encoder,
+// preview fetcher, and URL safety checker.
+func NewService(store Storage, enc Encoder, preview PreviewFetcher, checker URLChecker) *ServiceImpl {
+	return &ServiceImpl{store: store, encoder: enc, preview: preview, checker: checker}
 }
 
 // Create validates the request, resolves the short code, and persists the URL.
 func (s *ServiceImpl) Create(ctx context.Context, req CreateRequest) (*URL, error) {
 	if err := ValidateURL(req.URL); err != nil {
+		return nil, err
+	}
+
+	if err := s.checker.Check(ctx, req.URL); err != nil {
 		return nil, err
 	}
 

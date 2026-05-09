@@ -46,3 +46,9 @@ format = "json"
 # Base URL used in MCP tool responses when constructing short URLs.
 # Falls back to server.base_url when empty.
 base_url = ""
+
+[security]
+# Google Safe Browsing Lookup API v4 key.
+# Leave empty to disable URL safety checks (fail-open by default).
+# Env var: GOSHORT_SECURITY_SAFE_BROWSING_API_KEY
+safe_browsing_api_key = ""

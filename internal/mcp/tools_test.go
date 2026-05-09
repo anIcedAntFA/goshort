@@ -31,7 +31,7 @@ func newTestClient(t *testing.T) *sdkmcp.ClientSession {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
 
-	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{})
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}, shortener.NoopChecker{})
 	srv := mcpserver.NewServer(svc, testBaseURL)
 
 	ct, st := sdkmcp.NewInMemoryTransports()
