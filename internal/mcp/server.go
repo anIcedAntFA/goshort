@@ -54,6 +54,11 @@ func (s *Server) register() {
 		Description: "Quickly resolve a short code to its original URL",
 	}, s.handleLookupURL)
 
+	sdkmcp.AddTool(s.server, &sdkmcp.Tool{
+		Name:        "batch_shorten_urls",
+		Description: "Create multiple short URLs in a single call (max 50)",
+	}, s.handleBatchShortenURLs)
+
 	s.server.AddResource(&sdkmcp.Resource{
 		URI:         "goshort://stats/summary",
 		Name:        "GoShort Stats Summary",

@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/anIcedAntFA/goshort/internal/shortener"
@@ -187,4 +188,95 @@ func (s *Server) handleLookupURL(
 		return nil, lookupOutput{}, err
 	}
 	return nil, lookupOutput{OriginalURL: url.OriginalURL}, nil
+}
+
+type batchShortenInput struct {
+	URLs []shortenInput `json:"urls" jsonschema:"required,Array of URLs to shorten (max 50)"`
+}
+
+type batchResultItem struct {
+	ShortCode   string          `json:"short_code,omitempty"`
+	ShortURL    string          `json:"short_url,omitempty"`
+	OriginalURL string          `json:"original_url,omitempty"`
+	ExpiresAt   *string         `json:"expires_at,omitempty"`
+	CreatedAt   string          `json:"created_at,omitempty"`
+	Error       *batchItemError `json:"error,omitempty"`
+}
+
+type batchItemError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type batchSummary struct {
+	Total   int `json:"total"`
+	Success int `json:"success"`
+	Failed  int `json:"failed"`
+}
+
+type batchShortenOutput struct {
+	Results []batchResultItem `json:"results"`
+	Summary batchSummary      `json:"summary"`
+}
+
+func (s *Server) handleBatchShortenURLs(
+	ctx context.Context, _ *sdkmcp.CallToolRequest, in batchShortenInput,
+) (*sdkmcp.CallToolResult, batchShortenOutput, error) {
+	reqs := make([]shortener.CreateRequest, len(in.URLs))
+	for i, u := range in.URLs {
+		reqs[i] = shortener.CreateRequest{
+			URL:         u.URL,
+			CustomAlias: u.Alias,
+			ExpiresIn:   u.ExpiresIn,
+		}
+	}
+
+	batchResults, err := s.svc.CreateBatch(ctx, reqs)
+	if err != nil {
+		return nil, batchShortenOutput{}, err
+	}
+
+	out := batchShortenOutput{
+		Results: make([]batchResultItem, len(batchResults)),
+		Summary: batchSummary{Total: len(batchResults)},
+	}
+
+	for i, r := range batchResults {
+		if r.Error != nil {
+			out.Results[i] = batchResultItem{Error: toBatchItemError(r.Error)}
+			out.Summary.Failed++
+		} else {
+			item := batchResultItem{
+				ShortCode:   r.URL.ShortCode,
+				ShortURL:    fmt.Sprintf("%s/%s", s.baseURL, r.URL.ShortCode),
+				OriginalURL: r.URL.OriginalURL,
+				CreatedAt:   r.URL.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+			}
+			if r.URL.ExpiresAt != nil {
+				t := r.URL.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
+				item.ExpiresAt = &t
+			}
+			out.Results[i] = item
+			out.Summary.Success++
+		}
+	}
+
+	return nil, out, nil
+}
+
+func toBatchItemError(err error) *batchItemError {
+	switch {
+	case errors.Is(err, shortener.ErrInvalidURL):
+		return &batchItemError{Code: "invalid_url", Message: "The URL format is invalid"}
+	case errors.Is(err, shortener.ErrAliasTaken):
+		return &batchItemError{Code: "alias_taken", Message: "The requested alias is already in use"}
+	case errors.Is(err, shortener.ErrReservedPath):
+		return &batchItemError{Code: "reserved_path", Message: "The alias is a reserved path"}
+	case errors.Is(err, shortener.ErrInvalidAlias):
+		return &batchItemError{Code: "invalid_alias", Message: "The alias format is invalid"}
+	case errors.Is(err, shortener.ErrInvalidExpires):
+		return &batchItemError{Code: "invalid_expires", Message: "The expires_in duration is invalid"}
+	default:
+		return &batchItemError{Code: "internal_error", Message: "An internal error occurred"}
+	}
 }
