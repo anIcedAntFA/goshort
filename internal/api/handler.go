@@ -12,6 +12,7 @@ import (
 
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 	"github.com/go-chi/chi/v5"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 // Handler holds the HTTP handler dependencies.
@@ -291,6 +292,39 @@ func (h *Handler) BatchCreateURL(w http.ResponseWriter, r *http.Request) {
 			Failed:  len(batchResults) - succeeded,
 		},
 	})
+}
+
+// GetQRCode handles GET /api/v1/urls/{code}/qr.
+// Returns a PNG QR code for the full short URL. Size is clamped to [128, 1024].
+func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
+	code := chi.URLParam(r, "code")
+
+	size := parseIntQuery(r, "size", 256)
+	if size < 128 {
+		size = 128
+	}
+	if size > 1024 {
+		size = 1024
+	}
+
+	if _, err := h.svc.GetByCode(r.Context(), code); err != nil {
+		respondError(w, err)
+		return
+	}
+
+	shortURL := fmt.Sprintf("%s/%s", h.baseURL, code)
+	png, err := qrcode.Encode(shortURL, qrcode.Medium, size)
+	if err != nil {
+		h.logger.Error("qr code generation failed", "code", code, "error", err)
+		respondJSON(w, http.StatusInternalServerError, errorResponse{Error: errorDetail{
+			Code:    "internal_error",
+			Message: "An internal error occurred",
+		}})
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	_, _ = w.Write(png) //nolint:gosec // binary PNG data; Content-Type is image/png, not HTML
 }
 
 func parseIntQuery(r *http.Request, key string, defaultVal int) int {
