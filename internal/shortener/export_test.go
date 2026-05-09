@@ -12,3 +12,13 @@ func NewHTTPPreviewFetcherForTest(client *http.Client) *HTTPPreviewFetcher {
 		skipPrivate: true,
 	}
 }
+
+// NewSafeBrowsingCheckerForTest returns a SafeBrowsingChecker that targets
+// endpoint instead of the Google Safe Browsing API, for use in unit tests.
+func NewSafeBrowsingCheckerForTest(endpoint string, client *http.Client) *SafeBrowsingChecker {
+	return &SafeBrowsingChecker{
+		apiKey:   "test-key",
+		client:   client,
+		endpoint: endpoint,
+	}
+}

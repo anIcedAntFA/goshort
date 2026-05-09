@@ -72,6 +72,11 @@ func respondError(w http.ResponseWriter, err error) {
 			Code:    "batch_empty",
 			Message: "Batch must contain at least one item",
 		}})
+	case errors.Is(err, shortener.ErrUnsafeURL):
+		respondJSON(w, http.StatusUnprocessableEntity, errorResponse{Error: errorDetail{
+			Code:    "unsafe_url",
+			Message: "The URL has been flagged as unsafe",
+		}})
 	default:
 		slog.Error("internal server error", "error", err)
 		respondJSON(w, http.StatusInternalServerError, errorResponse{Error: errorDetail{
@@ -94,6 +99,8 @@ func toErrorDetail(err error) *errorDetail {
 		return &errorDetail{Code: "invalid_alias", Message: "The alias format is invalid"}
 	case errors.Is(err, shortener.ErrInvalidExpires):
 		return &errorDetail{Code: "invalid_expires", Message: "The expires_in duration is invalid"}
+	case errors.Is(err, shortener.ErrUnsafeURL):
+		return &errorDetail{Code: "unsafe_url", Message: "The URL has been flagged as unsafe"}
 	default:
 		return &errorDetail{Code: "internal_error", Message: "An internal error occurred"}
 	}
