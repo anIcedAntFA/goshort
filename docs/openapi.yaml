@@ -338,6 +338,77 @@ paths:
                   code: rate_limited
                   message: Too many requests. Please try again later.
 
+  /api/v1/urls/{code}/qr:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        description: Short code or custom alias
+        schema:
+          type: string
+        example: k7Xm2p
+      - name: size
+        in: query
+        required: false
+        description: Image size in pixels (min 128, max 1024, default 256)
+        schema:
+          type: integer
+          minimum: 128
+          maximum: 1024
+          default: 256
+        example: 256
+
+    get:
+      summary: Get QR code for short URL
+      operationId: getQRCode
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: QR code PNG image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: not_found
+                  message: Short URL not found
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: unauthorized
+                  message: Missing or invalid API key
+        "429":
+          description: Too many requests
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: rate_limited
+                  message: Too many requests. Please try again later.
+
   /{code}:
     get:
       summary: Redirect to original URL
