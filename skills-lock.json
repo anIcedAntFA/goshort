@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "golang-benchmark": {
+      "source": "samber/cc-skills-golang",
+      "sourceType": "github",
+      "skillPath": "skills/golang-benchmark/SKILL.md",
+      "computedHash": "753dad6fbe49af44c39f4a62afe996173819cd4d923f93a10f31815dc1cd1e6e"
+    },
     "golang-cli": {
       "source": "samber/cc-skills-golang",
       "sourceType": "github",
@@ -42,6 +48,12 @@
       "sourceType": "github",
       "skillPath": "skills/golang-security/SKILL.md",
       "computedHash": "9faa31d5a182b84f7ce8f04420ccd7b8597870e7dece45da6111c14b81df7540"
+    },
+    "golang-stretchr-testify": {
+      "source": "samber/cc-skills-golang",
+      "sourceType": "github",
+      "skillPath": "skills/golang-stretchr-testify/SKILL.md",
+      "computedHash": "697d9d48aacadaf7d0714cbd5e186ca009671a1caae39040a59e9361fcd0c3f9"
     },
     "golang-testing": {
       "source": "samber/cc-skills-golang",
