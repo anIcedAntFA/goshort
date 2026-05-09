@@ -211,6 +211,88 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, _ *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+type batchCreateURLRequest struct {
+	URLs []createURLRequest `json:"urls"`
+}
+
+type batchItemResponse struct {
+	ShortCode   string       `json:"short_code,omitempty"`
+	ShortURL    string       `json:"short_url,omitempty"`
+	OriginalURL string       `json:"original_url,omitempty"`
+	ExpiresAt   *string      `json:"expires_at,omitempty"`
+	CreatedAt   string       `json:"created_at,omitempty"`
+	Error       *errorDetail `json:"error,omitempty"`
+}
+
+type batchSummary struct {
+	Total   int `json:"total"`
+	Success int `json:"success"`
+	Failed  int `json:"failed"`
+}
+
+type batchCreateURLResponse struct {
+	Results []batchItemResponse `json:"results"`
+	Summary batchSummary        `json:"summary"`
+}
+
+// BatchCreateURL handles POST /api/v1/urls/batch.
+func (h *Handler) BatchCreateURL(w http.ResponseWriter, r *http.Request) {
+	var req batchCreateURLRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, errorResponse{Error: errorDetail{
+			Code:    "invalid_body",
+			Message: "Request body is invalid JSON",
+		}})
+		return
+	}
+
+	svcReqs := make([]shortener.CreateRequest, len(req.URLs))
+	for i, u := range req.URLs {
+		svcReqs[i] = shortener.CreateRequest{
+			URL:         u.URL,
+			CustomAlias: u.CustomAlias,
+			ExpiresIn:   u.ExpiresIn,
+		}
+	}
+
+	batchResults, err := h.svc.CreateBatch(r.Context(), svcReqs)
+	if err != nil {
+		respondError(w, err)
+		return
+	}
+
+	items := make([]batchItemResponse, len(batchResults))
+	var succeeded int
+	for i, br := range batchResults {
+		if br.Error != nil {
+			items[i] = batchItemResponse{Error: toErrorDetail(br.Error)}
+		} else {
+			succeeded++
+			urlType := "generated"
+			if br.URL.IsCustom {
+				urlType = "custom"
+			}
+			urlsCreatedTotal.WithLabelValues(urlType).Inc()
+			items[i] = batchItemResponse{
+				ShortCode:   br.URL.ShortCode,
+				ShortURL:    fmt.Sprintf("%s/%s", h.baseURL, br.URL.ShortCode),
+				OriginalURL: br.URL.OriginalURL,
+				ExpiresAt:   formatTimePtr(br.URL.ExpiresAt),
+				CreatedAt:   br.URL.CreatedAt.Format(time.RFC3339),
+			}
+		}
+	}
+
+	respondJSON(w, http.StatusOK, batchCreateURLResponse{
+		Results: items,
+		Summary: batchSummary{
+			Total:   len(batchResults),
+			Success: succeeded,
+			Failed:  len(batchResults) - succeeded,
+		},
+	})
+}
+
 func parseIntQuery(r *http.Request, key string, defaultVal int) int {
 	raw := r.URL.Query().Get(key)
 	if raw == "" {
