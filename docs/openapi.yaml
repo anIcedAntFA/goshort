@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GoShort API
-  version: 0.2.0
+  version: 0.5.0
   description: |
     Self-hosted URL shortener API.
 

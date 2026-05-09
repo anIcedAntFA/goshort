@@ -39,7 +39,11 @@
 
 - **Zero-collision codes** — atomic SQLite counter + [Sqids](https://sqids.org): non-sequential, bijective, no retry loops
 - **Custom aliases** — bring your own slug (`/my-link`); charset isolation prevents collision with generated codes
-- **URL expiration** — configurable TTL with lazy expiry on read + hourly background cleanup
+- **URL expiration** — configurable TTL with lazy expiry on read + hourly background cleanup; update expiry via `PATCH`
+- **Batch creation** — `POST /api/v1/urls/batch` accepts up to 100 URLs; per-item success/failure
+- **QR codes** — `GET /api/v1/urls/{code}/qr` returns a PNG QR code for any short link
+- **Link previews** — `title` and `description` auto-fetched on create (fail-open, private-IP blocked)
+- **Spam detection** — optional Google Safe Browsing v4 integration; unsafe URLs rejected with 422 (fail-open)
 - **Switchable cache** — `none | memory | redis` at config time; cache-aside with TTL capped to remaining expiry
 - **API key auth** — constant-time comparison; per-IP token bucket rate limiting
 - **CLI client** — `goshort-cli` for shorten, list, stats, delete from the terminal
@@ -71,6 +75,9 @@ Full architecture diagrams: [high-level](docs/sys-arch.png), [request flow](docs
 | Metrics        | [Prometheus](https://github.com/prometheus/prometheus)        |
 | Rate Limit     | [rate](https://pkg.go.dev/golang.org/x/time/rate) (token bucket) |
 | MCP            | [go-sdk](https://github.com/modelcontextprotocol/go-sdk) v1.6 (official) |
+| Migrations     | [goose](https://github.com/pressly/goose) v3 (embedded FS, versioned SQL) |
+| QR codes       | [go-qrcode](https://github.com/skip2/go-qrcode) |
+| Spam detection | Google Safe Browsing Lookup API v4 (optional, fail-open) |
 | Reverse Proxy  | [Caddy](https://github.com/caddyserver/caddy) (Docker Compose) |
 | Release        | [GoReleaser](https://github.com/goreleaser/goreleaser) + [GitHub Actions](https://github.com/features/actions) |
 
@@ -212,10 +219,12 @@ claude mcp add goshort-remote \
 | Tool | Description |
 |------|-------------|
 | `shorten_url` | Create a short URL (alias + expiry optional) |
+| `batch_shorten_urls` | Create up to 100 short URLs in one call |
 | `list_urls` | List URLs with pagination |
 | `get_url_stats` | Click count and full details for a URL |
 | `delete_url` | Delete a short URL |
 | `lookup_url` | Resolve a short code to its original URL |
+| `update_url` | Update the expiry of an existing short URL |
 
 ### Resources
 
@@ -223,6 +232,7 @@ claude mcp add goshort-remote \
 |-----|-------------|
 | `goshort://stats/summary` | Total URL count and top URLs by clicks |
 | `goshort://urls/{code}` | Full details for a specific short code |
+| `goshort://urls/{code}/qr` | PNG QR code blob for a short URL |
 
 ### Prompts
 
@@ -265,6 +275,9 @@ format = "json"                     # json | text
 
 [mcp]
 base_url = ""                       # override base URL for MCP responses; falls back to server.base_url
+
+[security]
+safe_browsing_api_key = ""          # empty = disabled; env: GOSHORT_SECURITY_SAFE_BROWSING_API_KEY
 ```
 
 Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT_SERVER_PORT=9090`, `GOSHORT_AUTH_API_KEY=secret`.
@@ -273,17 +286,20 @@ Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT
 
 ## 📋 API
 
-| Method   | Path                  | Auth | Description           |
-|----------|-----------------------|------|-----------------------|
-| `POST`   | `/api/v1/urls`        | Yes  | Create short URL      |
-| `GET`    | `/api/v1/urls`        | Yes  | List URLs (paginated) |
-| `GET`    | `/api/v1/urls/:code`  | Yes  | Get URL details       |
-| `DELETE` | `/api/v1/urls/:code`  | Yes  | Delete short URL      |
-| `GET`    | `/:code`              | No   | Redirect (302)        |
-| `GET`    | `/health`             | No   | Health check          |
-| `GET`    | `/metrics`            | No   | Prometheus metrics    |
-| `GET`    | `/docs`               | No   | Interactive API docs  |
-| `POST`   | `/mcp`                | Yes  | MCP Streamable HTTP   |
+| Method   | Path                       | Auth | Description              |
+|----------|----------------------------|------|--------------------------|
+| `POST`   | `/api/v1/urls`             | Yes  | Create short URL         |
+| `POST`   | `/api/v1/urls/batch`       | Yes  | Create up to 100 URLs    |
+| `GET`    | `/api/v1/urls`             | Yes  | List URLs (paginated)    |
+| `GET`    | `/api/v1/urls/:code`       | Yes  | Get URL details          |
+| `PATCH`  | `/api/v1/urls/:code`       | Yes  | Update URL expiry        |
+| `DELETE` | `/api/v1/urls/:code`       | Yes  | Delete short URL         |
+| `GET`    | `/api/v1/urls/:code/qr`    | No   | QR code PNG              |
+| `GET`    | `/:code`                   | No   | Redirect (302)           |
+| `GET`    | `/health`                  | No   | Health check             |
+| `GET`    | `/metrics`                 | No   | Prometheus metrics       |
+| `GET`    | `/docs`                    | No   | Interactive API docs     |
+| `POST`   | `/mcp`                     | Yes  | MCP Streamable HTTP      |
 
 **Auth:** `X-API-Key: <key>` header. **Redirect codes:** `302 Found`, `404 Not Found`, `410 Gone` (expired).
 
