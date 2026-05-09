@@ -58,7 +58,7 @@ func (m *mockStorage) insertDirect(u *shortener.URL) {
 	m.urls[u.ShortCode] = &cp
 }
 
-func (m *mockStorage) CreateURL(_ context.Context, p shortener.CreateParams) (shortener.URL, error) {
+func (m *mockStorage) CreateURL(_ context.Context, p *shortener.CreateParams) (shortener.URL, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -77,6 +77,8 @@ func (m *mockStorage) CreateURL(_ context.Context, p shortener.CreateParams) (sh
 		IsCustom:    p.IsCustom,
 		CreatedAt:   time.Now(),
 		ExpiresAt:   p.ExpiresAt,
+		Title:       p.Title,
+		Description: p.Description,
 	}
 	m.nextID++
 
@@ -221,7 +223,7 @@ func newTestService(t *testing.T) (shortener.Service, *mockStorage) {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
 
-	return shortener.NewService(store, enc), store
+	return shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}), store
 }
 
 // alphanumericRe matches codes produced by SqidsEncoder — no hyphens allowed.
@@ -631,7 +633,7 @@ func TestService_Create_EncodeCounterError(t *testing.T) {
 
 	store := newMockStorage()
 	enc := &mockEncoder{encodeErr: errors.New("encode failed")}
-	svc := shortener.NewService(store, enc)
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{})
 
 	_, err := svc.Create(context.Background(), shortener.CreateRequest{
 		URL: "https://example.com",

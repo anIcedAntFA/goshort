@@ -74,12 +74,14 @@ func (s *SQLiteStorage) Close() error {
 }
 
 // CreateURL inserts a new URL record and returns the created row.
-func (s *SQLiteStorage) CreateURL(ctx context.Context, params shortener.CreateParams) (shortener.URL, error) {
+func (s *SQLiteStorage) CreateURL(ctx context.Context, params *shortener.CreateParams) (shortener.URL, error) {
 	row, err := s.q.CreateURL(ctx, idb.CreateURLParams{
 		ShortCode:   params.ShortCode,
 		OriginalUrl: params.OriginalURL,
 		IsCustom:    boolToInt(params.IsCustom),
 		ExpiresAt:   timeToNullString(params.ExpiresAt),
+		Title:       params.Title,
+		Description: params.Description,
 	})
 	if err != nil {
 		return shortener.URL{}, fmt.Errorf("create url: %w", err)
@@ -247,5 +249,7 @@ func toURL(row *idb.Url) (shortener.URL, error) {
 		CreatedAt:   createdAt,
 		ExpiresAt:   expiresAt,
 		ClickCount:  row.ClickCount,
+		Title:       row.Title,
+		Description: row.Description,
 	}, nil
 }

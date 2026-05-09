@@ -40,6 +40,8 @@ type createURLResponse struct {
 	OriginalURL string  `json:"original_url"`
 	ExpiresAt   *string `json:"expires_at"`
 	CreatedAt   string  `json:"created_at"`
+	Title       string  `json:"title,omitempty"`
+	Description string  `json:"description,omitempty"`
 }
 
 type urlResponse struct {
@@ -50,6 +52,8 @@ type urlResponse struct {
 	ExpiresAt   *string `json:"expires_at"`
 	CreatedAt   string  `json:"created_at"`
 	ClickCount  int64   `json:"click_count"`
+	Title       string  `json:"title,omitempty"`
+	Description string  `json:"description,omitempty"`
 }
 
 type listURLsResponse struct {
@@ -97,6 +101,8 @@ func (h *Handler) CreateURL(w http.ResponseWriter, r *http.Request) {
 		OriginalURL: url.OriginalURL,
 		ExpiresAt:   formatTimePtr(url.ExpiresAt),
 		CreatedAt:   url.CreatedAt.Format(time.RFC3339),
+		Title:       url.Title,
+		Description: url.Description,
 	})
 }
 
@@ -348,6 +354,8 @@ func toURLResponse(u *shortener.URL, baseURL string) urlResponse {
 		ExpiresAt:   formatTimePtr(u.ExpiresAt),
 		CreatedAt:   u.CreatedAt.Format(time.RFC3339),
 		ClickCount:  u.ClickCount,
+		Title:       u.Title,
+		Description: u.Description,
 	}
 }
 

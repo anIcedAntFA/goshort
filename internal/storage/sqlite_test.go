@@ -32,8 +32,8 @@ func newTestStorage(t *testing.T) *storage.SQLiteStorage {
 }
 
 // sampleParams returns minimal valid CreateParams for test use.
-func sampleParams(code, url string) shortener.CreateParams {
-	return shortener.CreateParams{
+func sampleParams(code, url string) *shortener.CreateParams {
+	return &shortener.CreateParams{
 		ShortCode:   code,
 		OriginalURL: url,
 		IsCustom:    false,
@@ -89,7 +89,7 @@ func TestSQLiteStorage_CreateURL_CustomAlias(t *testing.T) {
 	s := newTestStorage(t)
 	ctx := context.Background()
 
-	params := shortener.CreateParams{
+	params := &shortener.CreateParams{
 		ShortCode:   "my-link",
 		OriginalURL: "https://example.com/long/path",
 		IsCustom:    true,
@@ -125,7 +125,7 @@ func TestSQLiteStorage_CreateURL_WithExpiry(t *testing.T) {
 	ctx := context.Background()
 
 	expiry := time.Now().Add(24 * time.Hour).UTC().Truncate(time.Second)
-	params := shortener.CreateParams{
+	params := &shortener.CreateParams{
 		ShortCode:   "exp-url",
 		OriginalURL: "https://example.com",
 		IsCustom:    false,
@@ -309,12 +309,12 @@ func TestSQLiteStorage_DeleteExpired(t *testing.T) {
 	future := time.Now().Add(24 * time.Hour).UTC()
 
 	// Two expired, one not expired, one with no expiry.
-	expired1 := shortener.CreateParams{ShortCode: "exp1", OriginalURL: "https://example.com", ExpiresAt: &past}
-	expired2 := shortener.CreateParams{ShortCode: "exp2", OriginalURL: "https://example.com", ExpiresAt: &past}
-	live := shortener.CreateParams{ShortCode: "live", OriginalURL: "https://example.com", ExpiresAt: &future}
-	noexp := shortener.CreateParams{ShortCode: "noexp", OriginalURL: "https://example.com", ExpiresAt: nil}
+	expired1 := &shortener.CreateParams{ShortCode: "exp1", OriginalURL: "https://example.com", ExpiresAt: &past}
+	expired2 := &shortener.CreateParams{ShortCode: "exp2", OriginalURL: "https://example.com", ExpiresAt: &past}
+	live := &shortener.CreateParams{ShortCode: "live", OriginalURL: "https://example.com", ExpiresAt: &future}
+	noexp := &shortener.CreateParams{ShortCode: "noexp", OriginalURL: "https://example.com", ExpiresAt: nil}
 
-	for _, p := range []shortener.CreateParams{expired1, expired2, live, noexp} {
+	for _, p := range []*shortener.CreateParams{expired1, expired2, live, noexp} {
 		if _, err := s.CreateURL(ctx, p); err != nil {
 			t.Fatalf("CreateURL(%s): %v", p.ShortCode, err)
 		}
@@ -354,7 +354,7 @@ func TestSQLiteStorage_DeleteExpired_Batch(t *testing.T) {
 	past := time.Now().Add(-1 * time.Hour).UTC()
 	for i := range 5 {
 		code := fmt.Sprintf("exp%d", i)
-		p := shortener.CreateParams{ShortCode: code, OriginalURL: "https://example.com", ExpiresAt: &past}
+		p := &shortener.CreateParams{ShortCode: code, OriginalURL: "https://example.com", ExpiresAt: &past}
 		if _, err := s.CreateURL(ctx, p); err != nil {
 			t.Fatalf("CreateURL(%s): %v", code, err)
 		}

@@ -22,9 +22,9 @@ func (q *Queries) CountURLs(ctx context.Context) (int64, error) {
 }
 
 const createURL = `-- name: CreateURL :one
-INSERT INTO urls (short_code, original_url, is_custom, expires_at)
-VALUES (?, ?, ?, ?)
-RETURNING id, short_code, original_url, is_custom, created_at, expires_at, click_count
+INSERT INTO urls (short_code, original_url, is_custom, expires_at, title, description)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description
 `
 
 type CreateURLParams struct {
@@ -32,6 +32,8 @@ type CreateURLParams struct {
 	OriginalUrl string
 	IsCustom    int64
 	ExpiresAt   sql.NullString
+	Title       string
+	Description string
 }
 
 func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, error) {
@@ -40,6 +42,8 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, erro
 		arg.OriginalUrl,
 		arg.IsCustom,
 		arg.ExpiresAt,
+		arg.Title,
+		arg.Description,
 	)
 	var i Url
 	err := row.Scan(
@@ -50,6 +54,8 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, erro
 		&i.CreatedAt,
 		&i.ExpiresAt,
 		&i.ClickCount,
+		&i.Title,
+		&i.Description,
 	)
 	return i, err
 }
@@ -83,7 +89,7 @@ func (q *Queries) DeleteExpired(ctx context.Context, limit int64) (int64, error)
 }
 
 const getByCode = `-- name: GetByCode :one
-SELECT id, short_code, original_url, is_custom, created_at, expires_at, click_count FROM urls WHERE short_code = ?
+SELECT id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description FROM urls WHERE short_code = ?
 `
 
 func (q *Queries) GetByCode(ctx context.Context, shortCode string) (Url, error) {
@@ -97,6 +103,8 @@ func (q *Queries) GetByCode(ctx context.Context, shortCode string) (Url, error) 
 		&i.CreatedAt,
 		&i.ExpiresAt,
 		&i.ClickCount,
+		&i.Title,
+		&i.Description,
 	)
 	return i, err
 }
@@ -133,7 +141,7 @@ func (q *Queries) IncrementCounter(ctx context.Context) (int64, error) {
 }
 
 const listURLs = `-- name: ListURLs :many
-SELECT id, short_code, original_url, is_custom, created_at, expires_at, click_count FROM urls ORDER BY id DESC LIMIT ? OFFSET ?
+SELECT id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description FROM urls ORDER BY id DESC LIMIT ? OFFSET ?
 `
 
 type ListURLsParams struct {
@@ -158,6 +166,8 @@ func (q *Queries) ListURLs(ctx context.Context, arg ListURLsParams) ([]Url, erro
 			&i.CreatedAt,
 			&i.ExpiresAt,
 			&i.ClickCount,
+			&i.Title,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}
@@ -170,4 +180,31 @@ func (q *Queries) ListURLs(ctx context.Context, arg ListURLsParams) ([]Url, erro
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateMetadata = `-- name: UpdateMetadata :one
+UPDATE urls SET title = ?, description = ? WHERE short_code = ? RETURNING id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description
+`
+
+type UpdateMetadataParams struct {
+	Title       string
+	Description string
+	ShortCode   string
+}
+
+func (q *Queries) UpdateMetadata(ctx context.Context, arg UpdateMetadataParams) (Url, error) {
+	row := q.db.QueryRowContext(ctx, updateMetadata, arg.Title, arg.Description, arg.ShortCode)
+	var i Url
+	err := row.Scan(
+		&i.ID,
+		&i.ShortCode,
+		&i.OriginalUrl,
+		&i.IsCustom,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.ClickCount,
+		&i.Title,
+		&i.Description,
+	)
+	return i, err
 }

@@ -41,8 +41,8 @@ func TestSQLiteStorage_GooseMigrationApplied(t *testing.T) {
 	if err != nil {
 		t.Fatalf("query goose_db_version: %v (table likely missing — goose not yet wired)", err)
 	}
-	if version != 1 {
-		t.Errorf("applied migration version = %d, want 1", version)
+	if version != 2 {
+		t.Errorf("applied migration version = %d, want 2", version)
 	}
 }
 

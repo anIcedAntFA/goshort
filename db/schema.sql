@@ -5,7 +5,9 @@ CREATE TABLE urls (
   is_custom    INTEGER NOT NULL DEFAULT 0,
   created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
   expires_at   TEXT,
-  click_count  INTEGER NOT NULL DEFAULT 0
+  click_count  INTEGER NOT NULL DEFAULT 0,
+  title        TEXT    NOT NULL DEFAULT '',
+  description  TEXT    NOT NULL DEFAULT ''
 );
 
 CREATE TABLE counter (
