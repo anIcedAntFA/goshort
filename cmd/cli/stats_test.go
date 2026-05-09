@@ -16,8 +16,8 @@ func newStatsTestCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func TestRunStats_Success(t *testing.T) {
-	// Mutates global serverURL — no t.Parallel().
+func TestRunStats_Success(t *testing.T) { //nolint:paralleltest // mutates global serverURL
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			t.Errorf("method = %s, want GET", r.Method)
@@ -45,8 +45,8 @@ func TestRunStats_Success(t *testing.T) {
 	}
 }
 
-func TestRunStats_NotFound(t *testing.T) {
-	// Mutates global serverURL — no t.Parallel().
+func TestRunStats_NotFound(t *testing.T) { //nolint:paralleltest // mutates global serverURL
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(map[string]any{

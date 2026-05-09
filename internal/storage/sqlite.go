@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/anIcedAntFA/goshort/db/migrations"
 	idb "github.com/anIcedAntFA/goshort/internal/db"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
+	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite" // register "sqlite" driver
 )
 
@@ -16,29 +19,19 @@ import (
 // All times are stored and parsed as UTC.
 const sqliteTimeLayout = "2006-01-02 15:04:05"
 
-// migrateSQL creates all tables and indexes idempotently and seeds the counter row.
-const migrateSQL = `
-CREATE TABLE IF NOT EXISTS urls (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    short_code   TEXT    UNIQUE NOT NULL,
-    original_url TEXT    NOT NULL,
-    is_custom    INTEGER NOT NULL DEFAULT 0,
-    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
-    expires_at   TEXT,
-    click_count  INTEGER NOT NULL DEFAULT 0
-);
+// gooseOnce ensures goose global configuration is set exactly once across all
+// goroutines (tests, concurrent server startup) since goose uses global state.
+var gooseOnce sync.Once
 
-CREATE TABLE IF NOT EXISTS counter (
-    id    INTEGER PRIMARY KEY CHECK (id = 1),
-    value INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_short_code ON urls(short_code);
-CREATE INDEX IF NOT EXISTS idx_expires_at ON urls(expires_at)
-    WHERE expires_at IS NOT NULL;
-
-INSERT OR IGNORE INTO counter (id, value) VALUES (1, 0);
-`
+func initGoose() {
+	gooseOnce.Do(func() {
+		goose.SetBaseFS(migrations.FS)
+		goose.SetLogger(goose.NopLogger())
+		if err := goose.SetDialect("sqlite3"); err != nil {
+			panic(fmt.Sprintf("storage: goose set dialect: %v", err))
+		}
+	})
+}
 
 // SQLiteStorage implements Storage using a SQLite database via sqlc-generated queries.
 type SQLiteStorage struct {
@@ -49,9 +42,11 @@ type SQLiteStorage struct {
 // compile-time interface check.
 var _ shortener.Storage = (*SQLiteStorage)(nil)
 
-// NewSQLiteStorage opens (or creates) the database at dsn, applies the schema, and
-// returns a ready-to-use SQLiteStorage. Caller must call Close when done.
+// NewSQLiteStorage opens (or creates) the database at dsn, applies goose migrations,
+// and returns a ready-to-use SQLiteStorage. Caller must call Close when done.
 func NewSQLiteStorage(ctx context.Context, dsn string) (*SQLiteStorage, error) {
+	initGoose()
+
 	sqlDB, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
@@ -65,9 +60,9 @@ func NewSQLiteStorage(ctx context.Context, dsn string) (*SQLiteStorage, error) {
 		return nil, fmt.Errorf("enable WAL mode: %w", err)
 	}
 
-	if _, err := sqlDB.ExecContext(ctx, migrateSQL); err != nil {
+	if err := goose.Up(sqlDB, "."); err != nil {
 		_ = sqlDB.Close()
-		return nil, fmt.Errorf("apply schema: %w", err)
+		return nil, fmt.Errorf("apply migrations: %w", err)
 	}
 
 	return &SQLiteStorage{db: sqlDB, q: idb.New(sqlDB)}, nil

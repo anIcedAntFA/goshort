@@ -158,6 +158,7 @@ func TestLoad_EnvOverride_MultiWordField(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if tc.got != tc.want {
 				t.Errorf("got %v, want %v", tc.got, tc.want)
 			}
@@ -165,7 +166,7 @@ func TestLoad_EnvOverride_MultiWordField(t *testing.T) {
 	}
 }
 
-func TestLoad_AutoDiscover(t *testing.T) {
+func TestLoad_AutoDiscover(t *testing.T) { //nolint:paralleltest // os.Chdir mutates process-wide cwd
 	dir := t.TempDir()
 	tomlContent := `[server]
 port = 7777
@@ -192,7 +193,7 @@ port = 7777
 	}
 }
 
-func TestLoad_AutoDiscover_NoFile(t *testing.T) {
+func TestLoad_AutoDiscover_NoFile(t *testing.T) { //nolint:paralleltest // os.Chdir mutates process-wide cwd
 	dir := t.TempDir()
 	orig, err := os.Getwd()
 	if err != nil {

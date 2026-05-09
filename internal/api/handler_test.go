@@ -24,25 +24,27 @@ type testDeps struct {
 	store  *storage.SQLiteStorage
 }
 
-func setupTestDeps(t testing.TB) testDeps {
-	return setupTestDepsWithConfig(t, api.RouterConfig{})
+func setupTestDeps(tb testing.TB) testDeps {
+	tb.Helper()
+	return setupTestDepsWithConfig(tb, api.RouterConfig{})
 }
 
 func setupTestDepsWithAuth(t *testing.T, apiKey string) testDeps {
+	t.Helper()
 	return setupTestDepsWithConfig(t, api.RouterConfig{APIKey: apiKey})
 }
 
-func setupTestDepsWithConfig(t testing.TB, rcfg api.RouterConfig) testDeps {
-	t.Helper()
+func setupTestDepsWithConfig(tb testing.TB, rcfg api.RouterConfig) testDeps {
+	tb.Helper()
 	store, err := storage.NewSQLiteStorage(context.Background(), ":memory:")
 	if err != nil {
-		t.Fatalf("create storage: %v", err)
+		tb.Fatalf("create storage: %v", err)
 	}
-	t.Cleanup(func() { _ = store.Close() })
+	tb.Cleanup(func() { _ = store.Close() })
 
 	enc, err := encoder.NewSqidsEncoder(4)
 	if err != nil {
-		t.Fatalf("create encoder: %v", err)
+		tb.Fatalf("create encoder: %v", err)
 	}
 
 	svc := shortener.NewService(store, enc)
@@ -92,8 +94,8 @@ type errDetail struct {
 }
 
 // serve executes a single request against the router and returns the recorder.
-func serve(t testing.TB, router http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
-	t.Helper()
+func serve(tb testing.TB, router http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
+	tb.Helper()
 	var req *http.Request
 	if body != nil {
 		req = httptest.NewRequest(method, path, bytes.NewReader(body))
@@ -106,20 +108,20 @@ func serve(t testing.TB, router http.Handler, method, path string, body []byte) 
 	return rec
 }
 
-func mustMarshal(t testing.TB, v any) []byte {
-	t.Helper()
+func mustMarshal(tb testing.TB, v any) []byte {
+	tb.Helper()
 	b, err := json.Marshal(v)
 	if err != nil {
-		t.Fatalf("marshal: %v", err)
+		tb.Fatalf("marshal: %v", err)
 	}
 	return b
 }
 
-func decodeJSON[T any](t testing.TB, rec *httptest.ResponseRecorder) T {
-	t.Helper()
+func decodeJSON[T any](tb testing.TB, rec *httptest.ResponseRecorder) T {
+	tb.Helper()
 	var v T
 	if err := json.NewDecoder(rec.Body).Decode(&v); err != nil {
-		t.Fatalf("decode response body: %v", err)
+		tb.Fatalf("decode response body: %v", err)
 	}
 	return v
 }
