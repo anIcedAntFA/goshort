@@ -59,6 +59,11 @@ func (s *Server) register() {
 		Description: "Create multiple short URLs in a single call (max 50)",
 	}, s.handleBatchShortenURLs)
 
+	sdkmcp.AddTool(s.server, &sdkmcp.Tool{
+		Name:        "update_url",
+		Description: "Update the expiry of a short URL. Use expires_in='0' to remove expiry.",
+	}, s.handleUpdateURL)
+
 	s.server.AddResource(&sdkmcp.Resource{
 		URI:         "goshort://stats/summary",
 		Name:        "GoShort Stats Summary",

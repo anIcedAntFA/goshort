@@ -264,6 +264,43 @@ func (s *Server) handleBatchShortenURLs(
 	return nil, out, nil
 }
 
+type updateURLInput struct {
+	Code      string `json:"code"       jsonschema:"required,Short code or custom alias to update"`
+	ExpiresIn string `json:"expires_in" jsonschema:"required,New expiration duration (e.g. 7d 30d) or '0' to remove"`
+}
+
+type updateURLOutput struct {
+	ShortCode   string  `json:"short_code"`
+	ShortURL    string  `json:"short_url"`
+	OriginalURL string  `json:"original_url"`
+	IsCustom    bool    `json:"is_custom"`
+	ClickCount  int64   `json:"click_count"`
+	CreatedAt   string  `json:"created_at"`
+	ExpiresAt   *string `json:"expires_at,omitempty"`
+}
+
+func (s *Server) handleUpdateURL(
+	ctx context.Context, _ *sdkmcp.CallToolRequest, in updateURLInput,
+) (*sdkmcp.CallToolResult, updateURLOutput, error) {
+	url, err := s.svc.Update(ctx, in.Code, shortener.UpdateRequest{ExpiresIn: in.ExpiresIn})
+	if err != nil {
+		return nil, updateURLOutput{}, err
+	}
+	out := updateURLOutput{
+		ShortCode:   url.ShortCode,
+		ShortURL:    fmt.Sprintf("%s/%s", s.baseURL, url.ShortCode),
+		OriginalURL: url.OriginalURL,
+		IsCustom:    url.IsCustom,
+		ClickCount:  url.ClickCount,
+		CreatedAt:   url.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+	}
+	if url.ExpiresAt != nil {
+		t := url.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
+		out.ExpiresAt = &t
+	}
+	return nil, out, nil
+}
+
 func toBatchItemError(err error) *batchItemError {
 	switch {
 	case errors.Is(err, shortener.ErrInvalidURL):

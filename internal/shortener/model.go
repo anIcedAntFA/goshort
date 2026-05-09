@@ -29,6 +29,12 @@ type ListOptions struct {
 	PerPage int
 }
 
+// UpdateRequest holds the input for updating a shortened URL.
+// Currently only expiry is mutable.
+type UpdateRequest struct {
+	ExpiresIn string
+}
+
 // BatchResult holds the outcome of a single item in a CreateBatch call.
 // Exactly one of URL or Error is non-nil.
 type BatchResult struct {

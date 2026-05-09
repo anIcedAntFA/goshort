@@ -40,6 +40,7 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 		r.Get("/urls", h.ListURLs)
 		r.Get("/urls/{code}/qr", h.GetQRCode)
 		r.Get("/urls/{code}", h.GetURL)
+		r.Patch("/urls/{code}", h.UpdateURL)
 		r.Delete("/urls/{code}", h.DeleteURL)
 	})
 

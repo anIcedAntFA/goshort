@@ -182,6 +182,32 @@ func (q *Queries) ListURLs(ctx context.Context, arg ListURLsParams) ([]Url, erro
 	return items, nil
 }
 
+const updateExpiry = `-- name: UpdateExpiry :one
+UPDATE urls SET expires_at = ? WHERE short_code = ? RETURNING id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description
+`
+
+type UpdateExpiryParams struct {
+	ExpiresAt sql.NullString
+	ShortCode string
+}
+
+func (q *Queries) UpdateExpiry(ctx context.Context, arg UpdateExpiryParams) (Url, error) {
+	row := q.db.QueryRowContext(ctx, updateExpiry, arg.ExpiresAt, arg.ShortCode)
+	var i Url
+	err := row.Scan(
+		&i.ID,
+		&i.ShortCode,
+		&i.OriginalUrl,
+		&i.IsCustom,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.ClickCount,
+		&i.Title,
+		&i.Description,
+	)
+	return i, err
+}
+
 const updateMetadata = `-- name: UpdateMetadata :one
 UPDATE urls SET title = ?, description = ? WHERE short_code = ? RETURNING id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description
 `

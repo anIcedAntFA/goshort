@@ -21,6 +21,9 @@ SELECT COUNT(*) FROM urls;
 -- name: IncrementClicks :exec
 UPDATE urls SET click_count = click_count + 1 WHERE short_code = ?;
 
+-- name: UpdateExpiry :one
+UPDATE urls SET expires_at = ? WHERE short_code = ? RETURNING *;
+
 -- name: DeleteExpired :execrows
 DELETE FROM urls WHERE id IN (
     SELECT id FROM urls

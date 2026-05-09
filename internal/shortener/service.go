@@ -18,4 +18,7 @@ type Service interface {
 	// Per-item failures are returned inside BatchResult.Error; the top-level error
 	// is reserved for batch-wide validation (empty slice, exceeds cap).
 	CreateBatch(ctx context.Context, reqs []CreateRequest) ([]BatchResult, error)
+	// Update updates mutable fields of a shortened URL.
+	// Currently only expires_in is mutable; use "0" to remove the expiry.
+	Update(ctx context.Context, code string, req UpdateRequest) (*URL, error)
 }

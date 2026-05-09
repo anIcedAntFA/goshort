@@ -175,6 +175,28 @@ func (s *SQLiteStorage) DeleteExpired(ctx context.Context, batchSize int) (int64
 	return n, nil
 }
 
+// UpdateExpiry sets or clears the expiry timestamp for a URL by short code.
+// Returns shortener.ErrNotFound if no matching record exists.
+func (s *SQLiteStorage) UpdateExpiry(ctx context.Context, code string, expiresAt *time.Time) (*shortener.URL, error) {
+	row, err := s.q.UpdateExpiry(ctx, idb.UpdateExpiryParams{
+		ExpiresAt: timeToNullString(expiresAt),
+		ShortCode: code,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("update expiry %q: %w", code, shortener.ErrNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("update expiry: %w", err)
+	}
+
+	u, err := toURL(&row)
+	if err != nil {
+		return nil, err
+	}
+
+	return &u, nil
+}
+
 // GetCounter returns the current value of the global URL counter.
 func (s *SQLiteStorage) GetCounter(ctx context.Context) (int64, error) {
 	n, err := s.q.GetCounter(ctx)
