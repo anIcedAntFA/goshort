@@ -503,3 +503,64 @@ func TestSQLiteStorage_CreateURL_DuplicateShortCode(t *testing.T) {
 		t.Fatal("expected error for duplicate short_code, got nil")
 	}
 }
+
+func TestSQLiteStorage_UpdateExpiry_Set(t *testing.T) {
+	t.Parallel()
+
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	if _, err := s.CreateURL(ctx, sampleParams("upd1", "https://example.com")); err != nil {
+		t.Fatalf("CreateURL: %v", err)
+	}
+
+	future := time.Now().Add(24 * time.Hour).UTC().Truncate(time.Second)
+	got, err := s.UpdateExpiry(ctx, "upd1", &future)
+	if err != nil {
+		t.Fatalf("UpdateExpiry: %v", err)
+	}
+	if got.ExpiresAt == nil {
+		t.Fatal("ExpiresAt should be set, got nil")
+	}
+	if !got.ExpiresAt.Equal(future) {
+		t.Errorf("ExpiresAt = %v, want %v", got.ExpiresAt, future)
+	}
+}
+
+func TestSQLiteStorage_UpdateExpiry_Clear(t *testing.T) {
+	t.Parallel()
+
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	exp := time.Now().Add(24 * time.Hour)
+	params := &shortener.CreateParams{
+		ShortCode:   "upd2",
+		OriginalURL: "https://example.com",
+		ExpiresAt:   &exp,
+	}
+	if _, err := s.CreateURL(ctx, params); err != nil {
+		t.Fatalf("CreateURL: %v", err)
+	}
+
+	got, err := s.UpdateExpiry(ctx, "upd2", nil)
+	if err != nil {
+		t.Fatalf("UpdateExpiry: %v", err)
+	}
+	if got.ExpiresAt != nil {
+		t.Errorf("ExpiresAt should be nil after clearing, got %v", got.ExpiresAt)
+	}
+}
+
+func TestSQLiteStorage_UpdateExpiry_NotFound(t *testing.T) {
+	t.Parallel()
+
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	future := time.Now().Add(24 * time.Hour)
+	_, err := s.UpdateExpiry(ctx, "nonexistent", &future)
+	if !errors.Is(err, shortener.ErrNotFound) {
+		t.Errorf("want ErrNotFound, got %v", err)
+	}
+}

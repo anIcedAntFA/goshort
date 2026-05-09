@@ -174,6 +174,31 @@ func (s *ServiceImpl) CreateBatch(ctx context.Context, reqs []CreateRequest) ([]
 	return results, nil
 }
 
+// Update updates mutable fields of a shortened URL.
+// Use ExpiresIn="0" to remove the expiry (set to null).
+func (s *ServiceImpl) Update(ctx context.Context, code string, req UpdateRequest) (*URL, error) {
+	var expiresAt *time.Time
+
+	if req.ExpiresIn != "0" {
+		if err := ValidateExpiresIn(req.ExpiresIn); err != nil {
+			return nil, err
+		}
+		dur, err := parseExpiresIn(req.ExpiresIn)
+		if err != nil {
+			return nil, err
+		}
+		t := time.Now().Add(dur)
+		expiresAt = &t
+	}
+
+	u, err := s.store.UpdateExpiry(ctx, code, expiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("update: %w", err)
+	}
+
+	return u, nil
+}
+
 func parseExpiresIn(s string) (time.Duration, error) {
 	unit := s[len(s)-1]
 	n, err := strconv.ParseInt(s[:len(s)-1], 10, 64)

@@ -302,6 +302,54 @@ paths:
                   code: rate_limited
                   message: Too many requests. Please try again later.
 
+    patch:
+      summary: Update URL expiry
+      operationId: updateURL
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateURLRequest"
+            example:
+              expires_in: "30d"
+      responses:
+        "200":
+          description: Updated URL details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/URL"
+              example:
+                short_code: k7Xm2p
+                short_url: "http://localhost:8080/k7Xm2p"
+                original_url: "https://example.com"
+                is_custom: false
+                expires_at: "2025-07-01T00:00:00Z"
+                created_at: "2025-06-01T12:00:00Z"
+                click_count: 0
+        "400":
+          description: Invalid request body or expires_in format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
     delete:
       summary: Delete short URL
       operationId: deleteURL
@@ -474,6 +522,17 @@ paths:
 
 components:
   schemas:
+    UpdateURLRequest:
+      type: object
+      required: [expires_in]
+      properties:
+        expires_in:
+          type: string
+          description: |
+            New expiration duration (e.g. `1h`, `7d`, `30d`).
+            Use `"0"` to remove expiry entirely.
+          example: "30d"
+
     BatchCreateURLRequest:
       type: object
       required: [urls]

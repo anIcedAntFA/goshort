@@ -511,3 +511,92 @@ func TestBatchShortenURLs_ExceedsCap(t *testing.T) {
 		t.Error("expected error for batch exceeding 50, got success")
 	}
 }
+
+func TestUpdateURL_SetExpiry(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	// Create a URL with no expiry.
+	createRes := callTool(t, cs, "shorten_url", map[string]any{"url": "https://example.com"})
+	if createRes.IsError {
+		t.Fatalf("create: %s", textOf(t, createRes))
+	}
+	var created struct {
+		ShortCode string `json:"short_code"`
+	}
+	if err := json.Unmarshal([]byte(textOf(t, createRes)), &created); err != nil {
+		t.Fatalf("unmarshal create: %v", err)
+	}
+
+	res := callTool(t, cs, "update_url", map[string]any{
+		"code":       created.ShortCode,
+		"expires_in": "7d",
+	})
+	if res.IsError {
+		t.Fatalf("update_url: %s", textOf(t, res))
+	}
+
+	var out struct {
+		ShortCode string  `json:"short_code"`
+		ExpiresAt *string `json:"expires_at"`
+	}
+	if err := json.Unmarshal([]byte(textOf(t, res)), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if out.ExpiresAt == nil {
+		t.Error("ExpiresAt should be set, got nil")
+	}
+	if out.ShortCode != created.ShortCode {
+		t.Errorf("ShortCode = %q, want %q", out.ShortCode, created.ShortCode)
+	}
+}
+
+func TestUpdateURL_RemoveExpiry(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	createRes := callTool(t, cs, "shorten_url", map[string]any{
+		"url":        "https://example.com",
+		"expires_in": "7d",
+	})
+	if createRes.IsError {
+		t.Fatalf("create: %s", textOf(t, createRes))
+	}
+	var created struct {
+		ShortCode string `json:"short_code"`
+	}
+	if err := json.Unmarshal([]byte(textOf(t, createRes)), &created); err != nil {
+		t.Fatalf("unmarshal create: %v", err)
+	}
+
+	res := callTool(t, cs, "update_url", map[string]any{
+		"code":       created.ShortCode,
+		"expires_in": "0",
+	})
+	if res.IsError {
+		t.Fatalf("update_url: %s", textOf(t, res))
+	}
+
+	var out struct {
+		ExpiresAt *string `json:"expires_at"`
+	}
+	if err := json.Unmarshal([]byte(textOf(t, res)), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if out.ExpiresAt != nil {
+		t.Errorf("ExpiresAt should be nil after removal, got %v", *out.ExpiresAt)
+	}
+}
+
+func TestUpdateURL_NotFound(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	res := callTool(t, cs, "update_url", map[string]any{
+		"code":       "no-such-code",
+		"expires_in": "7d",
+	})
+	if !res.IsError {
+		t.Error("expected error for non-existent code, got success")
+	}
+}

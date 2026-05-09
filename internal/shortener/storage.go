@@ -37,4 +37,6 @@ type Storage interface {
 	GetCounter(ctx context.Context) (int64, error)
 	// IncrementCounter atomically increments the global URL counter and returns the new value.
 	IncrementCounter(ctx context.Context) (int64, error)
+	// UpdateExpiry sets (or clears) the expiry time for a URL by its short code.
+	UpdateExpiry(ctx context.Context, code string, expiresAt *time.Time) (*URL, error)
 }

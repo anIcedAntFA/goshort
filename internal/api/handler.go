@@ -300,6 +300,36 @@ func (h *Handler) BatchCreateURL(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type updateURLRequest struct {
+	ExpiresIn string `json:"expires_in"`
+}
+
+// UpdateURL handles PATCH /api/v1/urls/{code}.
+// Only expires_in is mutable; use "0" to remove the expiry.
+func (h *Handler) UpdateURL(w http.ResponseWriter, r *http.Request) {
+	code := chi.URLParam(r, "code")
+
+	var req updateURLRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, errorResponse{Error: errorDetail{
+			Code:    "invalid_body",
+			Message: "Request body is invalid JSON",
+		}})
+		return
+	}
+
+	url, err := h.svc.Update(r.Context(), code, shortener.UpdateRequest{
+		ExpiresIn: req.ExpiresIn,
+	})
+	if err != nil {
+		respondError(w, err)
+		return
+	}
+
+	_ = h.cache.Delete(r.Context(), "short:"+code)
+	respondJSON(w, http.StatusOK, toURLResponse(url, h.baseURL))
+}
+
 // GetQRCode handles GET /api/v1/urls/{code}/qr.
 // Returns a PNG QR code for the full short URL. Size is clamped to [128, 1024].
 func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {

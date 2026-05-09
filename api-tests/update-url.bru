@@ -1,0 +1,26 @@
+meta {
+  name: Update URL expiry
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{base_url}}/api/v1/urls/{{short_code}}
+}
+
+headers {
+  X-API-Key: {{api_key}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "expires_in": "30d"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.short_code: isDefined
+  res.body.expires_at: isDefined
+}

@@ -780,51 +780,51 @@ changelog:
 
 ### Milestone 5.4: Link Preview Metadata
 
-- [ ] **T5.4.1** Create migration `002_add_url_metadata.sql`:
+- [x] **T5.4.1** Create migration `002_add_url_metadata.sql`:
   ```sql
   ALTER TABLE urls ADD COLUMN title TEXT NOT NULL DEFAULT '';
   ALTER TABLE urls ADD COLUMN description TEXT NOT NULL DEFAULT '';
   ```
-- [ ] **T5.4.2** Add `title` and `description` fields to `shortener.URL` model
-- [ ] **T5.4.3** Update sqlc queries: `CreateURL` to accept title/description, `GetByCode` and `ListURLs` to return them
-- [ ] **T5.4.4** Run `sqlc generate`, verify generated code
-- [ ] **T5.4.5** Implement `internal/shortener/preview.go`:
+- [x] **T5.4.2** Add `title` and `description` fields to `shortener.URL` model
+- [x] **T5.4.3** Update sqlc queries: `CreateURL` to accept title/description, `GetByCode` and `ListURLs` to return them
+- [x] **T5.4.4** Run `sqlc generate`, verify generated code
+- [x] **T5.4.5** Implement `internal/shortener/preview.go`:
   - `FetchPreview(ctx, url) (title, description, error)` — GET the URL, parse `<title>` and `<meta name="description">`
   - 3-second timeout, max 512KB body read, graceful fallback (empty strings on failure)
   - Skip private/loopback IPs (reuse existing `isPrivateHost`)
-- [ ] **T5.4.6** Call `FetchPreview` in `Service.Create` after validation, before storage
+- [x] **T5.4.6** Call `FetchPreview` in `Service.Create` after validation, before storage
   - Preview fetch failure is non-fatal — store empty strings, log warning
-- [ ] **T5.4.7** Include `title` and `description` in API responses (create, get, list)
-- [ ] **T5.4.8** Write unit tests for preview parser (table-driven: valid HTML, missing tags, timeout, private IP)
-- [ ] **T5.4.9** Write integration test: create URL → response includes title
-- [ ] **T5.4.10** Update OpenAPI spec with new response fields
-- [ ] **T5.4.11** Update `SQLiteStorage` and tests to handle new columns
-- [ ] **T5.4.12** Verify: `make test && make lint` pass
+- [x] **T5.4.7** Include `title` and `description` in API responses (create, get, list)
+- [x] **T5.4.8** Write unit tests for preview parser (table-driven: valid HTML, missing tags, timeout, private IP)
+- [x] **T5.4.9** Write integration test: create URL → response includes title
+- [x] **T5.4.10** Update OpenAPI spec with new response fields
+- [x] **T5.4.11** Update `SQLiteStorage` and tests to handle new columns
+- [x] **T5.4.12** Verify: `make test && make lint` pass
 
 ### Milestone 5.5: URL Expiry Update (PATCH)
 
-- [ ] **T5.5.1** Add sqlc query `UpdateExpiry`:
+- [x] **T5.5.1** Add sqlc query `UpdateExpiry`:
   ```sql
   -- name: UpdateExpiry :one
   UPDATE urls SET expires_at = ? WHERE short_code = ? RETURNING *;
   ```
-- [ ] **T5.5.2** Run `sqlc generate`
-- [ ] **T5.5.3** Add `UpdateExpiry(ctx, code, expiresAt) (*URL, error)` to `Storage` interface and `SQLiteStorage`
-- [ ] **T5.5.4** Add `Update(ctx, code, req UpdateRequest) (*URL, error)` to `Service` interface and `ServiceImpl`
+- [x] **T5.5.2** Run `sqlc generate`
+- [x] **T5.5.3** Add `UpdateExpiry(ctx, code, expiresAt) (*URL, error)` to `Storage` interface and `SQLiteStorage`
+- [x] **T5.5.4** Add `Update(ctx, code, req UpdateRequest) (*URL, error)` to `Service` interface and `ServiceImpl`
   - `UpdateRequest` contains only `ExpiresIn string` (destination is immutable)
   - Validate `ExpiresIn` with existing validator
   - Return `ErrNotFound` if code does not exist
-- [ ] **T5.5.5** Implement `PATCH /api/v1/urls/:code` handler
+- [x] **T5.5.5** Implement `PATCH /api/v1/urls/:code` handler
   - Request body: `{ "expires_in": "30d" }` or `{ "expires_in": "0" }` to remove expiry
   - Response: full URL detail (same as GET)
   - Invalidate cache on update
-- [ ] **T5.5.6** Write handler tests: update expiry, remove expiry, not found, invalid expires_in
-- [ ] **T5.5.7** Write service tests: update, not found, invalid input
-- [ ] **T5.5.8** Write storage tests: update and retrieve roundtrip
-- [ ] **T5.5.9** Add MCP tool `update_url` with `code` and `expires_in` params
-- [ ] **T5.5.10** Update OpenAPI spec with PATCH endpoint
-- [ ] **T5.5.11** Add Bruno test file `api-tests/update-url.bru`
-- [ ] **T5.5.12** Verify: `make test && make lint` pass
+- [x] **T5.5.6** Write handler tests: update expiry, remove expiry, not found, invalid expires_in
+- [x] **T5.5.7** Write service tests: update, not found, invalid input
+- [x] **T5.5.8** Write storage tests: update and retrieve roundtrip
+- [x] **T5.5.9** Add MCP tool `update_url` with `code` and `expires_in` params
+- [x] **T5.5.10** Update OpenAPI spec with PATCH endpoint
+- [x] **T5.5.11** Add Bruno test file `api-tests/update-url.bru`
+- [x] **T5.5.12** Verify: `make test && make lint` pass
 
 ### Milestone 5.6: Spam Detection (Google Safe Browsing)
 

@@ -53,6 +53,7 @@ func TestNewServer_ToolsRegistered(t *testing.T) {
 		"delete_url":         false,
 		"lookup_url":         false,
 		"batch_shorten_urls": false,
+		"update_url":         false,
 	}
 	for _, tool := range res.Tools {
 		if _, ok := want[tool.Name]; ok {
@@ -64,8 +65,8 @@ func TestNewServer_ToolsRegistered(t *testing.T) {
 			t.Errorf("tool %q not registered", name)
 		}
 	}
-	if len(res.Tools) != 6 {
-		t.Errorf("expected 6 tools, got %d", len(res.Tools))
+	if len(res.Tools) != 7 {
+		t.Errorf("expected 7 tools, got %d", len(res.Tools))
 	}
 }
 
