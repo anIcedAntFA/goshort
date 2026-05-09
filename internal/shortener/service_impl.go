@@ -12,14 +12,15 @@ import (
 type ServiceImpl struct {
 	store   Storage
 	encoder Encoder
+	preview PreviewFetcher
 }
 
 // compile-time interface check.
 var _ Service = (*ServiceImpl)(nil)
 
-// NewService creates a new Service backed by the provided storage and encoder.
-func NewService(store Storage, enc Encoder) *ServiceImpl {
-	return &ServiceImpl{store: store, encoder: enc}
+// NewService creates a new Service backed by the provided storage, encoder, and preview fetcher.
+func NewService(store Storage, enc Encoder, preview PreviewFetcher) *ServiceImpl {
+	return &ServiceImpl{store: store, encoder: enc, preview: preview}
 }
 
 // Create validates the request, resolves the short code, and persists the URL.
@@ -46,11 +47,15 @@ func (s *ServiceImpl) Create(ctx context.Context, req CreateRequest) (*URL, erro
 		return nil, err
 	}
 
-	created, err := s.store.CreateURL(ctx, CreateParams{
+	title, desc, _ := s.preview.Fetch(ctx, req.URL)
+
+	created, err := s.store.CreateURL(ctx, &CreateParams{
 		ShortCode:   shortCode,
 		OriginalURL: req.URL,
 		IsCustom:    isCustom,
 		ExpiresAt:   expiresAt,
+		Title:       title,
+		Description: desc,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create url: %w", err)

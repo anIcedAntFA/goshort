@@ -21,4 +21,6 @@ type Url struct {
 	CreatedAt   string
 	ExpiresAt   sql.NullString
 	ClickCount  int64
+	Title       string
+	Description string
 }

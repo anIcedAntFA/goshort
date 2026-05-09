@@ -34,7 +34,7 @@ func newTestMCPServer(t *testing.T) *mcpserver.Server {
 		t.Fatalf("NewSqidsEncoder: %v", err)
 	}
 
-	return mcpserver.NewServer(shortener.NewService(store, enc), testBaseURL)
+	return mcpserver.NewServer(shortener.NewService(store, enc, shortener.NoopPreviewFetcher{}), testBaseURL)
 }
 
 func TestNewServer_ToolsRegistered(t *testing.T) {

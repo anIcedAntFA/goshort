@@ -47,7 +47,7 @@ func setupTestDepsWithConfig(tb testing.TB, rcfg api.RouterConfig) testDeps {
 		tb.Fatalf("create encoder: %v", err)
 	}
 
-	svc := shortener.NewService(store, enc)
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{})
 	h := api.NewHandler(svc, cache.NewNoopCache(), slog.Default(), "http://localhost:8080")
 	return testDeps{router: api.NewRouter(h, rcfg), store: store}
 }
@@ -332,7 +332,7 @@ func TestRedirect(t *testing.T) {
 		deps := setupTestDeps(t)
 
 		past := time.Now().Add(-time.Hour)
-		_, err := deps.store.CreateURL(context.Background(), shortener.CreateParams{
+		_, err := deps.store.CreateURL(context.Background(), &shortener.CreateParams{
 			ShortCode:   "expired",
 			OriginalURL: "https://example.com",
 			ExpiresAt:   &past,
@@ -570,7 +570,7 @@ func TestRedirect_CacheHit(t *testing.T) {
 	}
 
 	mc := cache.NewMemoryCache()
-	svc := shortener.NewService(store, enc)
+	svc := shortener.NewService(store, enc, shortener.NoopPreviewFetcher{})
 	h := api.NewHandler(svc, mc, slog.Default(), "http://localhost:8080")
 	router := api.NewRouter(h, api.RouterConfig{})
 

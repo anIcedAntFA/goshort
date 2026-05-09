@@ -12,6 +12,8 @@ type URL struct {
 	CreatedAt   time.Time
 	ExpiresAt   *time.Time
 	ClickCount  int64
+	Title       string
+	Description string
 }
 
 // CreateRequest holds the input data for creating a new shortened URL.

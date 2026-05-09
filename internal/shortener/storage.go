@@ -12,13 +12,15 @@ type CreateParams struct {
 	OriginalURL string
 	IsCustom    bool
 	ExpiresAt   *time.Time
+	Title       string
+	Description string
 }
 
 // Storage defines the persistence interface consumed by the shortener service.
 // It is implemented by the storage package (SQLite) and by test mocks.
 type Storage interface {
 	// CreateURL inserts a new URL record and returns the created row.
-	CreateURL(ctx context.Context, params CreateParams) (URL, error)
+	CreateURL(ctx context.Context, params *CreateParams) (URL, error)
 	// GetByCode retrieves a URL record by its short code.
 	GetByCode(ctx context.Context, code string) (*URL, error)
 	// DeleteByCode removes a URL record by its short code.

@@ -66,7 +66,7 @@ func main() {
 		slog.Warn("API key auth disabled — all endpoints are public")
 	}
 
-	svc := shortener.NewService(store, enc)
+	svc := shortener.NewService(store, enc, shortener.NewHTTPPreviewFetcher())
 
 	if *mcpMode || *mcpHTTP != "" {
 		if err := runMCPMode(ctx, cfg, svc, *mcpHTTP); err != nil {
