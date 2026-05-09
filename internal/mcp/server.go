@@ -72,6 +72,13 @@ func (s *Server) register() {
 		Description: "Full details for a shortened URL by short code",
 	}, s.handleURLByCode)
 
+	s.server.AddResourceTemplate(&sdkmcp.ResourceTemplate{
+		URITemplate: "goshort://urls/{code}/qr",
+		Name:        "URL QR Code",
+		Description: "QR code PNG (256×256) for a shortened URL",
+		MIMEType:    "image/png",
+	}, s.handleQRCode)
+
 	s.server.AddPrompt(&sdkmcp.Prompt{
 		Name:        "shorten_and_share",
 		Description: "Shorten a URL and format it for sharing on a platform",

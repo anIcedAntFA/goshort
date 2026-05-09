@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 func (s *Server) handleStatsSummary(
@@ -110,4 +112,45 @@ func extractCodeFromURI(uri string) string {
 		return ""
 	}
 	return uri[len(prefix):]
+}
+
+func (s *Server) handleQRCode(
+	ctx context.Context, req *sdkmcp.ReadResourceRequest,
+) (*sdkmcp.ReadResourceResult, error) {
+	code := extractCodeFromQRURI(req.Params.URI)
+	if code == "" {
+		return nil, sdkmcp.ResourceNotFoundError(req.Params.URI)
+	}
+
+	if _, err := s.svc.GetByCode(ctx, code); err != nil {
+		return nil, sdkmcp.ResourceNotFoundError(req.Params.URI)
+	}
+
+	shortURL := fmt.Sprintf("%s/%s", s.baseURL, code)
+	png, err := qrcode.Encode(shortURL, qrcode.Medium, 256)
+	if err != nil {
+		return nil, fmt.Errorf("generate qr code: %w", err)
+	}
+
+	return &sdkmcp.ReadResourceResult{
+		Contents: []*sdkmcp.ResourceContents{{
+			URI:      req.Params.URI,
+			MIMEType: "image/png",
+			Blob:     png,
+		}},
+	}, nil
+}
+
+// extractCodeFromQRURI parses the short code from "goshort://urls/{code}/qr".
+func extractCodeFromQRURI(uri string) string {
+	const prefix = "goshort://urls/"
+	const suffix = "/qr"
+	if !strings.HasPrefix(uri, prefix) || !strings.HasSuffix(uri, suffix) {
+		return ""
+	}
+	start, end := len(prefix), len(uri)-len(suffix)
+	if start >= end {
+		return ""
+	}
+	return uri[start:end]
 }
