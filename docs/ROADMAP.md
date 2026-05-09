@@ -755,28 +755,28 @@ changelog:
 
 ### Milestone 5.2: MCP Batch Tool
 
-- [ ] **T5.2.1** Add `batch_shorten_urls` tool to `internal/mcp/tools.go`
+- [x] **T5.2.1** Add `batch_shorten_urls` tool to `internal/mcp/tools.go`
   - Input: `{ "urls": [{ "url": "...", "alias": "...", "expires_in": "..." }] }`
   - Calls `Service.CreateBatch` directly (not HTTP)
   - Returns structured JSON with per-URL results
-- [ ] **T5.2.2** Write MCP tool test using in-memory transport
-- [ ] **T5.2.3** Update MCP tool count assertion in `TestNewServer_ToolsRegistered` (5 → 6)
-- [ ] **T5.2.4** Verify: `make test` passes
+- [x] **T5.2.2** Write MCP tool test using in-memory transport
+- [x] **T5.2.3** Update MCP tool count assertion in `TestNewServer_ToolsRegistered` (5 → 6)
+- [x] **T5.2.4** Verify: `make test` passes
 
 ### Milestone 5.3: QR Code Generation
 
-- [ ] **T5.3.1** Install QR library: `go get github.com/skip2/go-qrcode`
-- [ ] **T5.3.2** Implement `GET /api/v1/urls/:code/qr` handler
+- [x] **T5.3.1** Install QR library: `go get github.com/skip2/go-qrcode`
+- [x] **T5.3.2** Implement `GET /api/v1/urls/:code/qr` handler
   - Returns `image/png` (256×256 default)
   - Optional query param `?size=512` (min 128, max 1024)
   - Generates QR code for the full short URL (`base_url + "/" + code`)
   - Returns 404 if code does not exist
-- [ ] **T5.3.3** Add route to `internal/api/router.go` (under auth group)
-- [ ] **T5.3.4** Write handler tests: valid code returns PNG, invalid code returns 404, size param
-- [ ] **T5.3.5** Add MCP resource `goshort://urls/{code}/qr` returning base64-encoded PNG
-- [ ] **T5.3.6** Update OpenAPI spec with QR endpoint
-- [ ] **T5.3.7** Add Bruno test file `api-tests/qr-code.bru`
-- [ ] **T5.3.8** Verify: `make test && make lint` pass
+- [x] **T5.3.3** Add route to `internal/api/router.go` (under auth group)
+- [x] **T5.3.4** Write handler tests: valid code returns PNG, invalid code returns 404, size param
+- [x] **T5.3.5** Add MCP resource `goshort://urls/{code}/qr` returning base64-encoded PNG
+- [x] **T5.3.6** Update OpenAPI spec with QR endpoint
+- [x] **T5.3.7** Add Bruno test file `api-tests/qr-code.bru`
+- [x] **T5.3.8** Verify: `make test && make lint` pass
 
 ### Milestone 5.4: Link Preview Metadata
 
