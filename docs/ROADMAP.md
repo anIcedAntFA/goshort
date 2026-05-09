@@ -856,7 +856,7 @@ changelog:
 - [x] **T5.7.2** Update `README.md` with new features (batch, QR, preview, update, spam detection)
 - [x] **T5.7.3** Final `make lint && make test && make build`
 - [x] **T5.7.4** Commit: `✨ feat: v0.5.0 — batch creation, QR codes, link previews, URL update, spam detection`
-- [ ] **T5.7.5** Tag: `git tag v0.5.0 && git push --tags`
+- [x] **T5.7.5** Tag: `git tag v0.5.0 && git push --tags`
 
 ---
 
