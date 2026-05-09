@@ -102,6 +102,18 @@ test/fuzz/alias: ## Fuzz alias validator for 30s
 test/fuzz/encoder: ## Fuzz encoder for 30s
 	go test -fuzz=FuzzSqidsEncoder_Encode -fuzztime=30s ./internal/encoder/
 
+.PHONY: migrate
+migrate: ## Run pending database migrations (requires GOOSE_DB env or default path)
+	goose -dir db/migrations sqlite3 ./data/goshort.db up
+
+.PHONY: migrate/status
+migrate/status: ## Show applied migration status
+	goose -dir db/migrations sqlite3 ./data/goshort.db status
+
+.PHONY: migrate/down
+migrate/down: ## Roll back the last migration
+	goose -dir db/migrations sqlite3 ./data/goshort.db down
+
 .PHONY: docker/up
 docker/up: ## Start services with Docker Compose
 	docker compose up -d

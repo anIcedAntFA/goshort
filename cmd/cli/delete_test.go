@@ -16,8 +16,8 @@ func newDeleteTestCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func TestRunDelete_Success(t *testing.T) {
-	// Mutates global serverURL — no t.Parallel().
+func TestRunDelete_Success(t *testing.T) { //nolint:paralleltest // mutates global serverURL
+
 	called := false
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
@@ -43,8 +43,8 @@ func TestRunDelete_Success(t *testing.T) {
 	}
 }
 
-func TestRunDelete_NotFound(t *testing.T) {
-	// Mutates global serverURL — no t.Parallel().
+func TestRunDelete_NotFound(t *testing.T) { //nolint:paralleltest // mutates global serverURL
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(map[string]any{

@@ -15,6 +15,7 @@ func okHandler() http.Handler {
 }
 
 func TestAPIKeyMiddleware_NoKeyRequired(t *testing.T) {
+	t.Parallel()
 	handler := mcpserver.APIKeyMiddleware("", okHandler())
 	req := httptest.NewRequest(http.MethodPost, "/mcp", http.NoBody)
 	rec := httptest.NewRecorder()
@@ -25,6 +26,7 @@ func TestAPIKeyMiddleware_NoKeyRequired(t *testing.T) {
 }
 
 func TestAPIKeyMiddleware_MissingKey(t *testing.T) {
+	t.Parallel()
 	handler := mcpserver.APIKeyMiddleware("secret", okHandler())
 	req := httptest.NewRequest(http.MethodPost, "/mcp", http.NoBody)
 	rec := httptest.NewRecorder()
@@ -35,6 +37,7 @@ func TestAPIKeyMiddleware_MissingKey(t *testing.T) {
 }
 
 func TestAPIKeyMiddleware_WrongKey(t *testing.T) {
+	t.Parallel()
 	handler := mcpserver.APIKeyMiddleware("secret", okHandler())
 	req := httptest.NewRequest(http.MethodPost, "/mcp", http.NoBody)
 	req.Header.Set("X-API-Key", "wrong")
@@ -46,6 +49,7 @@ func TestAPIKeyMiddleware_WrongKey(t *testing.T) {
 }
 
 func TestAPIKeyMiddleware_CorrectKey(t *testing.T) {
+	t.Parallel()
 	handler := mcpserver.APIKeyMiddleware("secret", okHandler())
 	req := httptest.NewRequest(http.MethodPost, "/mcp", http.NoBody)
 	req.Header.Set("X-API-Key", "secret")

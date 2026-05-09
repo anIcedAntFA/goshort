@@ -19,6 +19,8 @@ linters:
     - gosec           # security checks
     - bodyclose       # detect unclosed HTTP response bodies
     - noctx           # detect HTTP requests without context
+    - paralleltest    # detect tests that can be run in parallel
+    - thelper         # detect test helper functions
 
   settings:
     govet:
@@ -32,6 +34,11 @@ linters:
         - fmt.Fprintln
         - (fmt).Fprintf
         - (fmt).Fprintln
+
+    thelper:
+      test:
+        first: true   # t.Helper() must be first line
+        begin: true   # must be at function start
 
     gocognit:
       min-complexity: 15

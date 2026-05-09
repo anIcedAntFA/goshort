@@ -20,8 +20,8 @@ func newShortenTestCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func TestRunShorten_Stdin(t *testing.T) {
-	// Mutates os.Stdin and serverURL globals — no t.Parallel().
+func TestRunShorten_Stdin(t *testing.T) { //nolint:paralleltest // mutates os.Stdin and serverURL globals
+
 	var gotURL string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req CreateRequest
@@ -59,8 +59,8 @@ func TestRunShorten_Stdin(t *testing.T) {
 	}
 }
 
-func TestRunShorten_StdinEmpty(t *testing.T) {
-	// Mutates os.Stdin global — no t.Parallel().
+func TestRunShorten_StdinEmpty(t *testing.T) { //nolint:paralleltest // mutates os.Stdin global
+
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		t.Fatal(err)

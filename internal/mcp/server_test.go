@@ -38,6 +38,7 @@ func newTestMCPServer(t *testing.T) *mcpserver.Server {
 }
 
 func TestNewServer_ToolsRegistered(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res, err := cs.ListTools(context.Background(), &sdkmcp.ListToolsParams{})
@@ -68,6 +69,7 @@ func TestNewServer_ToolsRegistered(t *testing.T) {
 }
 
 func TestResource_StatsSummary_Empty(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res, err := cs.ReadResource(context.Background(), &sdkmcp.ReadResourceParams{
@@ -96,6 +98,7 @@ func TestResource_StatsSummary_Empty(t *testing.T) {
 }
 
 func TestResource_StatsSummary_WithData(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	for i := range 3 {
@@ -123,6 +126,7 @@ func TestResource_StatsSummary_WithData(t *testing.T) {
 }
 
 func TestResource_URLByCode(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	r := callTool(t, cs, "shorten_url", map[string]any{
@@ -159,6 +163,7 @@ func TestResource_URLByCode(t *testing.T) {
 }
 
 func TestResource_URLByCode_NotFound(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	_, err := cs.ReadResource(context.Background(), &sdkmcp.ReadResourceParams{
@@ -170,6 +175,7 @@ func TestResource_URLByCode_NotFound(t *testing.T) {
 }
 
 func TestPrompt_ShortenAndShare(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res, err := cs.GetPrompt(context.Background(), &sdkmcp.GetPromptParams{
@@ -199,6 +205,7 @@ func TestPrompt_ShortenAndShare(t *testing.T) {
 }
 
 func TestPrompt_ShortenAndShare_DefaultPlatform(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res, err := cs.GetPrompt(context.Background(), &sdkmcp.GetPromptParams{
@@ -219,6 +226,7 @@ func TestPrompt_ShortenAndShare_DefaultPlatform(t *testing.T) {
 }
 
 func TestPrompt_BatchShorten(t *testing.T) {
+	t.Parallel()
 	cs := newTestClient(t)
 
 	res, err := cs.GetPrompt(context.Background(), &sdkmcp.GetPromptParams{
@@ -272,6 +280,7 @@ func TestServer_HTTPHandler(t *testing.T) {
 // request to invoke the internal `return s.server` closure, then cancels the
 // context and waits for a clean nil return.
 func TestServer_RunHTTP_GracefulShutdown(t *testing.T) {
+	t.Parallel()
 	// Reserve a random free port, release it, then hand the address to RunHTTP.
 	// Port reuse within tests on loopback is safe enough; the window is tiny.
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -320,6 +329,7 @@ func TestServer_RunHTTP_GracefulShutdown(t *testing.T) {
 
 // TestServer_RunHTTP_ListenError verifies the error return when the port is occupied.
 func TestServer_RunHTTP_ListenError(t *testing.T) {
+	t.Parallel()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("pre-listen: %v", err)
