@@ -38,6 +38,7 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 		r.Post("/urls", h.CreateURL)
 		r.Post("/urls/batch", h.BatchCreateURL)
 		r.Get("/urls", h.ListURLs)
+		r.Get("/urls/{code}/qr", h.GetQRCode)
 		r.Get("/urls/{code}", h.GetURL)
 		r.Delete("/urls/{code}", h.DeleteURL)
 	})

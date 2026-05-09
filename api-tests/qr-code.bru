@@ -1,0 +1,19 @@
+meta {
+  name: Get QR Code
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/api/v1/urls/{{short_code}}/qr?size=256
+  body: none
+}
+
+headers {
+  X-API-Key: {{api_key}}
+}
+
+assert {
+  res.status: eq 200
+  res.headers["content-type"]: eq image/png
+}
