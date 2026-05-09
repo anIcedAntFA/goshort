@@ -828,27 +828,27 @@ changelog:
 
 ### Milestone 5.6: Spam Detection (Google Safe Browsing)
 
-- [ ] **T5.6.1** Add config section:
+- [x] **T5.6.1** Add config section:
   ```toml
   [security]
   safe_browsing_api_key = ""  # empty = disabled
   ```
-- [ ] **T5.6.2** Update `config.go` with `SecurityConfig` struct, defaults, env var mapping (`GOSHORT_SECURITY_SAFE_BROWSING_API_KEY`)
-- [ ] **T5.6.3** Implement `internal/shortener/safebrowsing.go`:
+- [x] **T5.6.2** Update `config.go` with `SecurityConfig` struct, defaults, env var mapping (`GOSHORT_SECURITY_SAFE_BROWSING_API_KEY`)
+- [x] **T5.6.3** Implement `internal/shortener/safebrowsing.go`:
   - `URLChecker` interface: `Check(ctx, url) error` (returns `ErrUnsafeURL` if flagged)
   - `SafeBrowsingChecker` struct: calls Google Safe Browsing Lookup API v4
   - `NoopChecker` struct: always returns nil (when API key is empty)
   - 2-second timeout per check
-- [ ] **T5.6.4** Add `ErrUnsafeURL` sentinel error to `errors.go`
-- [ ] **T5.6.5** Wire `URLChecker` into `Service` via constructor injection
+- [x] **T5.6.4** Add `ErrUnsafeURL` sentinel error to `errors.go`
+- [x] **T5.6.5** Wire `URLChecker` into `Service` via constructor injection
   - Check runs after URL validation, before storage
   - Batch creation also checks each URL
-- [ ] **T5.6.6** Map `ErrUnsafeURL` to HTTP 422 in `respondError`
-- [ ] **T5.6.7** Write unit tests with mock checker (flagged URL, clean URL, checker disabled)
-- [ ] **T5.6.8** Write integration test: checker returns error → create fails with 422
-- [ ] **T5.6.9** Update OpenAPI spec with new error code `unsafe_url`
+- [x] **T5.6.6** Map `ErrUnsafeURL` to HTTP 422 in `respondError`
+- [x] **T5.6.7** Write unit tests with mock checker (flagged URL, clean URL, checker disabled)
+- [x] **T5.6.8** Write integration test: checker returns error → create fails with 422
+- [x] **T5.6.9** Update OpenAPI spec with new error code `unsafe_url`
 - [ ] **T5.6.10** Update `CLAUDE.md` with new config section
-- [ ] **T5.6.11** Verify: `make test && make lint` pass
+- [x] **T5.6.11** Verify: `make test && make lint` pass
 
 ### Milestone 5.7: Release
 
