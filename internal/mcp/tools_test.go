@@ -372,3 +372,142 @@ func TestLookupURL_NotFound(t *testing.T) {
 		t.Error("expected error for missing code, got success")
 	}
 }
+
+func TestBatchShortenURLs_AllValid(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	res := callTool(t, cs, "batch_shorten_urls", map[string]any{
+		"urls": []map[string]any{
+			{"url": "https://a.com"},
+			{"url": "https://b.com"},
+			{"url": "https://c.com"},
+		},
+	})
+	if res.IsError {
+		t.Fatalf("expected success, got error: %s", textOf(t, res))
+	}
+
+	var out struct {
+		Results []struct {
+			ShortCode   string `json:"short_code"`
+			OriginalURL string `json:"original_url"`
+			Error       any    `json:"error"`
+		} `json:"results"`
+		Summary struct {
+			Total   int `json:"total"`
+			Success int `json:"success"`
+			Failed  int `json:"failed"`
+		} `json:"summary"`
+	}
+	if err := json.Unmarshal([]byte(textOf(t, res)), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(out.Results) != 3 {
+		t.Errorf("want 3 results, got %d", len(out.Results))
+	}
+	if out.Summary.Total != 3 {
+		t.Errorf("summary.total = %d, want 3", out.Summary.Total)
+	}
+	if out.Summary.Success != 3 {
+		t.Errorf("summary.success = %d, want 3", out.Summary.Success)
+	}
+	if out.Summary.Failed != 0 {
+		t.Errorf("summary.failed = %d, want 0", out.Summary.Failed)
+	}
+	for i, r := range out.Results {
+		if r.ShortCode == "" {
+			t.Errorf("result[%d].short_code is empty", i)
+		}
+		if r.Error != nil {
+			t.Errorf("result[%d].error is non-nil: %v", i, r.Error)
+		}
+	}
+}
+
+func TestBatchShortenURLs_PartialSuccess(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	res := callTool(t, cs, "batch_shorten_urls", map[string]any{
+		"urls": []map[string]any{
+			{"url": "https://valid.com"},
+			{"url": "not-a-url"},
+			{"url": "https://also-valid.com"},
+		},
+	})
+	if res.IsError {
+		t.Fatalf("expected success for partial batch, got error: %s", textOf(t, res))
+	}
+
+	var out struct {
+		Results []struct {
+			ShortCode string `json:"short_code"`
+			Error     *struct {
+				Code    string `json:"code"`
+				Message string `json:"message"`
+			} `json:"error"`
+		} `json:"results"`
+		Summary struct {
+			Total   int `json:"total"`
+			Success int `json:"success"`
+			Failed  int `json:"failed"`
+		} `json:"summary"`
+	}
+	if err := json.Unmarshal([]byte(textOf(t, res)), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(out.Results) != 3 {
+		t.Errorf("want 3 results, got %d", len(out.Results))
+	}
+	if out.Summary.Success != 2 {
+		t.Errorf("summary.success = %d, want 2", out.Summary.Success)
+	}
+	if out.Summary.Failed != 1 {
+		t.Errorf("summary.failed = %d, want 1", out.Summary.Failed)
+	}
+	// result[0]: success
+	if out.Results[0].ShortCode == "" {
+		t.Error("result[0] should have short_code")
+	}
+	if out.Results[0].Error != nil {
+		t.Errorf("result[0] should not have error, got %+v", out.Results[0].Error)
+	}
+	// result[1]: error
+	if out.Results[1].Error == nil {
+		t.Error("result[1] should have error for invalid URL")
+	} else if out.Results[1].Error.Code != "invalid_url" {
+		t.Errorf("result[1].error.code = %q, want %q", out.Results[1].Error.Code, "invalid_url")
+	}
+	// result[2]: success
+	if out.Results[2].ShortCode == "" {
+		t.Error("result[2] should have short_code")
+	}
+}
+
+func TestBatchShortenURLs_Empty(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	res := callTool(t, cs, "batch_shorten_urls", map[string]any{
+		"urls": []map[string]any{},
+	})
+	if !res.IsError {
+		t.Error("expected error for empty batch, got success")
+	}
+}
+
+func TestBatchShortenURLs_ExceedsCap(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	urls := make([]map[string]any, 51)
+	for i := range urls {
+		urls[i] = map[string]any{"url": "https://example.com"}
+	}
+
+	res := callTool(t, cs, "batch_shorten_urls", map[string]any{"urls": urls})
+	if !res.IsError {
+		t.Error("expected error for batch exceeding 50, got success")
+	}
+}

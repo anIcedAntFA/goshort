@@ -47,11 +47,12 @@ func TestNewServer_ToolsRegistered(t *testing.T) {
 	}
 
 	want := map[string]bool{
-		"shorten_url":   false,
-		"list_urls":     false,
-		"get_url_stats": false,
-		"delete_url":    false,
-		"lookup_url":    false,
+		"shorten_url":        false,
+		"list_urls":          false,
+		"get_url_stats":      false,
+		"delete_url":         false,
+		"lookup_url":         false,
+		"batch_shorten_urls": false,
 	}
 	for _, tool := range res.Tools {
 		if _, ok := want[tool.Name]; ok {
@@ -63,8 +64,8 @@ func TestNewServer_ToolsRegistered(t *testing.T) {
 			t.Errorf("tool %q not registered", name)
 		}
 	}
-	if len(res.Tools) != 5 {
-		t.Errorf("expected 5 tools, got %d", len(res.Tools))
+	if len(res.Tools) != 6 {
+		t.Errorf("expected 6 tools, got %d", len(res.Tools))
 	}
 }
 
