@@ -252,6 +252,56 @@ func TestPrompt_BatchShorten(t *testing.T) {
 	}
 }
 
+func TestResource_QRCode(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	// Create a URL with a known alias so we can look it up.
+	r := callTool(t, cs, "shorten_url", map[string]any{
+		"url":   "https://example.com",
+		"alias": "qr-test",
+	})
+	if r.IsError {
+		t.Fatalf("create failed: %s", textOf(t, r))
+	}
+
+	res, err := cs.ReadResource(context.Background(), &sdkmcp.ReadResourceParams{
+		URI: "goshort://urls/qr-test/qr",
+	})
+	if err != nil {
+		t.Fatalf("ReadResource: %v", err)
+	}
+	if len(res.Contents) == 0 {
+		t.Fatal("expected non-empty contents")
+	}
+	c := res.Contents[0]
+	if c.MIMEType != "image/png" {
+		t.Errorf("MIMEType = %q, want %q", c.MIMEType, "image/png")
+	}
+	// PNG magic bytes: 137 80 78 71 13 10 26 10
+	pngMagic := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	if len(c.Blob) < 8 {
+		t.Fatalf("blob too short: %d bytes", len(c.Blob))
+	}
+	for i, b := range pngMagic {
+		if c.Blob[i] != b {
+			t.Errorf("blob[%d] = %02x, want %02x", i, c.Blob[i], b)
+		}
+	}
+}
+
+func TestResource_QRCode_NotFound(t *testing.T) {
+	t.Parallel()
+	cs := newTestClient(t)
+
+	_, err := cs.ReadResource(context.Background(), &sdkmcp.ReadResourceParams{
+		URI: "goshort://urls/nonexistent/qr",
+	})
+	if err == nil {
+		t.Error("expected error for nonexistent QR resource")
+	}
+}
+
 // TestServer_HTTPHandler verifies that HTTPHandler returns a working http.Handler
 // and that the internal `return s.server` closure is invoked on a request.
 func TestServer_HTTPHandler(t *testing.T) {
