@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-10
+
+### Added
+
+- **Batch URL creation** — `POST /api/v1/urls/batch` accepts up to 100 URLs in one
+  request; returns per-item results with individual success/failure status
+- **QR code generation** — `GET /api/v1/urls/{code}/qr` returns a PNG QR code for any
+  short URL; also exposed as `goshort://urls/{code}/qr` MCP resource
+- **Link preview metadata** — `title` and `description` fields populated automatically
+  on URL creation via `HTTPPreviewFetcher` (fetches `<title>` / `<meta description>`,
+  3 s timeout, 512 KB cap, private-IP blocked, fail-open)
+- **Expiry update** — `PATCH /api/v1/urls/{code}` updates the expiry of an existing
+  short URL without changing its code or target
+- **Spam detection** — optional Google Safe Browsing Lookup API v4 integration;
+  unsafe URLs are rejected with HTTP 422 `unsafe_url`; fail-open (API errors never
+  block creation); enabled by setting `security.safe_browsing_api_key` in config
+  or `GOSHORT_SECURITY_SAFE_BROWSING_API_KEY` env var
+- **MCP tools** — `batch_shorten_urls` and `update_url` added (7 tools total)
+- **MCP resource** — `goshort://urls/{code}/qr` PNG QR code blob resource (3 resources total)
+- **Schema migrations** — goose embedded FS (`db/migrations/*.sql`) applied automatically
+  at startup; `make migrate` / `make migrate/status` commands added
+- **`[security]` config section** — `safe_browsing_api_key` setting
+
+### Changed
+
+- `shortener.NewService` now accepts a 4th `URLChecker` parameter; pass `NoopChecker{}`
+  when no spam detection is needed (all existing callers updated)
+- `urls` table extended with `title`, `description`, and `preview_fetched_at` columns
+  (migration `002_add_preview_metadata.sql`)
+- OpenAPI spec updated to v0.5.0 with new endpoints, QR resource, batch operation,
+  and `unsafe_url` error code
+
 ## [0.4.0] - 2026-05-03
 
 ### Added
