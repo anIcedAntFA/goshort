@@ -147,6 +147,28 @@ func (s *ServiceImpl) IncrementClicks(ctx context.Context, code string) error {
 	return nil
 }
 
+const batchMaxSize = 50
+
+// CreateBatch creates up to 50 shortened URLs in one call.
+// Per-item errors are collected into BatchResult.Error; the batch always
+// processes every item regardless of individual failures.
+func (s *ServiceImpl) CreateBatch(ctx context.Context, reqs []CreateRequest) ([]BatchResult, error) {
+	if len(reqs) == 0 {
+		return nil, ErrBatchEmpty
+	}
+	if len(reqs) > batchMaxSize {
+		return nil, ErrBatchTooLarge
+	}
+
+	results := make([]BatchResult, len(reqs))
+	for i, req := range reqs {
+		u, err := s.Create(ctx, req)
+		results[i] = BatchResult{URL: u, Error: err}
+	}
+
+	return results, nil
+}
+
 func parseExpiresIn(s string) (time.Duration, error) {
 	unit := s[len(s)-1]
 	n, err := strconv.ParseInt(s[:len(s)-1], 10, 64)

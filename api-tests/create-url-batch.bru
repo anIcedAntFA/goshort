@@ -1,0 +1,44 @@
+meta {
+  name: Batch Create Short URLs
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/api/v1/urls/batch
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  X-API-Key: {{api_key}}
+}
+
+body:json {
+  {
+    "urls": [
+      {
+        "url": "https://a.com",
+        "custom_alias": "batch-a",
+        "expires_in": "7d"
+      },
+      {
+        "url": "https://b.com"
+      },
+      {
+        "url": "not-a-url"
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.summary.total: eq 3
+  res.body.summary.success: eq 2
+  res.body.summary.failed: eq 1
+  res.body.results[0].short_code: eq batch-a
+  res.body.results[1].short_code: isDefined
+  res.body.results[2].error: isDefined
+  res.body.results[2].error.code: eq invalid_url
+}

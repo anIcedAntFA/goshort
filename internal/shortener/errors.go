@@ -11,4 +11,6 @@ var (
 	ErrInvalidURL     = errors.New("invalid url")
 	ErrInvalidAlias   = errors.New("invalid alias")
 	ErrInvalidExpires = errors.New("invalid expires_in duration")
+	ErrBatchTooLarge  = errors.New("batch exceeds maximum of 50 items")
+	ErrBatchEmpty     = errors.New("batch must contain at least one item")
 )

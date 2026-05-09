@@ -62,11 +62,39 @@ func respondError(w http.ResponseWriter, err error) {
 			Code:    "invalid_expires",
 			Message: "The expires_in duration is invalid",
 		}})
+	case errors.Is(err, shortener.ErrBatchTooLarge):
+		respondJSON(w, http.StatusBadRequest, errorResponse{Error: errorDetail{
+			Code:    "batch_too_large",
+			Message: "Batch exceeds maximum of 50 items",
+		}})
+	case errors.Is(err, shortener.ErrBatchEmpty):
+		respondJSON(w, http.StatusBadRequest, errorResponse{Error: errorDetail{
+			Code:    "batch_empty",
+			Message: "Batch must contain at least one item",
+		}})
 	default:
 		slog.Error("internal server error", "error", err)
 		respondJSON(w, http.StatusInternalServerError, errorResponse{Error: errorDetail{
 			Code:    "internal_error",
 			Message: "An internal error occurred",
 		}})
+	}
+}
+
+// toErrorDetail converts an error into the JSON error detail used in batch responses.
+func toErrorDetail(err error) *errorDetail {
+	switch {
+	case errors.Is(err, shortener.ErrInvalidURL):
+		return &errorDetail{Code: "invalid_url", Message: "The URL format is invalid"}
+	case errors.Is(err, shortener.ErrAliasTaken):
+		return &errorDetail{Code: "alias_taken", Message: "The requested alias is already in use"}
+	case errors.Is(err, shortener.ErrReservedPath):
+		return &errorDetail{Code: "reserved_path", Message: "The alias is a reserved path"}
+	case errors.Is(err, shortener.ErrInvalidAlias):
+		return &errorDetail{Code: "invalid_alias", Message: "The alias format is invalid"}
+	case errors.Is(err, shortener.ErrInvalidExpires):
+		return &errorDetail{Code: "invalid_expires", Message: "The expires_in duration is invalid"}
+	default:
+		return &errorDetail{Code: "internal_error", Message: "An internal error occurred"}
 	}
 }

@@ -26,3 +26,10 @@ type ListOptions struct {
 	Page    int
 	PerPage int
 }
+
+// BatchResult holds the outcome of a single item in a CreateBatch call.
+// Exactly one of URL or Error is non-nil.
+type BatchResult struct {
+	URL   *URL
+	Error error
+}

@@ -14,4 +14,8 @@ type Service interface {
 	List(ctx context.Context, opts ListOptions) ([]URL, int, error)
 	// IncrementClicks atomically increments the click counter for a URL.
 	IncrementClicks(ctx context.Context, code string) error
+	// CreateBatch creates multiple shortened URLs in a single call.
+	// Per-item failures are returned inside BatchResult.Error; the top-level error
+	// is reserved for batch-wide validation (empty slice, exceeds cap).
+	CreateBatch(ctx context.Context, reqs []CreateRequest) ([]BatchResult, error)
 }

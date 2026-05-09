@@ -168,6 +168,82 @@ paths:
                   code: rate_limited
                   message: Too many requests. Please try again later.
 
+  /api/v1/urls/batch:
+    post:
+      summary: Batch create short URLs
+      operationId: batchCreateURLs
+      tags: [URLs]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchCreateURLRequest"
+            example:
+              urls:
+                - url: "https://a.com"
+                  custom_alias: "a-link"
+                  expires_in: "7d"
+                - url: "https://b.com"
+                - url: "not-a-url"
+      responses:
+        "200":
+          description: Batch results (partial success is possible)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchCreateURLResponse"
+              example:
+                results:
+                  - short_code: "a-link"
+                    short_url: "http://localhost:8080/a-link"
+                    original_url: "https://a.com"
+                    expires_at: "2025-07-01T00:00:00Z"
+                    created_at: "2025-06-01T12:00:00Z"
+                  - short_code: "k7Xm2p"
+                    short_url: "http://localhost:8080/k7Xm2p"
+                    original_url: "https://b.com"
+                    expires_at: null
+                    created_at: "2025-06-01T12:00:01Z"
+                  - error:
+                      code: invalid_url
+                      message: The URL format is invalid
+                summary:
+                  total: 3
+                  success: 2
+                  failed: 1
+        "400":
+          description: Batch is empty or exceeds the 50-item limit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                batch_empty:
+                  value:
+                    error:
+                      code: batch_empty
+                      message: Batch must contain at least one item
+                batch_too_large:
+                  value:
+                    error:
+                      code: batch_too_large
+                      message: Batch exceeds maximum of 50 items
+        "429":
+          description: Too many requests
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/urls/{code}:
     parameters:
       - name: code
@@ -327,6 +403,73 @@ paths:
 
 components:
   schemas:
+    BatchCreateURLRequest:
+      type: object
+      required: [urls]
+      properties:
+        urls:
+          type: array
+          description: List of URLs to shorten (1–50 items).
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/CreateURLRequest"
+
+    BatchItemResponse:
+      type: object
+      description: |
+        Outcome of a single item in a batch request.
+        On success, `short_code` / `short_url` / `original_url` are present.
+        On failure, only `error` is present.
+      properties:
+        short_code:
+          type: string
+          example: k7Xm2p
+        short_url:
+          type: string
+          format: uri
+          example: "http://localhost:8080/k7Xm2p"
+        original_url:
+          type: string
+          format: uri
+          example: "https://example.com"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-07-01T00:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-06-01T12:00:00Z"
+        error:
+          $ref: "#/components/schemas/ErrorDetail"
+
+    BatchSummary:
+      type: object
+      required: [total, success, failed]
+      properties:
+        total:
+          type: integer
+          example: 3
+        success:
+          type: integer
+          example: 2
+        failed:
+          type: integer
+          example: 1
+
+    BatchCreateURLResponse:
+      type: object
+      required: [results, summary]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchItemResponse"
+        summary:
+          $ref: "#/components/schemas/BatchSummary"
+
     CreateURLRequest:
       type: object
       required: [url]
@@ -444,34 +587,39 @@ components:
           type: integer
           example: 8
 
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          enum:
+            - invalid_url
+            - invalid_expires
+            - invalid_body
+            - invalid_alias
+            - alias_taken
+            - reserved_path
+            - not_found
+            - expired
+            - unauthorized
+            - rate_limited
+            - batch_empty
+            - batch_too_large
+            - internal_error
+          example: invalid_url
+        message:
+          type: string
+          description: Human-readable error description
+          example: The URL format is invalid
+
     ErrorResponse:
       type: object
       required: [error]
       properties:
         error:
-          type: object
-          required: [code, message]
-          properties:
-            code:
-              type: string
-              description: Machine-readable error code
-              enum:
-                - invalid_url
-                - invalid_expires
-                - invalid_body
-                - invalid_alias
-                - alias_taken
-                - reserved_path
-                - not_found
-                - expired
-                - unauthorized
-                - rate_limited
-                - internal_error
-              example: invalid_url
-            message:
-              type: string
-              description: Human-readable error description
-              example: The URL format is invalid
+          $ref: "#/components/schemas/ErrorDetail"
 
   securitySchemes:
     ApiKeyAuth:
