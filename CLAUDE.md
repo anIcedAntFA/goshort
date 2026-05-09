@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Phase 4 complete — MCP server shipped (stdio + Streamable HTTP on `/mcp`, 5 tools, 2 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
+**Current state:** Phase 5 complete — batch creation, QR codes, link previews, expiry update, and spam detection shipped (7 tools, 3 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
 
 ## Commands
 
@@ -31,6 +31,10 @@ make lint/fix                        # With auto-fix
 
 # Code generation
 sqlc generate                        # Regenerate type-safe Go from SQL
+
+# Migrations
+make migrate                         # Run goose migrations against ./data/goshort.db
+make migrate/status                  # Show applied/pending migrations
 
 # Docker
 docker compose up -d                 # Production stack (GoShort + Caddy)
@@ -62,6 +66,7 @@ internal/
 
 db/
 ├── schema.sql         # Table definitions
+├── migrations/        # goose versioned SQL migrations (embedded via go:embed)
 ├── queries.sql        # All SQL queries (sqlc input)
 └── sqlc.yaml          # sqlc config
 ```
@@ -80,6 +85,10 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 - **Logging:** `slog` stdlib only — zero dependencies.
 - **Auth:** API key with constant-time comparison (Phase 3). MCP `/mcp` endpoint uses its own `APIKeyMiddleware`, bypasses Chi rate limit middleware (MCP sessions are long-lived).
 - **MCP:** Official `modelcontextprotocol/go-sdk` v1.6. Dual transport: stdio (`--mcp`) for local Claude Code/Cursor, Streamable HTTP on `/mcp` (same port as REST API) for remote agents.
+- **Link previews:** `PreviewFetcher` interface (consumer-package pattern); `HTTPPreviewFetcher` fetches `<title>`/`<meta description>` on create (3 s timeout, 512 KB cap, fail-open, blocks private IPs). Use `NoopPreviewFetcher` in tests.
+- **Spam detection:** `URLChecker` interface; `SafeBrowsingChecker` calls Google Safe Browsing v4 — **fail-open**: any API error returns nil so URL creation is never blocked. `NoopChecker` used when no key is configured.
+- **Schema migrations:** goose embedded FS — `db/migrations/*.sql` versioned files applied automatically at server startup via `goose.Up`.
+- **Test-only constructors:** `export_test.go` (package `shortener`, not `shortener_test`) exposes internal fields to external test packages without polluting the public API.
 
 ## Phased Roadmap
 
@@ -90,7 +99,8 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | 3 | Auth, CLI (Cobra), rate limiting, Docker, Fly.io | ✅ v0.3.0 |
 | 3.5 | Fly.io deploy + Cloudflare DNS/CDN | ✅ goshort.app |
 | 4 | MCP server (official Go SDK, stdio + HTTP) | ✅ v0.4.0 |
-| 5+ | Analytics, spam detection, PostgreSQL, Redis counter | 🔲 |
+| 5 | Batch, QR codes, link previews, expiry update, spam detection | ✅ v0.5.0 |
+| 6+ | Analytics, PostgreSQL, Redis counter | 🔲 |
 
 ## Technology Stack
 
@@ -105,6 +115,9 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | Metrics | `prometheus/client_golang` |
 | Rate limiting | `golang.org/x/time/rate` |
 | MCP server | `modelcontextprotocol/go-sdk` (official, v1.6.0) |
+| Migrations | `pressly/goose/v3` (embedded FS, versioned SQL) |
+| QR codes | `skip2/go-qrcode` |
+| Spam detection | Google Safe Browsing Lookup API v4 (optional, fail-open) |
 | API testing | Bruno (`.bru` files in `api-tests/`) |
 
 ## Configuration
@@ -140,6 +153,9 @@ format = "json"
 
 [mcp]
 base_url = ""     # override for MCP responses; falls back to server.base_url
+
+[security]
+safe_browsing_api_key = ""  # empty = disabled; env: GOSHORT_SECURITY_SAFE_BROWSING_API_KEY
 ```
 
 ## Code Conventions
