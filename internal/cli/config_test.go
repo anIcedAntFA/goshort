@@ -1,9 +1,11 @@
-package main
+package cli_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/anIcedAntFA/goshort/internal/cli"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -18,7 +20,7 @@ api_key = "sk_test_abc"
 		t.Fatalf("write config: %v", err)
 	}
 
-	cfg := loadConfig(path)
+	cfg := cli.LoadConfig(path)
 	if cfg.ServerURL != "http://myserver:9090" {
 		t.Errorf("ServerURL = %q, want http://myserver:9090", cfg.ServerURL)
 	}
@@ -30,7 +32,7 @@ api_key = "sk_test_abc"
 func TestLoadConfig_MissingFile(t *testing.T) {
 	t.Parallel()
 
-	cfg := loadConfig("/nonexistent/path/goshort.toml")
+	cfg := cli.LoadConfig("/nonexistent/path/goshort.toml")
 	if cfg.ServerURL != "" {
 		t.Errorf("ServerURL = %q, want empty for missing file", cfg.ServerURL)
 	}
@@ -48,7 +50,7 @@ func TestLoadConfig_InvalidTOML(t *testing.T) {
 		t.Fatalf("write config: %v", err)
 	}
 
-	cfg := loadConfig(path)
+	cfg := cli.LoadConfig(path)
 	if cfg.ServerURL != "" || cfg.APIKey != "" {
 		t.Error("expected zero-value config for invalid TOML")
 	}
@@ -71,9 +73,9 @@ func TestResolveValue(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got := resolveValue(tc.values...)
+			got := cli.ResolveValue(tc.values...)
 			if got != tc.want {
-				t.Errorf("resolveValue(%v) = %q, want %q", tc.values, got, tc.want)
+				t.Errorf("ResolveValue(%v) = %q, want %q", tc.values, got, tc.want)
 			}
 		})
 	}

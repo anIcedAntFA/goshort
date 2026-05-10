@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,7 @@ func TestRunStats_Success(t *testing.T) { //nolint:paralleltest // mutates globa
 			t.Errorf("path = %s, want /api/v1/urls/abc123", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(URLDetail{
+		_ = json.NewEncoder(w).Encode(cli.URLDetail{
 			ShortCode:   "abc123",
 			ShortURL:    "http://localhost:8080/abc123",
 			OriginalURL: "https://example.com",

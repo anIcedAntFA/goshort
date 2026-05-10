@@ -1,4 +1,4 @@
-package shortener_test
+package safebrowsing_test
 
 import (
 	"context"
@@ -9,19 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/anIcedAntFA/goshort/internal/safebrowsing"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 )
 
-func TestNoopChecker(t *testing.T) {
-	t.Parallel()
-
-	c := shortener.NoopChecker{}
-	if err := c.Check(context.Background(), "https://evil.com"); err != nil {
-		t.Errorf("NoopChecker.Check = %v, want nil", err)
-	}
-}
-
-func TestSafeBrowsingChecker_SafeURL(t *testing.T) {
+func TestChecker_SafeURL(t *testing.T) {
 	t.Parallel()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -30,13 +22,13 @@ func TestSafeBrowsingChecker_SafeURL(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	checker := shortener.NewSafeBrowsingCheckerForTest(srv.URL, &http.Client{})
+	checker := safebrowsing.NewCheckerForTest(srv.URL, &http.Client{})
 	if err := checker.Check(context.Background(), "https://safe.example.com"); err != nil {
 		t.Errorf("Check(safe URL) = %v, want nil", err)
 	}
 }
 
-func TestSafeBrowsingChecker_UnsafeURL(t *testing.T) {
+func TestChecker_UnsafeURL(t *testing.T) {
 	t.Parallel()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -50,14 +42,14 @@ func TestSafeBrowsingChecker_UnsafeURL(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	checker := shortener.NewSafeBrowsingCheckerForTest(srv.URL, &http.Client{})
+	checker := safebrowsing.NewCheckerForTest(srv.URL, &http.Client{})
 	err := checker.Check(context.Background(), "https://evil.example.com")
 	if !errors.Is(err, shortener.ErrUnsafeURL) {
 		t.Errorf("Check(unsafe URL) = %v, want ErrUnsafeURL", err)
 	}
 }
 
-func TestSafeBrowsingChecker_APIError(t *testing.T) {
+func TestChecker_APIError(t *testing.T) {
 	t.Parallel()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -65,18 +57,16 @@ func TestSafeBrowsingChecker_APIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	checker := shortener.NewSafeBrowsingCheckerForTest(srv.URL, &http.Client{})
+	checker := safebrowsing.NewCheckerForTest(srv.URL, &http.Client{})
 	// Fail-open: API unavailability must not block URL creation.
 	if err := checker.Check(context.Background(), "https://example.com"); err != nil {
 		t.Errorf("Check(API 500) = %v, want nil (fail-open)", err)
 	}
 }
 
-func TestSafeBrowsingChecker_Timeout(t *testing.T) {
+func TestChecker_Timeout(t *testing.T) {
 	t.Parallel()
 
-	// unblock is closed by t.Cleanup to let the handler goroutine exit before
-	// srv.Close() waits for in-flight requests to finish.
 	unblock := make(chan struct{})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		select {
@@ -88,7 +78,7 @@ func TestSafeBrowsingChecker_Timeout(t *testing.T) {
 	t.Cleanup(func() { close(unblock); srv.Close() })
 
 	client := &http.Client{Timeout: 50 * time.Millisecond}
-	checker := shortener.NewSafeBrowsingCheckerForTest(srv.URL, client)
+	checker := safebrowsing.NewCheckerForTest(srv.URL, client)
 	// Fail-open: timeout must not block URL creation.
 	if err := checker.Check(context.Background(), "https://example.com"); err != nil {
 		t.Errorf("Check(timeout) = %v, want nil (fail-open)", err)

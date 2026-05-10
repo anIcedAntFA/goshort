@@ -11,3 +11,9 @@ type URLChecker interface {
 	// and nil returned so URL creation is not blocked.
 	Check(ctx context.Context, rawURL string) error
 }
+
+// NoopChecker always returns nil. Used when no API key is configured.
+type NoopChecker struct{}
+
+// Check implements URLChecker. Always returns nil (disabled).
+func (NoopChecker) Check(_ context.Context, _ string) error { return nil }

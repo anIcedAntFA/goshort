@@ -3,9 +3,6 @@ INSERT INTO urls (short_code, original_url, is_custom, expires_at, title, descri
 VALUES (?, ?, ?, ?, ?, ?)
 RETURNING *;
 
--- name: UpdateMetadata :one
-UPDATE urls SET title = ?, description = ? WHERE short_code = ? RETURNING *;
-
 -- name: GetByCode :one
 SELECT * FROM urls WHERE short_code = ?;
 

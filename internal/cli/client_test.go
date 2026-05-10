@@ -1,4 +1,4 @@
-package main
+package cli_test
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/anIcedAntFA/goshort/internal/cli"
 )
 
 func TestAPIClient_CreateURL(t *testing.T) {
@@ -23,7 +25,7 @@ func TestAPIClient_CreateURL(t *testing.T) {
 		if r.Header.Get("X-API-Key") != "test-key" {
 			t.Errorf("X-API-Key = %q, want test-key", r.Header.Get("X-API-Key"))
 		}
-		var req CreateRequest
+		var req cli.CreateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
@@ -31,7 +33,7 @@ func TestAPIClient_CreateURL(t *testing.T) {
 			t.Errorf("url = %q, want https://example.com", req.URL)
 		}
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(CreateResponse{
+		_ = json.NewEncoder(w).Encode(cli.CreateResponse{
 			ShortCode:   "abc123",
 			ShortURL:    "http://localhost:8080/abc123",
 			OriginalURL: "https://example.com",
@@ -40,8 +42,8 @@ func TestAPIClient_CreateURL(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := NewAPIClient(srv.URL, "test-key")
-	resp, err := client.CreateURL(context.Background(), CreateRequest{URL: "https://example.com"})
+	client := cli.NewAPIClient(srv.URL, "test-key")
+	resp, err := client.CreateURL(context.Background(), cli.CreateRequest{URL: "https://example.com"})
 	if err != nil {
 		t.Fatalf("CreateURL: %v", err)
 	}
@@ -58,15 +60,14 @@ func TestAPIClient_CreateURL_ErrorResponse(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusConflict)
-		_ = json.NewEncoder(w).Encode(apiError{Error: struct {
-			Code    string `json:"code"`
-			Message string `json:"message"`
-		}{Code: "alias_taken", Message: "The alias is taken"}})
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": map[string]string{"code": "alias_taken", "message": "The alias is taken"},
+		})
 	}))
 	defer srv.Close()
 
-	client := NewAPIClient(srv.URL, "test-key")
-	_, err := client.CreateURL(context.Background(), CreateRequest{URL: "https://example.com", CustomAlias: "taken"})
+	client := cli.NewAPIClient(srv.URL, "test-key")
+	_, err := client.CreateURL(context.Background(), cli.CreateRequest{URL: "https://example.com", CustomAlias: "taken"})
 	if err == nil {
 		t.Fatal("expected error for 409 response")
 	}
@@ -88,14 +89,14 @@ func TestAPIClient_ListURLs(t *testing.T) {
 		if r.URL.Query().Get("page") != "2" {
 			t.Errorf("page = %q, want 2", r.URL.Query().Get("page"))
 		}
-		_ = json.NewEncoder(w).Encode(ListResponse{
-			Data:       []URLDetail{{ShortCode: "abc", OriginalURL: "https://example.com"}},
-			Pagination: PaginationMeta{Page: 2, PerPage: 10, Total: 15, TotalPages: 2},
+		_ = json.NewEncoder(w).Encode(cli.ListResponse{
+			Data:       []cli.URLDetail{{ShortCode: "abc", OriginalURL: "https://example.com"}},
+			Pagination: cli.PaginationMeta{Page: 2, PerPage: 10, Total: 15, TotalPages: 2},
 		})
 	}))
 	defer srv.Close()
 
-	client := NewAPIClient(srv.URL, "")
+	client := cli.NewAPIClient(srv.URL, "")
 	resp, err := client.ListURLs(context.Background(), 2, 10)
 	if err != nil {
 		t.Fatalf("ListURLs: %v", err)
@@ -115,7 +116,7 @@ func TestAPIClient_GetURL(t *testing.T) {
 		if r.URL.Path != "/api/v1/urls/abc123" {
 			t.Errorf("path = %s, want /api/v1/urls/abc123", r.URL.Path)
 		}
-		_ = json.NewEncoder(w).Encode(URLDetail{
+		_ = json.NewEncoder(w).Encode(cli.URLDetail{
 			ShortCode:   "abc123",
 			OriginalURL: "https://example.com",
 			ClickCount:  7,
@@ -123,7 +124,7 @@ func TestAPIClient_GetURL(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := NewAPIClient(srv.URL, "")
+	client := cli.NewAPIClient(srv.URL, "")
 	u, err := client.GetURL(context.Background(), "abc123")
 	if err != nil {
 		t.Fatalf("GetURL: %v", err)
@@ -149,7 +150,7 @@ func TestAPIClient_DeleteURL(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := NewAPIClient(srv.URL, "")
+	client := cli.NewAPIClient(srv.URL, "")
 	if err := client.DeleteURL(context.Background(), "abc123"); err != nil {
 		t.Fatalf("DeleteURL: %v", err)
 	}
@@ -162,10 +163,10 @@ func TestAPIClient_ConnectionError(t *testing.T) {
 	t.Parallel()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
-	srv.Close() // closed immediately — all connections will be refused
+	srv.Close()
 
-	client := NewAPIClient(srv.URL, "")
-	_, err := client.CreateURL(context.Background(), CreateRequest{URL: "https://example.com"})
+	client := cli.NewAPIClient(srv.URL, "")
+	_, err := client.CreateURL(context.Background(), cli.CreateRequest{URL: "https://example.com"})
 	if err == nil {
 		t.Fatal("expected error for closed server")
 	}
@@ -183,8 +184,8 @@ func TestAPIClient_NonJSONError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := NewAPIClient(srv.URL, "")
-	_, err := client.CreateURL(context.Background(), CreateRequest{URL: "https://example.com"})
+	client := cli.NewAPIClient(srv.URL, "")
+	_, err := client.CreateURL(context.Background(), cli.CreateRequest{URL: "https://example.com"})
 	if err == nil {
 		t.Fatal("expected error for 500 response with non-JSON body")
 	}
@@ -205,7 +206,7 @@ func TestAPIClient_APIKeyHeader(t *testing.T) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
 		defer srv.Close()
-		_ = NewAPIClient(srv.URL, "my-key").DeleteURL(context.Background(), "x")
+		_ = cli.NewAPIClient(srv.URL, "my-key").DeleteURL(context.Background(), "x")
 	})
 
 	t.Run("omits key when empty", func(t *testing.T) {
@@ -217,6 +218,6 @@ func TestAPIClient_APIKeyHeader(t *testing.T) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
 		defer srv.Close()
-		_ = NewAPIClient(srv.URL, "").DeleteURL(context.Background(), "x")
+		_ = cli.NewAPIClient(srv.URL, "").DeleteURL(context.Background(), "x")
 	})
 }

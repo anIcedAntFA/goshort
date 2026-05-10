@@ -360,7 +360,7 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "image/png")
-	_, _ = w.Write(png) //nolint:gosec // binary PNG data; Content-Type is image/png, not HTML
+	_, _ = w.Write(png) //nolint:errcheck,gosec // response already committed; write failure is unrecoverable
 }
 
 func parseIntQuery(r *http.Request, key string, defaultVal int) int {

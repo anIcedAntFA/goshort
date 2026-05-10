@@ -53,20 +53,17 @@ archives:
       - goos: windows
         formats: [zip]
 
-dockers_v2:
-  - images:
-      - "ghcr.io/anicedantfa/goshort"
-    tags:
-      - "{{ .Tag }}"
-      - latest
+dockers:
+  - image_templates:
+      - "ghcr.io/anicedantfa/goshort:{{ .Tag }}"
+      - "ghcr.io/anicedantfa/goshort:latest"
     dockerfile: Dockerfile.goreleaser
     extra_files:
       - docs/openapi.yaml
     ids:
       - server
-    platforms:
-      - linux/amd64
-      - linux/arm64
+    build_flag_templates:
+      - "--platform=linux/amd64"
 
 checksum:
   name_template: "checksums.txt"

@@ -1,6 +1,10 @@
-package main
+package cli_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/anIcedAntFA/goshort/internal/cli"
+)
 
 func TestFormatTime(t *testing.T) {
 	t.Parallel()
@@ -20,9 +24,9 @@ func TestFormatTime(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got := formatTime(tc.input)
+			got := cli.FormatTime(tc.input)
 			if got != tc.want {
-				t.Errorf("formatTime(%q) = %q, want %q", tc.input, got, tc.want)
+				t.Errorf("FormatTime(%q) = %q, want %q", tc.input, got, tc.want)
 			}
 		})
 	}

@@ -18,11 +18,20 @@ import (
 	"github.com/anIcedAntFA/goshort/internal/config"
 	"github.com/anIcedAntFA/goshort/internal/encoder"
 	mcpserver "github.com/anIcedAntFA/goshort/internal/mcp"
+	"github.com/anIcedAntFA/goshort/internal/preview"
+	"github.com/anIcedAntFA/goshort/internal/safebrowsing"
 	"github.com/anIcedAntFA/goshort/internal/shortener"
 	"github.com/anIcedAntFA/goshort/internal/storage"
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	configPath := flag.String("config", "", "path to TOML config file (default: env vars + built-in defaults)")
 	mcpMode := flag.Bool("mcp", false, "run as MCP server over stdio")
 	mcpHTTP := flag.String("mcp-http", "", "run MCP server over Streamable HTTP on this address (e.g. :9090)")
@@ -30,31 +39,27 @@ func main() {
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "load config: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("load config: %w", err)
 	}
 	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "invalid config: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("invalid config: %w", err)
 	}
 
-	setupLogger(cfg.Logging)
+	config.SetupLogger(cfg.Logging)
 
 	if err := os.MkdirAll(filepath.Dir(cfg.Storage.SQLitePath), 0o750); err != nil {
-		slog.Error("create data dir", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("create data dir: %w", err)
 	}
 
 	store, err := storage.NewSQLiteStorage(context.Background(), cfg.Storage.SQLitePath)
 	if err != nil {
-		slog.Error("open storage", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("open storage: %w", err)
 	}
+	defer func() { _ = store.Close() }()
 
 	enc, err := encoder.NewSqidsEncoder(uint8(cfg.Shortener.CodeLength)) //nolint:gosec // Validate() ensures [1,255]
 	if err != nil {
-		slog.Error("create encoder", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("create encoder: %w", err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -68,28 +73,26 @@ func main() {
 
 	var checker shortener.URLChecker
 	if cfg.Security.SafeBrowsingAPIKey != "" {
-		checker = shortener.NewSafeBrowsingChecker(cfg.Security.SafeBrowsingAPIKey)
+		checker = safebrowsing.NewChecker(cfg.Security.SafeBrowsingAPIKey)
 		slog.Info("safe browsing enabled")
 	} else {
 		checker = shortener.NoopChecker{}
 	}
 
-	svc := shortener.NewService(store, enc, shortener.NewHTTPPreviewFetcher(), checker)
+	svc := shortener.NewService(store, enc, preview.NewHTTPFetcher(), checker)
 
 	if *mcpMode || *mcpHTTP != "" {
 		if err := runMCPMode(ctx, cfg, svc, *mcpHTTP); err != nil {
 			slog.Error("mcp server error", "error", err)
 		}
-		return
+		return nil
 	}
 
-	go startCleanupJob(ctx, store)
+	go storage.StartCleanupJob(ctx, store)
 	runHTTPServer(ctx, cfg, svc)
 
-	if err := store.Close(); err != nil {
-		slog.Error("close storage", "error", err)
-	}
 	slog.Info("server stopped")
+	return nil
 }
 
 func runMCPMode(ctx context.Context, cfg *config.Config, svc shortener.Service, httpAddr string) error {
@@ -106,7 +109,7 @@ func runMCPMode(ctx context.Context, cfg *config.Config, svc shortener.Service, 
 }
 
 func runHTTPServer(ctx context.Context, cfg *config.Config, svc shortener.Service) {
-	c := buildCache(cfg.Cache)
+	c := cache.Build(cfg.Cache.Driver, cfg.Cache.RedisURL)
 	h := api.NewHandler(svc, c, slog.Default(), cfg.Server.BaseURL)
 	router := api.NewRouter(h, api.RouterConfig{
 		APIKey:           cfg.Auth.APIKey,
@@ -145,64 +148,5 @@ func runHTTPServer(ctx context.Context, cfg *config.Config, svc shortener.Servic
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("shutdown error", "error", err)
-	}
-}
-
-func setupLogger(cfg config.LoggingConfig) {
-	logLevel := slog.LevelInfo
-	switch cfg.Level {
-	case "debug":
-		logLevel = slog.LevelDebug
-	case "warn":
-		logLevel = slog.LevelWarn
-	case "error":
-		logLevel = slog.LevelError
-	}
-
-	opts := &slog.HandlerOptions{Level: logLevel}
-	var handler slog.Handler
-	if cfg.Format == "text" {
-		handler = slog.NewTextHandler(os.Stdout, opts)
-	} else {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
-	}
-	slog.SetDefault(slog.New(handler))
-}
-
-func buildCache(cfg config.CacheConfig) shortener.Cache {
-	switch cfg.Driver {
-	case "memory":
-		return cache.NewMemoryCache()
-	case "redis":
-		rc, err := cache.NewRedisCache(cfg.RedisURL)
-		if err != nil {
-			slog.Warn("redis unavailable, falling back to noop cache", "error", err)
-			return cache.NewNoopCache()
-		}
-		return rc
-	default:
-		return cache.NewNoopCache()
-	}
-}
-
-func startCleanupJob(ctx context.Context, store shortener.Storage) {
-	ticker := time.NewTicker(time.Hour)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			slog.Info("cleanup job stopped")
-			return
-		case <-ticker.C:
-			deleted, err := store.DeleteExpired(ctx, 1000)
-			if err != nil {
-				slog.Error("cleanup failed", "error", err)
-				continue
-			}
-			if deleted > 0 {
-				slog.Info("cleanup completed", "deleted", deleted)
-			}
-		}
 	}
 }

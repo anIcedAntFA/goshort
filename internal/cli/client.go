@@ -1,4 +1,7 @@
-package main
+// Package cli provides the HTTP API client and configuration helpers for the
+// GoShort CLI. Keeping these in an internal package allows test files outside
+// package main to import them without polluting the public API.
+package cli
 
 import (
 	"bytes"
@@ -27,14 +30,16 @@ func NewAPIClient(baseURL, key string) *APIClient {
 	}
 }
 
-// Request/response types — defined here so cmd/cli has no internal/ imports.
+// Request/response types mirror the GoShort REST API JSON shapes.
 
+// CreateRequest is the payload for POST /api/v1/urls.
 type CreateRequest struct {
 	URL         string `json:"url"`
 	CustomAlias string `json:"custom_alias,omitempty"`
 	ExpiresIn   string `json:"expires_in,omitempty"`
 }
 
+// CreateResponse is returned by POST /api/v1/urls.
 type CreateResponse struct {
 	ShortCode   string  `json:"short_code"`
 	ShortURL    string  `json:"short_url"`
@@ -43,6 +48,7 @@ type CreateResponse struct {
 	CreatedAt   string  `json:"created_at"`
 }
 
+// URLDetail is the full URL record returned by GET /api/v1/urls/{code}.
 type URLDetail struct {
 	ShortCode   string  `json:"short_code"`
 	ShortURL    string  `json:"short_url"`
@@ -53,11 +59,13 @@ type URLDetail struct {
 	ClickCount  int64   `json:"click_count"`
 }
 
+// ListResponse is returned by GET /api/v1/urls.
 type ListResponse struct {
 	Data       []URLDetail    `json:"data"`
 	Pagination PaginationMeta `json:"pagination"`
 }
 
+// PaginationMeta carries page/total metadata in list responses.
 type PaginationMeta struct {
 	Page       int `json:"page"`
 	PerPage    int `json:"per_page"`

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -24,11 +25,11 @@ func TestRunShorten_Stdin(t *testing.T) { //nolint:paralleltest // mutates os.St
 
 	var gotURL string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req CreateRequest
+		var req cli.CreateRequest
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		gotURL = req.URL
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(CreateResponse{
+		_ = json.NewEncoder(w).Encode(cli.CreateResponse{
 			ShortCode:   "xyz999",
 			ShortURL:    "http://localhost/xyz999",
 			OriginalURL: req.URL,

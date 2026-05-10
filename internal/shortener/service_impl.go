@@ -26,6 +26,13 @@ func NewService(store Storage, enc Encoder, preview PreviewFetcher, checker URLC
 }
 
 // Create validates the request, resolves the short code, and persists the URL.
+//
+// Error wrapping convention:
+//   - Validation errors (ValidateURL, ValidateAlias, ValidateExpiresIn) are returned
+//     as-is — they carry sentinel values (ErrInvalidURL, etc.) and already include
+//     context from the validator.
+//   - Infrastructure errors (storage, encoder) are wrapped with call-site context
+//     (e.g. "create url: increment counter: %w") for debugging.
 func (s *ServiceImpl) Create(ctx context.Context, req CreateRequest) (*URL, error) {
 	if err := ValidateURL(req.URL); err != nil {
 		return nil, err

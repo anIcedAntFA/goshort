@@ -442,7 +442,8 @@ fly launch && fly deploy
 | 3     | Auth, rate limiting, CLI, Docker, release infra | ✅ v0.3.0          |
 | 3.5   | Deploy — Fly.io + Cloudflare CDN                | ✅ [goshort.app](https://goshort.app) |
 | 4     | MCP server — Claude / Cursor integration        | ✅ v0.4.0          |
-| 5+    | Analytics, PostgreSQL, Redis counter, AI agent  | 🔲                 |
+| 5     | Batch, QR codes, link previews, spam detection  | ✅ v0.5.0          |
+| 6+    | Analytics, PostgreSQL, Redis counter            | 🔲                 |
 
 Each phase ships a working, deployable product.
 
@@ -457,3 +458,4 @@ Each phase ships a working, deployable product.
 ## 📄 License
 
 MIT — see [LICENSE](LICENSE).
+

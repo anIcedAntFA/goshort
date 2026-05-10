@@ -84,11 +84,8 @@ func (s *Server) handleURLByCode(
 		OriginalURL: url.OriginalURL,
 		IsCustom:    url.IsCustom,
 		ClickCount:  url.ClickCount,
-		CreatedAt:   url.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
-	}
-	if url.ExpiresAt != nil {
-		t := url.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
-		detail.ExpiresAt = &t
+		CreatedAt:   formatUTC(url.CreatedAt),
+		ExpiresAt:   formatUTCPtr(url.ExpiresAt),
 	}
 
 	b, err := json.Marshal(detail)
