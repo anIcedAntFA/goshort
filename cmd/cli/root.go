@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -41,16 +42,16 @@ func initConfig() {
 		}
 	}
 
-	cfg := loadConfig(configPath)
+	cfg := cli.LoadConfig(configPath)
 
 	// Resolution: flag > env > config > default
-	serverURL = resolveValue(
+	serverURL = cli.ResolveValue(
 		flagString("server"),
 		os.Getenv("GOSHORT_SERVER_URL"),
 		cfg.ServerURL,
 		"http://localhost:8080",
 	)
-	apiKey = resolveValue(
+	apiKey = cli.ResolveValue(
 		flagString("api-key"),
 		os.Getenv("GOSHORT_API_KEY"),
 		cfg.APIKey,
@@ -64,16 +65,6 @@ func Execute() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-}
-
-// resolveValue returns the first non-empty value from the list.
-func resolveValue(values ...string) string {
-	for _, v := range values {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
 }
 
 // flagString returns the value of a persistent flag, or "" if not set.

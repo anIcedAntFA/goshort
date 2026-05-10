@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-10
+
+### Security
+
+- **SSRF prevention** — preview fetcher validates resolved DNS IPs against private
+  network ranges, not just literal hostnames
+- **Open Graph support** — preview metadata parses `og:title` / `og:description`
+  with HTML fallback
+
+### Fixed
+
+- GoReleaser Docker config updated from v1 `dockers_v2` to v2 `dockers`
+- GitHub Actions goreleaser version pinned to `~> v2` (was `latest`)
+- `lefthook.yml` commit-msg hook uses POSIX `grep -E` (fixes macOS)
+- Removed dead `UpdateMetadata` sqlc query
+
+### Changed
+
+- `HTTPPreviewFetcher` moved to `internal/preview/`
+- `SafeBrowsingChecker` moved to `internal/safebrowsing/`
+- `APIClient` and `CLIConfig` extracted to `internal/cli/`
+- `setupLogger` moved to `internal/config/`, `buildCache` to `internal/cache/`,
+  `startCleanupJob` to `internal/storage/`
+- `cmd/server/main.go` refactored to `func run() error` (~100 lines, pure wiring)
+- MCP time formatting deduplicated via `formatUTC` / `formatUTCPtr` helpers
+- Test files split by concern; integration tests added with real SQLite
+- Makefile reorganized; added `make ci` and `make test/unit`
+
 ## [0.5.0] - 2026-05-10
 
 ### Added
@@ -185,7 +213,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/anIcedAntFA/goshort/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/anIcedAntFA/goshort/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/anIcedAntFA/goshort/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/anIcedAntFA/goshort/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/anIcedAntFA/goshort/compare/v0.2.1...v0.3.0

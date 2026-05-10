@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,7 @@ func init() {
 
 func runStats(cmd *cobra.Command, args []string) error {
 	code := args[0]
-	client := NewAPIClient(serverURL, apiKey)
+	client := cli.NewAPIClient(serverURL, apiKey)
 	u, err := client.GetURL(cmd.Context(), code)
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func runStats(cmd *cobra.Command, args []string) error {
 	}
 	expires := "never"
 	if u.ExpiresAt != nil {
-		expires = formatTime(*u.ExpiresAt)
+		expires = cli.FormatTime(*u.ExpiresAt)
 	}
 
 	fmt.Printf("  Code:       %s\n", u.ShortCode)
@@ -45,7 +46,7 @@ func runStats(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Short URL:  %s\n", u.ShortURL)
 	fmt.Printf("  Custom:     %s\n", custom)
 	fmt.Printf("  Clicks:     %d\n", u.ClickCount)
-	fmt.Printf("  Created:    %s\n", formatTime(u.CreatedAt))
+	fmt.Printf("  Created:    %s\n", cli.FormatTime(u.CreatedAt))
 	fmt.Printf("  Expires:    %s\n", expires)
 	return nil
 }

@@ -38,11 +38,8 @@ func (s *Server) handleShortenURL(
 		ShortCode:   url.ShortCode,
 		ShortURL:    fmt.Sprintf("%s/%s", s.baseURL, url.ShortCode),
 		OriginalURL: url.OriginalURL,
-		CreatedAt:   url.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
-	}
-	if url.ExpiresAt != nil {
-		t := url.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
-		out.ExpiresAt = &t
+		CreatedAt:   formatUTC(url.CreatedAt),
+		ExpiresAt:   formatUTCPtr(url.ExpiresAt),
 	}
 	return nil, out, nil
 }
@@ -96,19 +93,15 @@ func (s *Server) handleListURLs(
 
 	items := make([]listURLItem, len(urls))
 	for i, u := range urls {
-		item := listURLItem{
+		items[i] = listURLItem{
 			ShortCode:   u.ShortCode,
 			ShortURL:    fmt.Sprintf("%s/%s", s.baseURL, u.ShortCode),
 			OriginalURL: u.OriginalURL,
 			IsCustom:    u.IsCustom,
 			ClickCount:  u.ClickCount,
-			CreatedAt:   u.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+			CreatedAt:   formatUTC(u.CreatedAt),
+			ExpiresAt:   formatUTCPtr(u.ExpiresAt),
 		}
-		if u.ExpiresAt != nil {
-			t := u.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
-			item.ExpiresAt = &t
-		}
-		items[i] = item
 	}
 
 	totalPages := (total + perPage - 1) / perPage
@@ -154,11 +147,8 @@ func (s *Server) handleGetURLStats(
 		OriginalURL: url.OriginalURL,
 		IsCustom:    url.IsCustom,
 		ClickCount:  url.ClickCount,
-		CreatedAt:   url.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
-	}
-	if url.ExpiresAt != nil {
-		t := url.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
-		out.ExpiresAt = &t
+		CreatedAt:   formatUTC(url.CreatedAt),
+		ExpiresAt:   formatUTCPtr(url.ExpiresAt),
 	}
 	return nil, out, nil
 }
@@ -246,17 +236,13 @@ func (s *Server) handleBatchShortenURLs(
 			out.Results[i] = batchResultItem{Error: toBatchItemError(r.Error)}
 			out.Summary.Failed++
 		} else {
-			item := batchResultItem{
+			out.Results[i] = batchResultItem{
 				ShortCode:   r.URL.ShortCode,
 				ShortURL:    fmt.Sprintf("%s/%s", s.baseURL, r.URL.ShortCode),
 				OriginalURL: r.URL.OriginalURL,
-				CreatedAt:   r.URL.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
+				CreatedAt:   formatUTC(r.URL.CreatedAt),
+				ExpiresAt:   formatUTCPtr(r.URL.ExpiresAt),
 			}
-			if r.URL.ExpiresAt != nil {
-				t := r.URL.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
-				item.ExpiresAt = &t
-			}
-			out.Results[i] = item
 			out.Summary.Success++
 		}
 	}
@@ -292,11 +278,8 @@ func (s *Server) handleUpdateURL(
 		OriginalURL: url.OriginalURL,
 		IsCustom:    url.IsCustom,
 		ClickCount:  url.ClickCount,
-		CreatedAt:   url.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
-	}
-	if url.ExpiresAt != nil {
-		t := url.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
-		out.ExpiresAt = &t
+		CreatedAt:   formatUTC(url.CreatedAt),
+		ExpiresAt:   formatUTCPtr(url.ExpiresAt),
 	}
 	return nil, out, nil
 }

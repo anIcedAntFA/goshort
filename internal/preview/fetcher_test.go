@@ -1,4 +1,4 @@
-package shortener_test
+package preview_test
 
 import (
 	"context"
@@ -7,22 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anIcedAntFA/goshort/internal/shortener"
+	"github.com/anIcedAntFA/goshort/internal/preview"
 )
 
-func TestNoopPreviewFetcher(t *testing.T) {
-	t.Parallel()
-	f := shortener.NoopPreviewFetcher{}
-	title, desc, err := f.Fetch(context.Background(), "https://example.com")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if title != "" || desc != "" {
-		t.Errorf("want empty strings, got title=%q desc=%q", title, desc)
-	}
-}
-
-func TestHTTPPreviewFetcher(t *testing.T) {
+func TestHTTPFetcher(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -88,6 +76,42 @@ func TestHTTPPreviewFetcher(t *testing.T) {
 			wantTitle: "CaseTitle",
 			wantDesc:  "Case Test",
 		},
+		{
+			name: "og tags take priority",
+			handler: func(w http.ResponseWriter, _ *http.Request) {
+				_, _ = w.Write([]byte(`<html><head>
+					<title>HTML Title</title>
+					<meta name="description" content="HTML desc">
+					<meta property="og:title" content="Clean OG Title">
+					<meta property="og:description" content="OG description">
+				</head><body></body></html>`))
+			},
+			wantTitle: "Clean OG Title",
+			wantDesc:  "OG description",
+		},
+		{
+			name: "fallback to html when og missing",
+			handler: func(w http.ResponseWriter, _ *http.Request) {
+				_, _ = w.Write([]byte(`<html><head>
+					<title>HTML Title</title>
+					<meta name="description" content="HTML desc">
+				</head><body></body></html>`))
+			},
+			wantTitle: "HTML Title",
+			wantDesc:  "HTML desc",
+		},
+		{
+			name: "og title only with html description fallback",
+			handler: func(w http.ResponseWriter, _ *http.Request) {
+				_, _ = w.Write([]byte(`<html><head>
+					<title>HTML Title</title>
+					<meta name="description" content="HTML Desc">
+					<meta property="og:title" content="OG Only">
+				</head><body></body></html>`))
+			},
+			wantTitle: "OG Only",
+			wantDesc:  "HTML Desc",
+		},
 	}
 
 	for _, tc := range tests {
@@ -96,8 +120,7 @@ func TestHTTPPreviewFetcher(t *testing.T) {
 			srv := httptest.NewServer(tc.handler)
 			defer srv.Close()
 
-			// Use ForTest variant so loopback httptest server is not blocked.
-			f := shortener.NewHTTPPreviewFetcherForTest(http.DefaultClient)
+			f := preview.NewHTTPFetcherForTest(http.DefaultClient)
 			title, desc, err := f.Fetch(context.Background(), srv.URL)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -112,33 +135,7 @@ func TestHTTPPreviewFetcher(t *testing.T) {
 	}
 }
 
-func TestHTTPPreviewFetcher_PrivateHost(t *testing.T) {
-	t.Parallel()
-
-	privateURLs := []string{
-		"http://localhost/page",
-		"http://127.0.0.1/page",
-		"http://192.168.1.1/page",
-		"http://10.0.0.1/page",
-	}
-
-	// Production fetcher — private check enabled.
-	f := shortener.NewHTTPPreviewFetcher()
-	for _, u := range privateURLs {
-		t.Run(u, func(t *testing.T) {
-			t.Parallel()
-			title, desc, err := f.Fetch(context.Background(), u)
-			if err != nil {
-				t.Fatalf("want nil error, got %v", err)
-			}
-			if title != "" || desc != "" {
-				t.Errorf("want empty for private host, got title=%q desc=%q", title, desc)
-			}
-		})
-	}
-}
-
-func TestHTTPPreviewFetcher_Timeout(t *testing.T) {
+func TestHTTPFetcher_Timeout(t *testing.T) {
 	t.Parallel()
 
 	slowSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,9 +147,8 @@ func TestHTTPPreviewFetcher_Timeout(t *testing.T) {
 	}))
 	defer slowSrv.Close()
 
-	// Use ForTest variant (loopback) but with a very short timeout to trigger timeout path.
 	shortClient := &http.Client{Timeout: 50 * time.Millisecond}
-	f := shortener.NewHTTPPreviewFetcherForTest(shortClient)
+	f := preview.NewHTTPFetcherForTest(shortClient)
 
 	title, desc, err := f.Fetch(context.Background(), slowSrv.URL)
 	if err != nil {
@@ -160,5 +156,22 @@ func TestHTTPPreviewFetcher_Timeout(t *testing.T) {
 	}
 	if title != "" || desc != "" {
 		t.Errorf("want empty on timeout, got title=%q desc=%q", title, desc)
+	}
+}
+
+func TestSafeDialer_RejectsPrivateIPs(t *testing.T) {
+	t.Parallel()
+
+	f := preview.NewHTTPFetcher()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	// Attempt to fetch a URL resolving to localhost — should be blocked by safe dialer.
+	title, desc, err := f.Fetch(ctx, "http://127.0.0.1:9/")
+	if err != nil {
+		t.Fatalf("Fetch must swallow errors, got %v", err)
+	}
+	if title != "" || desc != "" {
+		t.Errorf("want empty for private IP, got title=%q desc=%q", title, desc)
 	}
 }

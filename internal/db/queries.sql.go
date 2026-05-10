@@ -207,30 +207,3 @@ func (q *Queries) UpdateExpiry(ctx context.Context, arg UpdateExpiryParams) (Url
 	)
 	return i, err
 }
-
-const updateMetadata = `-- name: UpdateMetadata :one
-UPDATE urls SET title = ?, description = ? WHERE short_code = ? RETURNING id, short_code, original_url, is_custom, created_at, expires_at, click_count, title, description
-`
-
-type UpdateMetadataParams struct {
-	Title       string
-	Description string
-	ShortCode   string
-}
-
-func (q *Queries) UpdateMetadata(ctx context.Context, arg UpdateMetadataParams) (Url, error) {
-	row := q.db.QueryRowContext(ctx, updateMetadata, arg.Title, arg.Description, arg.ShortCode)
-	var i Url
-	err := row.Scan(
-		&i.ID,
-		&i.ShortCode,
-		&i.OriginalUrl,
-		&i.IsCustom,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-		&i.ClickCount,
-		&i.Title,
-		&i.Description,
-	)
-	return i, err
-}

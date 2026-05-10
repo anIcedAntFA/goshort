@@ -1,4 +1,5 @@
-package shortener
+// Package safebrowsing wraps the Google Safe Browsing Lookup API v4.
+package safebrowsing
 
 import (
 	"bytes"
@@ -8,6 +9,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/anIcedAntFA/goshort/internal/shortener"
 )
 
 const (
@@ -15,26 +18,32 @@ const (
 	safeBrowsingTimeout  = 2 * time.Second
 )
 
-// NoopChecker always returns nil. Used when no API key is configured.
-type NoopChecker struct{}
+var _ shortener.URLChecker = (*Checker)(nil)
 
-// Check implements URLChecker. Always returns nil (disabled).
-func (NoopChecker) Check(_ context.Context, _ string) error { return nil }
-
-// SafeBrowsingChecker calls the Google Safe Browsing Lookup API v4.
+// Checker calls the Google Safe Browsing Lookup API v4.
 // Fails open: any transport or API error returns nil so URL creation is not blocked.
-type SafeBrowsingChecker struct {
+type Checker struct {
 	apiKey   string
 	client   *http.Client
 	endpoint string
 }
 
-// NewSafeBrowsingChecker creates a checker backed by the Google Safe Browsing API.
-func NewSafeBrowsingChecker(apiKey string) *SafeBrowsingChecker {
-	return &SafeBrowsingChecker{
+// NewChecker creates a Checker backed by the Google Safe Browsing API.
+func NewChecker(apiKey string) *Checker {
+	return &Checker{
 		apiKey:   apiKey,
 		client:   &http.Client{Timeout: safeBrowsingTimeout},
 		endpoint: safeBrowsingEndpoint,
+	}
+}
+
+// NewCheckerForTest returns a Checker that targets endpoint instead of the
+// Google Safe Browsing API, for use in unit tests.
+func NewCheckerForTest(endpoint string, client *http.Client) *Checker {
+	return &Checker{
+		apiKey:   "test-key",
+		client:   client,
+		endpoint: endpoint,
 	}
 }
 
@@ -65,7 +74,7 @@ type sbResponse struct {
 
 // Check calls the Safe Browsing API. Returns ErrUnsafeURL if the URL is flagged,
 // nil for safe URLs, and nil (fail-open) for any API or network error.
-func (c *SafeBrowsingChecker) Check(ctx context.Context, rawURL string) error {
+func (c *Checker) Check(ctx context.Context, rawURL string) error {
 	payload := sbRequest{
 		Client: sbClient{ClientID: "goshort", ClientVersion: "0.5.0"},
 		ThreatInfo: sbThreatInfo{
@@ -109,7 +118,7 @@ func (c *SafeBrowsingChecker) Check(ctx context.Context, rawURL string) error {
 	}
 
 	if len(sbResp.Matches) > 0 {
-		return fmt.Errorf("safe browsing check %q: %w", rawURL, ErrUnsafeURL)
+		return fmt.Errorf("safe browsing check %q: %w", rawURL, shortener.ErrUnsafeURL)
 	}
 
 	return nil

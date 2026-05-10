@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ func init() {
 
 func runDelete(cmd *cobra.Command, args []string) error {
 	code := args[0]
-	client := NewAPIClient(serverURL, apiKey)
+	client := cli.NewAPIClient(serverURL, apiKey)
 	if err := client.DeleteURL(cmd.Context(), code); err != nil {
 		return err
 	}

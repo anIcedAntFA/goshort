@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
-	"time"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +27,7 @@ func runList(cmd *cobra.Command, _ []string) error {
 	page, _ := cmd.Flags().GetInt("page")
 	perPage, _ := cmd.Flags().GetInt("per-page")
 
-	client := NewAPIClient(serverURL, apiKey)
+	client := cli.NewAPIClient(serverURL, apiKey)
 	resp, err := client.ListURLs(cmd.Context(), page, perPage)
 	if err != nil {
 		return err
@@ -47,10 +46,10 @@ func runList(cmd *cobra.Command, _ []string) error {
 	fmt.Fprintln(w, "CODE\tORIGINAL URL\tCLICKS\tCREATED\tEXPIRES")
 
 	for _, u := range resp.Data {
-		created := formatTime(u.CreatedAt)
+		created := cli.FormatTime(u.CreatedAt)
 		expires := "never"
 		if u.ExpiresAt != nil {
-			expires = formatTime(*u.ExpiresAt)
+			expires = cli.FormatTime(*u.ExpiresAt)
 		}
 		originalURL := u.OriginalURL
 		if len(originalURL) > 50 {
@@ -65,12 +64,4 @@ func runList(cmd *cobra.Command, _ []string) error {
 	p := resp.Pagination
 	fmt.Printf("\nPage %d of %d  (%d total)\n", p.Page, p.TotalPages, p.Total)
 	return nil
-}
-
-func formatTime(s string) string {
-	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return strings.TrimSuffix(s, "Z")
-	}
-	return t.UTC().Format("2006-01-02 15:04")
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anIcedAntFA/goshort/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -40,8 +41,8 @@ func runShorten(cmd *cobra.Command, args []string) error {
 	alias, _ := cmd.Flags().GetString("alias")
 	expires, _ := cmd.Flags().GetString("expires")
 
-	client := NewAPIClient(serverURL, apiKey)
-	resp, err := client.CreateURL(cmd.Context(), CreateRequest{
+	client := cli.NewAPIClient(serverURL, apiKey)
+	resp, err := client.CreateURL(cmd.Context(), cli.CreateRequest{
 		URL:         rawURL,
 		CustomAlias: alias,
 		ExpiresIn:   expires,

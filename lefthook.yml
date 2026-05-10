@@ -29,8 +29,8 @@ commit-msg:
     conventional:
       run: |
         msg=$(cat {1})
-        types="(🎉 init|✨ feat|🐛 fix|🚑️ hotfix|📝 docs|💄 style|♻️ refactor|⚡️ perf|✅ test|⬆️ update-deps|🔧 configs|🔨 chore|💥 breaking|🚀 deploy)"
-        if ! echo "$msg" | grep -qP "^${types}(\([^)]+\))?!?: .+"; then
+        valid_types="init|feat|fix|hotfix|docs|style|refactor|perf|test|update-deps|configs|chore|breaking|deploy"
+        if ! echo "$msg" | grep -qE "^.+ (${valid_types})(\([^)]+\))?!?: .+"; then
           echo "❌ Commit message must follow: emoji type(scope): subject"
           echo ""
           echo "   Valid types:"

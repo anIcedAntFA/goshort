@@ -72,16 +72,17 @@ func ValidateURL(rawURL string) error {
 		return fmt.Errorf("validate url: missing host: %w", ErrInvalidURL)
 	}
 
-	if isPrivateHost(u.Host) {
+	if IsPrivateHost(u.Host) {
 		return fmt.Errorf("validate url: host targets a private or reserved address: %w", ErrInvalidURL)
 	}
 
 	return nil
 }
 
-// isPrivateHost reports whether host (as returned by url.URL.Host) resolves to
+// IsPrivateHost reports whether host (as returned by url.URL.Host) resolves to
 // a private, loopback, or link-local address.
-func isPrivateHost(host string) bool {
+// Exported for use by the preview fetcher's SSRF prevention.
+func IsPrivateHost(host string) bool {
 	hostname := host
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		hostname = h
