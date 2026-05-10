@@ -7,7 +7,8 @@ RUN addgroup -S goshort && adduser -S goshort -G goshort
 
 WORKDIR /app
 
-COPY goshort /app/goshort
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/goshort  /app/goshort
 COPY docs/openapi.yaml           /app/docs/openapi.yaml
 
 RUN mkdir -p /app/data && chown -R goshort:goshort /app
