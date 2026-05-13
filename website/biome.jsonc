@@ -41,5 +41,20 @@
 	"files": {
 		"ignoreUnknown": false,
 		"includes": ["**", "!dist", "!node_modules", "!.astro", "!**/*.d.ts"]
-	}
+	},
+	"overrides": [
+		{
+			// Biome cannot parse Astro template sections, so frontmatter
+			// imports/variables used only in templates appear "unused".
+			"includes": ["**/*.astro"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		}
+	]
 }

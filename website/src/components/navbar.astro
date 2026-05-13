@@ -1,0 +1,98 @@
+---
+import ThemeToggle from '@/components/theme-toggle.astro';
+
+interface NavLink {
+	label: string;
+	href: string;
+	external?: boolean;
+}
+
+const navLinks: NavLink[] = [
+	{ label: 'Features', href: '#features' },
+	{ label: 'Demo', href: '#demo' },
+	{ label: 'Install', href: '#install' },
+	{ label: 'API Docs', href: 'https://goshort.app/docs', external: true },
+	{ label: 'GitHub', href: 'https://github.com/anIcedAntFA/goshort', external: true },
+];
+---
+
+<nav
+	class="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-sm dark:border-border-dark dark:bg-surface-dark/80"
+	data-navbar
+>
+	<div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+		<a href="/" class="text-lg font-bold text-text dark:text-text-dark">GoShort</a>
+
+		<div class="flex items-center gap-6">
+			{
+				navLinks.map((link) => (
+					<a
+						href={link.href}
+						class="nav-link text-sm"
+						data-nav-link={link.href.startsWith('#') ? link.href.slice(1) : undefined}
+						{...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+					>
+						{link.label}
+					</a>
+				))
+			}
+			<ThemeToggle />
+		</div>
+	</div>
+</nav>
+
+<script>
+	import { queryAll, queryAllData } from '@/lib/dom';
+
+	const sections = queryAll<HTMLElement>('section[id]');
+	const navLinks = queryAllData<HTMLAnchorElement>('nav-link');
+
+	const observer = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting) {
+					for (const link of navLinks) {
+						link.toggleAttribute('data-active', link.dataset.navLink === entry.target.id);
+					}
+				}
+			}
+		},
+		{ rootMargin: '-80px 0px -60% 0px' },
+	);
+
+	for (const section of sections) observer.observe(section);
+</script>
+
+<style>
+	html {
+		scroll-behavior: smooth;
+	}
+
+	.nav-link {
+		color: var(--color-text-muted);
+		transition: color 0.15s;
+	}
+
+	.nav-link:hover,
+	.nav-link[data-active] {
+		color: var(--color-text);
+	}
+
+	:global(.dark) .nav-link {
+		color: var(--color-text-muted-dark);
+	}
+
+	:global(.dark) .nav-link:hover,
+	:global(.dark) .nav-link[data-active] {
+		color: var(--color-text-dark);
+	}
+
+	.nav-link[data-active] {
+		color: var(--color-brand);
+		font-weight: 500;
+	}
+
+	:global(.dark) .nav-link[data-active] {
+		color: var(--color-brand);
+	}
+</style>

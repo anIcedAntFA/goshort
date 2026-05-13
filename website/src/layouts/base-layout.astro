@@ -1,0 +1,54 @@
+---
+import '@/styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+	canonicalURL?: string;
+}
+
+const {
+	title = 'GoShort — Short links, fast.',
+	description = 'A self-hosted URL shortener built with Go. Fast, lightweight, and developer-friendly with REST API, CLI, and MCP support.',
+	canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonicalURL} />
+
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+		<!-- Open Graph -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content="/og-image.png" />
+		<meta property="og:url" content={canonicalURL} />
+
+		<!-- Twitter Card -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content="/og-image.png" />
+
+		<link rel="sitemap" href="/sitemap-index.xml" />
+
+		<!-- Blocking theme script: prevents flash of wrong theme on load -->
+		<script is:inline>
+			const t = localStorage.getItem('theme');
+			if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
+				document.documentElement.classList.add('dark');
+		</script>
+	</head>
+	<body class="bg-surface text-text dark:bg-surface-dark dark:text-text-dark">
+		<slot />
+	</body>
+</html>

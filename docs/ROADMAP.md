@@ -904,13 +904,13 @@ changelog:
 
 ### Milestone 6.3: Base Layout + Navbar
 
-- [ ] **T6.3.1** Create `src/layouts/base-layout.astro`: HTML shell, charset, viewport, SEO meta, OG tags, Twitter Card, canonical URL, theme blocking `<script is:inline>`, global CSS import
-- [ ] **T6.3.2** Create `src/components/navbar.astro`: sticky, backdrop blur, logo, hash anchor links (`#features`, `#demo`, `#install`), external links (API Docs, GitHub), theme toggle
-- [ ] **T6.3.3** Active nav state on scroll via IntersectionObserver — `data-active` attribute on current section's link
-- [ ] **T6.3.4** Smooth scroll via `scroll-behavior: smooth` in CSS
-- [ ] **T6.3.5** Create `src/components/theme-toggle.astro`: cycle Light → Dark → Auto, persist to `localStorage`, vanilla JS
-- [ ] **T6.3.6** Create `src/components/footer.astro`: GitHub link + star badge, GitHub Sponsors, Ko-fi button, MIT badge, "Built by @anIcedAntFA"
-- [ ] **T6.3.7** Verify: nav links scroll smoothly, active state highlights correct section, theme toggle works without flash
+- [x] **T6.3.1** Create `src/layouts/base-layout.astro`: HTML shell, charset, viewport, SEO meta, OG tags, Twitter Card, canonical URL, theme blocking `<script is:inline>`, global CSS import
+- [x] **T6.3.2** Create `src/components/navbar.astro`: sticky, backdrop blur, logo, hash anchor links (`#features`, `#demo`, `#install`), external links (API Docs, GitHub), theme toggle
+- [x] **T6.3.3** Active nav state on scroll via IntersectionObserver — `data-active` attribute on current section's link
+- [x] **T6.3.4** Smooth scroll via `scroll-behavior: smooth` in CSS
+- [x] **T6.3.5** Create `src/components/theme-toggle.astro`: cycle Light → Dark → Auto, persist to `localStorage`, vanilla JS
+- [x] **T6.3.6** Create `src/components/footer.astro`: GitHub link + star badge, GitHub Sponsors, Ko-fi button, MIT badge, "Built by @anIcedAntFA"
+- [x] **T6.3.7** Verify: nav links scroll smoothly, active state highlights correct section, theme toggle works without flash
 
 ### Milestone 6.4: Landing Page Content
 

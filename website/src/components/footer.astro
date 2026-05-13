@@ -1,0 +1,80 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border py-10 dark:border-border-dark">
+	<div class="mx-auto max-w-5xl px-4">
+		<div class="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
+			<div class="flex flex-col gap-1">
+				<span class="text-sm font-semibold text-text dark:text-text-dark">GoShort</span>
+				<span class="text-xs text-text-muted dark:text-text-muted-dark">
+					&copy; {year} Built by
+					<a
+						href="https://github.com/anIcedAntFA"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="hover:text-brand transition-colors"
+					>
+						@anIcedAntFA
+					</a>
+					&mdash; MIT License
+				</span>
+			</div>
+
+			<div class="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
+				<a
+					href="https://github.com/anIcedAntFA/goshort"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="footer-link"
+				>
+					GitHub
+				</a>
+				<a
+					href="https://github.com/sponsors/anIcedAntFA"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="footer-link"
+				>
+					Sponsors
+				</a>
+				<a
+					href="https://ko-fi.com/anicedantfa"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="footer-link"
+				>
+					Ko-fi
+				</a>
+				<a
+					href="https://github.com/anIcedAntFA/goshort/blob/main/LICENSE"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="footer-link"
+				>
+					MIT
+				</a>
+			</div>
+		</div>
+	</div>
+</footer>
+
+<style>
+	.footer-link {
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+		transition: color 0.15s;
+	}
+
+	.footer-link:hover {
+		color: var(--color-brand);
+	}
+
+	:global(.dark) .footer-link {
+		color: var(--color-text-muted-dark);
+	}
+
+	:global(.dark) .footer-link:hover {
+		color: var(--color-brand);
+	}
+</style>

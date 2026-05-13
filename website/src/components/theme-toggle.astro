@@ -1,0 +1,57 @@
+---
+// Cycles: Auto → Light → Dark → Auto
+// Persists to localStorage; initial state applied by base-layout blocking script
+---
+
+<button class="btn btn-ghost text-sm" data-theme-toggle aria-label="Toggle color theme">
+	<span data-theme-label>Auto</span>
+</button>
+
+<script>
+	import { queryData } from '@/lib/dom';
+
+	type Theme = 'auto' | 'light' | 'dark';
+
+	const CYCLE: Theme[] = ['auto', 'light', 'dark'];
+	const LABELS: Record<Theme, string> = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+
+	function savedTheme(): Theme {
+		return (localStorage.getItem('theme') as Theme | null) ?? 'auto';
+	}
+
+	function applyTheme(theme: Theme): void {
+		if (theme === 'dark') {
+			document.documentElement.classList.add('dark');
+		} else if (theme === 'light') {
+			document.documentElement.classList.remove('dark');
+		} else {
+			if (matchMedia('(prefers-color-scheme:dark)').matches) {
+				document.documentElement.classList.add('dark');
+			} else {
+				document.documentElement.classList.remove('dark');
+			}
+		}
+	}
+
+	function setTheme(theme: Theme): void {
+		if (theme === 'auto') {
+			localStorage.removeItem('theme');
+		} else {
+			localStorage.setItem('theme', theme);
+		}
+		applyTheme(theme);
+		const label = queryData<HTMLElement>('theme-label');
+		if (label) label.textContent = LABELS[theme];
+	}
+
+	// Sync label with current theme on init
+	const label = queryData<HTMLElement>('theme-label');
+	if (label) label.textContent = LABELS[savedTheme()];
+
+	const btn = queryData<HTMLButtonElement>('theme-toggle');
+	btn?.addEventListener('click', () => {
+		const current = savedTheme();
+		const next = CYCLE[(CYCLE.indexOf(current) + 1) % CYCLE.length];
+		setTheme(next);
+	});
+</script>
