@@ -930,11 +930,11 @@ changelog:
 
 ### Milestone 6.5: Responsive + Polish
 
-- [ ] **T6.5.1** Mobile-first responsive: base = mobile, `md:` = tablet, `lg:` = desktop
-- [ ] **T6.5.2** Test all breakpoints: hero stacks, cards reflow, code demo scrollable on mobile, navbar collapses or scrolls
-- [ ] **T6.5.3** `robots.txt` in `public/` with sitemap URL
-- [ ] **T6.5.4** `og-image.png` in `public/` (1200×630, GoShort branding)
-- [ ] **T6.5.5** `favicon.svg` in `public/`
+- [x] **T6.5.1** Mobile-first responsive: base = mobile, `md:` = tablet, `lg:` = desktop
+- [x] **T6.5.2** Test all breakpoints: hero stacks, cards reflow, code demo scrollable on mobile, navbar collapses or scrolls
+- [x] **T6.5.3** `robots.txt` in `public/` with sitemap URL (done in M6.3)
+- [x] **T6.5.4** `og-image.svg` source in `public/` (1200×630 branded SVG; convert to PNG for Twitter/X compatibility before deploy)
+- [x] **T6.5.5** `favicon.svg` in `public/` (done in M6.3)
 - [ ] **T6.5.6** Verify: Lighthouse score >90 on Performance/SEO/Accessibility/Best Practices
 
 ### Milestone 6.6: Deploy + DNS

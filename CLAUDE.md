@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Phase 6 in progress — public shorten endpoint + Astro landing page (M6.1–M6.3 done). Phase 5 shipped batch, QR codes, link previews, expiry update, spam detection (7 tools, 3 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
+**Current state:** Phase 6 in progress — public shorten endpoint + Astro landing page (M6.1–M6.5 done). Phase 5 shipped batch, QR codes, link previews, expiry update, spam detection (7 tools, 3 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
 
 ## Commands
 

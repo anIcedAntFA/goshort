@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+
+  <!-- Subtle accent bar -->
+  <rect x="0" y="0" width="6" height="630" fill="#4f46e5"/>
+
+  <!-- Brand name -->
+  <text
+    x="600" y="255"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif"
+    font-size="96"
+    font-weight="700"
+    fill="#f1f5f9"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >GoShort</text>
+
+  <!-- Tagline -->
+  <text
+    x="600" y="355"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif"
+    font-size="40"
+    fill="#94a3b8"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >Short links, fast.</text>
+
+  <!-- URL -->
+  <text
+    x="600" y="440"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif"
+    font-size="28"
+    fill="#4f46e5"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >goshort.app</text>
+</svg>

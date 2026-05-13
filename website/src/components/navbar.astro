@@ -23,12 +23,49 @@ const navLinks: NavLink[] = [
 	<div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
 		<a href="/" class="text-lg font-bold text-text dark:text-text-dark">GoShort</a>
 
-		<div class="flex items-center gap-6">
+		<div class="flex items-center gap-3">
+			<!-- Desktop links — hidden on mobile -->
+			<div class="hidden items-center gap-6 md:flex">
+				{
+					navLinks.map((link) => (
+						<a
+							href={link.href}
+							class="nav-link text-sm"
+							data-nav-link={link.href.startsWith('#') ? link.href.slice(1) : undefined}
+							{...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+						>
+							{link.label}
+						</a>
+					))
+				}
+			</div>
+
+			<!-- Theme toggle — always visible -->
+			<ThemeToggle />
+
+			<!-- Hamburger — mobile only -->
+			<button
+				class="hamburger md:hidden"
+				data-menu-toggle
+				aria-label="Toggle navigation"
+				aria-expanded="false"
+				aria-controls="mobile-menu"
+			>
+				<span></span>
+				<span></span>
+				<span></span>
+			</button>
+		</div>
+	</div>
+
+	<!-- Mobile menu panel -->
+	<div id="mobile-menu" class="mobile-menu" data-mobile-menu>
+		<div class="mx-auto max-w-5xl border-t border-border px-4 py-2 dark:border-border-dark">
 			{
 				navLinks.map((link) => (
 					<a
 						href={link.href}
-						class="nav-link text-sm"
+						class="nav-link mobile-nav-link text-sm"
 						data-nav-link={link.href.startsWith('#') ? link.href.slice(1) : undefined}
 						{...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
 					>
@@ -36,17 +73,34 @@ const navLinks: NavLink[] = [
 					</a>
 				))
 			}
-			<ThemeToggle />
 		</div>
 	</div>
 </nav>
 
 <script>
-	import { queryAll, queryAllData } from '@/lib/dom';
+	import { query, queryAll, queryAllData } from '@/lib/dom';
 
+	const nav = query<HTMLElement>('[data-navbar]');
+	const toggleBtn = query<HTMLButtonElement>('[data-menu-toggle]');
 	const sections = queryAll<HTMLElement>('section[id]');
 	const navLinks = queryAllData<HTMLAnchorElement>('nav-link');
 
+	toggleBtn?.addEventListener('click', () => {
+		const isOpen = nav?.hasAttribute('data-menu-open') ?? false;
+		nav?.toggleAttribute('data-menu-open');
+		toggleBtn.setAttribute('aria-expanded', String(!isOpen));
+	});
+
+	// Close mobile menu when a link is followed
+	const mobileLinks = queryAll<HTMLAnchorElement>('[data-mobile-menu] a');
+	for (const link of mobileLinks) {
+		link.addEventListener('click', () => {
+			nav?.removeAttribute('data-menu-open');
+			toggleBtn?.setAttribute('aria-expanded', 'false');
+		});
+	}
+
+	// Highlight active nav link on scroll
 	const observer = new IntersectionObserver(
 		(entries) => {
 			for (const entry of entries) {
@@ -68,31 +122,80 @@ const navLinks: NavLink[] = [
 		scroll-behavior: smooth;
 	}
 
+	/* Nav links */
 	.nav-link {
 		color: var(--color-text-muted);
 		transition: color 0.15s;
 	}
-
 	.nav-link:hover,
 	.nav-link[data-active] {
 		color: var(--color-text);
 	}
-
-	:global(.dark) .nav-link {
-		color: var(--color-text-muted-dark);
-	}
-
-	:global(.dark) .nav-link:hover,
-	:global(.dark) .nav-link[data-active] {
-		color: var(--color-text-dark);
-	}
-
 	.nav-link[data-active] {
 		color: var(--color-brand);
 		font-weight: 500;
 	}
-
+	:global(.dark) .nav-link {
+		color: var(--color-text-muted-dark);
+	}
+	:global(.dark) .nav-link:hover,
+	:global(.dark) .nav-link[data-active] {
+		color: var(--color-text-dark);
+	}
 	:global(.dark) .nav-link[data-active] {
 		color: var(--color-brand);
+	}
+
+	/* Mobile nav link stacking */
+	.mobile-nav-link {
+		display: block;
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+	}
+
+	/* Hamburger button */
+	.hamburger {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 4px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-text-muted);
+	}
+	:global(.dark) .hamburger {
+		color: var(--color-text-muted-dark);
+	}
+	.hamburger span {
+		display: block;
+		width: 18px;
+		height: 2px;
+		background: currentColor;
+		border-radius: 2px;
+		transition:
+			transform 0.2s,
+			opacity 0.2s;
+	}
+
+	/* Hamburger → X animation when menu is open */
+	[data-navbar][data-menu-open] [data-menu-toggle] span:nth-child(1) {
+		transform: translateY(6px) rotate(45deg);
+	}
+	[data-navbar][data-menu-open] [data-menu-toggle] span:nth-child(2) {
+		opacity: 0;
+	}
+	[data-navbar][data-menu-open] [data-menu-toggle] span:nth-child(3) {
+		transform: translateY(-6px) rotate(-45deg);
+	}
+
+	/* Mobile dropdown panel */
+	.mobile-menu {
+		display: none;
+	}
+	@media (max-width: 767px) {
+		[data-navbar][data-menu-open] .mobile-menu {
+			display: block;
+		}
 	}
 </style>
