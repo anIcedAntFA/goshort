@@ -1,0 +1,18 @@
+---
+import Footer from '@/components/footer.astro';
+import Navbar from '@/components/navbar.astro';
+import BaseLayout from '@/layouts/base-layout.astro';
+---
+
+<BaseLayout title="404 — Page Not Found | GoShort" description="This page does not exist.">
+	<Navbar />
+	<main class="mx-auto flex max-w-5xl flex-col items-center justify-center px-4 py-32 text-center">
+		<p class="text-8xl font-bold text-brand">404</p>
+		<h1 class="mt-4 text-2xl font-semibold text-text dark:text-text-dark">Page not found</h1>
+		<p class="mt-2 text-text-muted dark:text-text-muted-dark">
+			The page you're looking for doesn't exist. If you followed a short link, it may have expired.
+		</p>
+		<a href="/" class="btn btn-primary mt-8">Back to home</a>
+	</main>
+	<Footer />
+</BaseLayout>

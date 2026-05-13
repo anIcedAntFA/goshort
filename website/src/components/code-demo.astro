@@ -1,0 +1,162 @@
+---
+import { Code } from 'astro:components';
+
+const apiCode = `curl -X POST https://goshort.app/api/v1/urls/public \\
+  -H "Content-Type: application/json" \\
+  -d '{"url":"https://github.com/anIcedAntFA/goshort"}'
+
+# 201 Created
+{
+  "short_code": "k7Xm2p",
+  "short_url": "https://goshort.app/k7Xm2p",
+  "original_url": "https://github.com/anIcedAntFA/goshort",
+  "expires_at": "2026-06-13T00:00:00Z"
+}`;
+
+const cliCode = `# Install (requires Go 1.22+)
+go install github.com/anIcedAntFA/goshort/cmd/cli@latest
+
+# Create a short link
+goshort-cli shorten https://github.com/anIcedAntFA/goshort
+# Short URL: https://goshort.app/k7Xm2p
+
+# List all links
+goshort-cli list
+
+# Authenticated commands use GOSHORT_API_KEY env var
+export GOSHORT_API_KEY=your-secret-key`;
+
+const mcpCode = `# Add to claude_desktop_config.json (stdio transport)
+{
+  "mcpServers": {
+    "goshort": {
+      "command": "goshort",
+      "args": ["--mcp"],
+      "env": { "GOSHORT_API_KEY": "your-secret-key" }
+    }
+  }
+}
+
+# Or connect via HTTP (Streamable HTTP transport)
+# MCP endpoint: https://goshort.app/mcp
+
+# Example tool call: create_url
+# { "url": "https://github.com/anIcedAntFA/goshort", "expires_in": "7d" }
+# → { "short_url": "https://goshort.app/k7Xm2p" }`;
+
+const tabs = [
+	{ id: 'api', label: 'API', code: apiCode, lang: 'bash' },
+	{ id: 'cli', label: 'CLI', code: cliCode, lang: 'bash' },
+	{ id: 'mcp', label: 'MCP', code: mcpCode, lang: 'json' },
+] as const;
+---
+
+<div data-code-demo>
+	<div class="mb-2 flex gap-1" role="tablist">
+		{
+			tabs.map((tab, i) => (
+				<button
+					role="tab"
+					class="demo-tab"
+					data-tab={tab.id}
+					aria-selected={i === 0 ? 'true' : 'false'}
+					data-active={i === 0 ? '' : undefined}
+				>
+					{tab.label}
+				</button>
+			))
+		}
+	</div>
+
+	{
+		tabs.map((tab, i) => (
+			<div
+				data-panel={tab.id}
+				data-active={i === 0 ? '' : undefined}
+				role="tabpanel"
+			>
+				<Code
+					code={tab.code}
+					lang={tab.lang}
+					theme="github-dark"
+					class="demo-code"
+				/>
+			</div>
+		))
+	}
+</div>
+
+<script>
+	import { query, queryAll } from '@/lib/dom';
+
+	const demo = query<HTMLElement>('[data-code-demo]');
+	if (demo) {
+		const tabBtns = queryAll<HTMLButtonElement>('[data-tab]', demo);
+		const panels = queryAll<HTMLElement>('[data-panel]', demo);
+
+		for (const btn of tabBtns) {
+			btn.addEventListener('click', () => {
+				const active = btn.dataset.tab;
+				for (const b of tabBtns) {
+					b.toggleAttribute('data-active', b.dataset.tab === active);
+					b.setAttribute('aria-selected', String(b.dataset.tab === active));
+				}
+				for (const p of panels) {
+					p.toggleAttribute('data-active', p.dataset.panel === active);
+				}
+			});
+		}
+	}
+</script>
+
+<style>
+	[data-panel] {
+		display: none;
+	}
+
+	[data-panel][data-active] {
+		display: block;
+	}
+
+	.demo-tab {
+		border-radius: 0.5rem 0.5rem 0 0;
+		padding: 0.375rem 0.875rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--color-text-muted);
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		transition: color 0.15s, background-color 0.15s;
+	}
+
+	.demo-tab:hover {
+		color: var(--color-text);
+	}
+
+	.demo-tab[data-active] {
+		color: var(--color-brand);
+		background-color: var(--color-surface-alt);
+	}
+
+	:global(.dark) .demo-tab {
+		color: var(--color-text-muted-dark);
+	}
+
+	:global(.dark) .demo-tab:hover {
+		color: var(--color-text-dark);
+	}
+
+	:global(.dark) .demo-tab[data-active] {
+		color: var(--color-brand);
+		background-color: var(--color-surface-alt-dark);
+	}
+
+	.demo-code {
+		border-radius: 0 0.75rem 0.75rem 0.75rem !important;
+		margin: 0 !important;
+		padding: 1.5rem !important;
+		font-size: 0.875rem !important;
+		line-height: 1.6 !important;
+	}
+</style>

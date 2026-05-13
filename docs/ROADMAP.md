@@ -914,19 +914,19 @@ changelog:
 
 ### Milestone 6.4: Landing Page Content
 
-- [ ] **T6.4.1** Create `src/pages/index.astro` with section structure: hero → features → demo → install → footer
-- [ ] **T6.4.2** **Hero section** — centered headline ("Short links, fast."), subtitle, `ShortenWidget` component
-- [ ] **T6.4.3** **ShortenWidget** (`src/components/shorten-widget/index.astro`):
+- [x] **T6.4.1** Create `src/pages/index.astro` with section structure: hero → features → demo → install → footer
+- [x] **T6.4.2** **Hero section** — centered headline ("Short links, fast."), subtitle, `ShortenWidget` component
+- [x] **T6.4.3** **ShortenWidget** (`src/components/shorten-widget/index.astro`):
   - Form with URL input + "Shorten" button
   - Honeypot hidden field (`name="website"`, `aria-hidden`, off-screen CSS)
   - Vanilla JS `<script>`: fetch `POST /api/v1/urls/public`, display result, copy-to-clipboard with `data-copied` state, error handling, loading state
-- [ ] **T6.4.4** **Feature cards** (4): REST API, CLI Tool, MCP Tools, Secure by Default
+- [x] **T6.4.4** **Feature cards** (4): REST API, CLI Tool, MCP Tools, Secure by Default
   - Grid: 1-col mobile → 2×2 tablet/desktop
   - Content sourced from README
-- [ ] **T6.4.5** **Demo section** (`src/components/code-demo.astro`): tabbed code blocks (API curl / CLI command / MCP tool call) with Astro built-in Shiki syntax highlighting, tab switching via `data-active` attribute
-- [ ] **T6.4.6** **Install section**: 3-step (Download / Configure / Shorten) with code snippets
-- [ ] **T6.4.7** Create `src/pages/404.astro` — styled 404 page
-- [ ] **T6.4.8** Verify: all sections render, content accurate, shorten widget calls API and works
+- [x] **T6.4.5** **Demo section** (`src/components/code-demo.astro`): tabbed code blocks (API curl / CLI command / MCP tool call) with Astro built-in Shiki syntax highlighting, tab switching via `data-active` attribute
+- [x] **T6.4.6** **Install section**: 3-step (Download / Configure / Shorten) with code snippets
+- [x] **T6.4.7** Create `src/pages/404.astro` — styled 404 page
+- [x] **T6.4.8** Verify: all sections render, content accurate, shorten widget calls API and works
 
 ### Milestone 6.5: Responsive + Polish
 

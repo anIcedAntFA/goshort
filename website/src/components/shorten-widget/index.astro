@@ -1,0 +1,159 @@
+---
+// POST /api/v1/urls/public — no auth, 30-day expiry, honeypot spam guard.
+// Set PUBLIC_API_BASE env var to override origin (e.g. http://localhost:8080 for local dev).
+---
+
+<div class="w-full" data-shorten-widget>
+	<form data-shorten-form novalidate>
+		<!-- Honeypot: positioned off-screen, invisible to humans, detectable by bots -->
+		<div
+			aria-hidden="true"
+			style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"
+		>
+			<input
+				id="website"
+				name="website"
+				type="text"
+				tabindex="-1"
+				autocomplete="off"
+				data-honeypot
+			/>
+		</div>
+
+		<div class="flex gap-2">
+			<input
+				type="url"
+				name="url"
+				class="input flex-1"
+				placeholder="Paste your long URL"
+				required
+				data-url-input
+			/>
+			<button type="submit" class="btn btn-primary" data-submit-btn>Shorten</button>
+		</div>
+	</form>
+
+	<div class="card mt-4 hidden" data-shorten-result>
+		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-success">URL shortened</p>
+		<div class="flex items-center justify-between gap-4">
+			<a
+				href=""
+				target="_blank"
+				rel="noopener noreferrer"
+				class="truncate font-semibold text-brand hover:underline"
+				data-short-url
+			></a>
+			<button class="btn btn-ghost shrink-0 text-sm" data-copy-btn>Copy</button>
+		</div>
+		<p class="mt-1 truncate text-sm text-text-muted dark:text-text-muted-dark" data-original-url>
+		</p>
+		<p class="mt-1 text-xs text-text-muted dark:text-text-muted-dark">Expires: 30 days</p>
+	</div>
+
+	<p class="mt-3 hidden text-sm text-danger" data-shorten-error></p>
+</div>
+
+<script>
+	import { query } from '@/lib/dom';
+
+	const COPY_RESET_MS = 2000;
+	const API_BASE = import.meta.env.PUBLIC_API_BASE ?? '';
+
+	interface ShortenResponse {
+		short_url: string;
+		short_code: string;
+		original_url: string;
+		expires_at: string | null;
+	}
+
+	interface ErrorResponse {
+		error?: { message?: string };
+	}
+
+	const form = query<HTMLFormElement>('[data-shorten-form]');
+	const urlInput = query<HTMLInputElement>('[data-url-input]');
+	const honeypot = query<HTMLInputElement>('[data-honeypot]');
+	const submitBtn = query<HTMLButtonElement>('[data-submit-btn]');
+	const resultEl = query<HTMLDivElement>('[data-shorten-result]');
+	const shortUrlEl = query<HTMLAnchorElement>('[data-short-url]');
+	const originalUrlEl = query<HTMLParagraphElement>('[data-original-url]');
+	const copyBtn = query<HTMLButtonElement>('[data-copy-btn]');
+	const errorEl = query<HTMLParagraphElement>('[data-shorten-error]');
+
+	function setLoading(loading: boolean): void {
+		if (!submitBtn) return;
+		submitBtn.disabled = loading;
+		submitBtn.textContent = loading ? 'Shortening…' : 'Shorten';
+	}
+
+	function showError(msg: string): void {
+		if (!errorEl) return;
+		errorEl.textContent = msg;
+		errorEl.classList.remove('hidden');
+		resultEl?.classList.add('hidden');
+	}
+
+	function hideError(): void {
+		errorEl?.classList.add('hidden');
+	}
+
+	function showResult(data: ShortenResponse): void {
+		if (!resultEl || !shortUrlEl || !originalUrlEl) return;
+		shortUrlEl.textContent = data.short_url;
+		shortUrlEl.href = data.short_url;
+		originalUrlEl.textContent = data.original_url;
+		resultEl.classList.remove('hidden');
+	}
+
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		hideError();
+		setLoading(true);
+
+		try {
+			const res = await fetch(`${API_BASE}/api/v1/urls/public`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					url: urlInput?.value ?? '',
+					website: honeypot?.value ?? '',
+				}),
+			});
+
+			if (res.ok) {
+				const data = (await res.json()) as ShortenResponse;
+				showResult(data);
+			} else if (res.status === 429) {
+				showError('Too many requests — please wait a moment and try again.');
+			} else if (res.status === 422) {
+				showError('URL flagged as potentially unsafe.');
+			} else {
+				const body = (await res.json().catch(() => null)) as ErrorResponse | null;
+				showError(body?.error?.message ?? 'Invalid URL. Please check and try again.');
+			}
+		} catch {
+			showError('Network error. Please check your connection and try again.');
+		} finally {
+			setLoading(false);
+		}
+	});
+
+	copyBtn?.addEventListener('click', async () => {
+		const url = shortUrlEl?.textContent ?? '';
+		if (!url || !copyBtn) return;
+		await navigator.clipboard.writeText(url);
+		copyBtn.textContent = 'Copied!';
+		copyBtn.dataset.copied = '';
+		setTimeout(() => {
+			if (!copyBtn) return;
+			copyBtn.textContent = 'Copy';
+			delete copyBtn.dataset.copied;
+		}, COPY_RESET_MS);
+	});
+</script>
+
+<style>
+	[data-copy-btn][data-copied] {
+		color: var(--color-success);
+	}
+</style>

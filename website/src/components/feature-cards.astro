@@ -1,0 +1,42 @@
+---
+interface Card {
+	title: string;
+	description: string;
+}
+
+const cards: Card[] = [
+	{
+		title: 'REST API',
+		description:
+			'Full-featured HTTP API with JSON responses. Create, list, update, delete, and batch-shorten links. QR code generation and link preview fetching included.',
+	},
+	{
+		title: 'CLI Tool',
+		description:
+			'Built with Cobra. Create and manage links from your terminal with goshort-cli. Scriptable, pipeline-friendly, and config-file driven.',
+	},
+	{
+		title: 'MCP Tools',
+		description:
+			'7 tools, 3 resources, 2 prompts. Let Claude, Cursor, or any MCP-compatible agent shorten URLs, fetch metadata, and manage your link collection.',
+	},
+	{
+		title: 'Secure by Default',
+		description:
+			'Private IP blocking, Google Safe Browsing v4, per-IP rate limiting, and constant-time API key comparison. Parameterized queries throughout. No tracking. No cookies. MIT licensed.',
+	},
+];
+---
+
+<div class="grid gap-6 sm:grid-cols-2">
+	{
+		cards.map((card) => (
+			<div class="card">
+				<h3 class="font-semibold text-text dark:text-text-dark">{card.title}</h3>
+				<p class="mt-2 text-sm leading-relaxed text-text-muted dark:text-text-muted-dark">
+					{card.description}
+				</p>
+			</div>
+		))
+	}
+</div>
