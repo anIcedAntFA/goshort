@@ -249,6 +249,81 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/urls/public:
+    post:
+      summary: Create short URL (public)
+      operationId: publicCreateURL
+      tags: [URLs]
+      description: |
+        No authentication required. Forces 30-day expiry. No custom alias allowed.
+        Rate limited to 5 requests per minute per IP.
+        The `website` field is a honeypot — leave it empty. A non-empty value silently
+        returns a fake success response without creating any URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicCreateURLRequest"
+            example:
+              url: "https://example.com/very/long/path?with=params"
+      responses:
+        "201":
+          description: Short URL created (or fake decoy response if honeypot triggered)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateURLResponse"
+              example:
+                short_code: "k7Xm2p"
+                short_url: "http://localhost:8080/k7Xm2p"
+                original_url: "https://example.com/very/long/path?with=params"
+                expires_at: "2025-07-14T00:00:00Z"
+                created_at: "2025-06-14T12:00:00Z"
+        "400":
+          description: Invalid URL format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid_url:
+                  value:
+                    error:
+                      code: invalid_url
+                      message: The URL format is invalid
+                invalid_body:
+                  value:
+                    error:
+                      code: invalid_body
+                      message: Request body is invalid JSON
+        "422":
+          description: URL flagged as unsafe by Safe Browsing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: unsafe_url
+                  message: The URL has been flagged as unsafe
+        "429":
+          description: Too many requests (5 req/min per IP)
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: string
+              example: "60"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: rate_limited
+                  message: Too many requests. Please try again later.
+
   /api/v1/urls/{code}:
     parameters:
       - name: code
@@ -604,6 +679,21 @@ components:
             $ref: "#/components/schemas/BatchItemResponse"
         summary:
           $ref: "#/components/schemas/BatchSummary"
+
+    PublicCreateURLRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: The long URL to shorten (http/https only, max 2048 chars)
+          example: "https://example.com/very/long/path?with=params"
+        website:
+          type: string
+          description: |
+            Honeypot field — must be left empty by legitimate clients.
+            A non-empty value silently returns a fake success response (bot detection).
 
     CreateURLRequest:
       type: object

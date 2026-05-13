@@ -363,6 +363,57 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(png) //nolint:errcheck,gosec // response already committed; write failure is unrecoverable
 }
 
+type publicCreateURLRequest struct {
+	URL     string `json:"url"`
+	Website string `json:"website"` // honeypot: non-empty means bot
+}
+
+// PublicCreateURL handles POST /api/v1/urls/public.
+// No auth required. Forces 30-day expiry, no custom alias.
+// If the honeypot field "website" is non-empty, returns a fake 201 without storing anything.
+func (h *Handler) PublicCreateURL(w http.ResponseWriter, r *http.Request) {
+	var req publicCreateURLRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, errorResponse{Error: errorDetail{
+			Code:    "invalid_body",
+			Message: "Request body is invalid JSON",
+		}})
+		return
+	}
+
+	if req.Website != "" {
+		expiresAt := time.Now().Add(30 * 24 * time.Hour).Format(time.RFC3339)
+		respondJSON(w, http.StatusCreated, createURLResponse{
+			ShortCode:   "decoy",
+			ShortURL:    fmt.Sprintf("%s/decoy", h.baseURL),
+			OriginalURL: req.URL,
+			ExpiresAt:   &expiresAt,
+			CreatedAt:   time.Now().Format(time.RFC3339),
+		})
+		return
+	}
+
+	url, err := h.svc.Create(r.Context(), shortener.CreateRequest{
+		URL:       req.URL,
+		ExpiresIn: "30d",
+	})
+	if err != nil {
+		respondError(w, err)
+		return
+	}
+
+	urlsCreatedTotal.WithLabelValues("generated").Inc()
+	respondJSON(w, http.StatusCreated, createURLResponse{
+		ShortCode:   url.ShortCode,
+		ShortURL:    fmt.Sprintf("%s/%s", h.baseURL, url.ShortCode),
+		OriginalURL: url.OriginalURL,
+		ExpiresAt:   formatTimePtr(url.ExpiresAt),
+		CreatedAt:   url.CreatedAt.Format(time.RFC3339),
+		Title:       url.Title,
+		Description: url.Description,
+	})
+}
+
 func parseIntQuery(r *http.Request, key string, defaultVal int) int {
 	raw := r.URL.Query().Get(key)
 	if raw == "" {

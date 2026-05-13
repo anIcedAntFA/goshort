@@ -31,17 +31,25 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 	r.Get("/docs", serveDocs)
 	r.Get("/docs/openapi.yaml", serveOpenAPISpec)
 
-	// API v1 — auth before rate limiting so bad keys get 401, not 429.
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Use(AuthMiddleware(cfg.APIKey))
-		r.Use(RateLimitMiddleware(cfg.RateLimitEnabled, cfg.RateLimitRPM))
-		r.Post("/urls", h.CreateURL)
-		r.Post("/urls/batch", h.BatchCreateURL)
-		r.Get("/urls", h.ListURLs)
-		r.Get("/urls/{code}/qr", h.GetQRCode)
-		r.Get("/urls/{code}", h.GetURL)
-		r.Patch("/urls/{code}", h.UpdateURL)
-		r.Delete("/urls/{code}", h.DeleteURL)
+		// Public shorten endpoint — no auth, always rate-limited at 5 req/min per IP.
+		r.Group(func(r chi.Router) {
+			r.Use(RateLimitMiddleware(true, 5))
+			r.Post("/urls/public", h.PublicCreateURL)
+		})
+
+		// Protected routes — auth before rate limiting so bad keys get 401, not 429.
+		r.Group(func(r chi.Router) {
+			r.Use(AuthMiddleware(cfg.APIKey))
+			r.Use(RateLimitMiddleware(cfg.RateLimitEnabled, cfg.RateLimitRPM))
+			r.Post("/urls", h.CreateURL)
+			r.Post("/urls/batch", h.BatchCreateURL)
+			r.Get("/urls", h.ListURLs)
+			r.Get("/urls/{code}/qr", h.GetQRCode)
+			r.Get("/urls/{code}", h.GetURL)
+			r.Patch("/urls/{code}", h.UpdateURL)
+			r.Delete("/urls/{code}", h.DeleteURL)
+		})
 	})
 
 	// Redirect — registered last so static routes take priority.

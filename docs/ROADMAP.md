@@ -860,6 +860,105 @@ changelog:
 
 ---
 
+## Phase 6: Landing Page + Public API (~2 weeks)
+
+> **Goal:** `goshort.app` serves a landing page promoting the product. Visitors can shorten URLs without login.
+> **Deliverable:** Landing page live on Cloudflare Workers, public shorten widget works, Fly.io API proxied behind same domain.
+> **Tag:** `v0.6.0`
+> **Design doc:** `.docs/PLAN_LANDING.md`
+
+### Architecture Decisions
+
+- **Separate Astro project** in `website/` — deployed to Cloudflare Workers independently from Go binary
+- **Single domain `goshort.app`** — Worker serves Astro static assets first, proxies unmatched paths to Fly.io (API + redirects). No subdomain split, no path conflict.
+- **Tailwind CSS v4** with `@theme` design tokens + `@apply` component classes — no inline utility soup
+- **Vanilla JS** for interactivity (shorten widget, theme toggle, scroll spy) — no framework islands
+- **Public shorten endpoint** `POST /api/v1/urls/public` — no auth, 5 req/min per IP, 30-day auto-expiry, honeypot field
+- **System fonts** — zero font loading, instant text render
+- **Anti-spam layers** — honeypot + rate limit + auto-expiry + Safe Browsing (all zero UX cost)
+- **Tooling** — Bun, Biome, lefthook (matches mairesume conventions)
+
+### Milestone 6.1: Public Shorten Endpoint (Go)
+
+- [x] **T6.1.1** Add `PublicCreateURL` handler in `internal/api/handler.go`:
+  - Accepts `{"url": "...", "website": "..."}` — `website` is honeypot field
+  - Forces `expires_in: "30d"`, no custom alias, no batch
+  - If `website` field non-empty → return fake 201 (don't reveal bot detection)
+  - Same URL validation + Safe Browsing as full endpoint
+- [x] **T6.1.2** Register route: `r.With(RateLimitMiddleware(true, 5)).Post("/api/v1/urls/public", h.PublicCreateURL)`
+- [x] **T6.1.3** Write tests: valid → 201, invalid → 400, honeypot → fake 201, rate limit → 429
+- [x] **T6.1.4** Update OpenAPI spec with `/api/v1/urls/public` endpoint
+- [x] **T6.1.5** Verify: `curl -X POST .../api/v1/urls/public -d '{"url":"https://example.com"}'` → short URL with 30d expiry
+
+### Milestone 6.2: Astro Project Setup
+
+- [ ] **T6.2.1** Create `website/` — `bun create astro@latest`
+- [ ] **T6.2.2** Configure Tailwind CSS v4 via `@tailwindcss/vite` plugin
+- [ ] **T6.2.3** Set up `src/styles/global.css`: `@theme` design tokens + component classes (`.btn`, `.btn-primary`, `.input`, `.card`)
+- [ ] **T6.2.4** Configure Biome (`biome.jsonc`): tabs, single quotes, kebab-case filenames, `noMagicNumbers`
+- [ ] **T6.2.5** Set up TypeScript strict mode, path aliases (`@/components`, `@/config`, `@/lib`)
+- [ ] **T6.2.6** Create `src/lib/dom.ts` — typed DOM query helper (query by `data-*`)
+- [ ] **T6.2.7** Set `output: 'static'` in `astro.config.mjs`, add `@astrojs/sitemap`
+- [ ] **T6.2.8** Add `make website/dev` and `make website/build` to root Makefile
+- [ ] **T6.2.9** Verify: `cd website && bun run dev` shows blank styled page, `bun run build` outputs `dist/`
+
+### Milestone 6.3: Base Layout + Navbar
+
+- [ ] **T6.3.1** Create `src/layouts/base-layout.astro`: HTML shell, charset, viewport, SEO meta, OG tags, Twitter Card, canonical URL, theme blocking `<script is:inline>`, global CSS import
+- [ ] **T6.3.2** Create `src/components/navbar.astro`: sticky, backdrop blur, logo, hash anchor links (`#features`, `#demo`, `#install`), external links (API Docs, GitHub), theme toggle
+- [ ] **T6.3.3** Active nav state on scroll via IntersectionObserver — `data-active` attribute on current section's link
+- [ ] **T6.3.4** Smooth scroll via `scroll-behavior: smooth` in CSS
+- [ ] **T6.3.5** Create `src/components/theme-toggle.astro`: cycle Light → Dark → Auto, persist to `localStorage`, vanilla JS
+- [ ] **T6.3.6** Create `src/components/footer.astro`: GitHub link + star badge, GitHub Sponsors, Ko-fi button, MIT badge, "Built by @anIcedAntFA"
+- [ ] **T6.3.7** Verify: nav links scroll smoothly, active state highlights correct section, theme toggle works without flash
+
+### Milestone 6.4: Landing Page Content
+
+- [ ] **T6.4.1** Create `src/pages/index.astro` with section structure: hero → features → demo → install → footer
+- [ ] **T6.4.2** **Hero section** — centered headline ("Short links, fast."), subtitle, `ShortenWidget` component
+- [ ] **T6.4.3** **ShortenWidget** (`src/components/shorten-widget/index.astro`):
+  - Form with URL input + "Shorten" button
+  - Honeypot hidden field (`name="website"`, `aria-hidden`, off-screen CSS)
+  - Vanilla JS `<script>`: fetch `POST /api/v1/urls/public`, display result, copy-to-clipboard with `data-copied` state, error handling, loading state
+- [ ] **T6.4.4** **Feature cards** (4): REST API, CLI Tool, MCP Tools, Secure by Default
+  - Grid: 1-col mobile → 2×2 tablet/desktop
+  - Content sourced from README
+- [ ] **T6.4.5** **Demo section** (`src/components/code-demo.astro`): tabbed code blocks (API curl / CLI command / MCP tool call) with Astro built-in Shiki syntax highlighting, tab switching via `data-active` attribute
+- [ ] **T6.4.6** **Install section**: 3-step (Download / Configure / Shorten) with code snippets
+- [ ] **T6.4.7** Create `src/pages/404.astro` — styled 404 page
+- [ ] **T6.4.8** Verify: all sections render, content accurate, shorten widget calls API and works
+
+### Milestone 6.5: Responsive + Polish
+
+- [ ] **T6.5.1** Mobile-first responsive: base = mobile, `md:` = tablet, `lg:` = desktop
+- [ ] **T6.5.2** Test all breakpoints: hero stacks, cards reflow, code demo scrollable on mobile, navbar collapses or scrolls
+- [ ] **T6.5.3** `robots.txt` in `public/` with sitemap URL
+- [ ] **T6.5.4** `og-image.png` in `public/` (1200×630, GoShort branding)
+- [ ] **T6.5.5** `favicon.svg` in `public/`
+- [ ] **T6.5.6** Verify: Lighthouse score >90 on Performance/SEO/Accessibility/Best Practices
+
+### Milestone 6.6: Deploy + DNS
+
+- [ ] **T6.6.1** Create `wrangler.jsonc` with static assets config
+- [ ] **T6.6.2** Create Worker entry point (~15 lines): try `env.ASSETS.fetch()` first, fallback proxy to `goshort-api.fly.dev`
+- [ ] **T6.6.3** Test locally: `wrangler dev` serves landing page, proxies `/api/*` to Fly.io
+- [ ] **T6.6.4** Deploy: `wrangler deploy`
+- [ ] **T6.6.5** Update Cloudflare DNS: `goshort.app` → Worker (remove old Fly.io A/AAAA records)
+- [ ] **T6.6.6** Verify: `goshort.app` → landing page, `goshort.app/api/v1/urls` → API, `goshort.app/k7Xm2p` → redirect, Cloudflare cache rules still work
+
+### Milestone 6.7: Release
+
+- [ ] **T6.7.1** Add `.github/FUNDING.yml`: `github: anIcedAntFA`, `ko_fi: anIcedAntFA`
+- [ ] **T6.7.2** Update `CLAUDE.md` with website architecture, Worker routing, public endpoint
+- [ ] **T6.7.3** Update `README.md`: add "Website" section, update architecture
+- [ ] **T6.7.4** Update `CHANGELOG.md` with Phase 6 entries
+- [ ] **T6.7.5** Add website build to CI: `cd website && bun install && bun run build`
+- [ ] **T6.7.6** Final: `make lint && make test && make build` (Go) + `cd website && bun run build` (Astro)
+- [ ] **T6.7.7** Commit: `✨ feat: v0.6.0 — landing page on Cloudflare Workers, public shorten endpoint`
+- [ ] **T6.7.8** Tag: `git tag v0.6.0 && git push --tags`
+
+---
+
 ## Appendix: Task Workflow
 
 ### For each task, follow this flow:
@@ -896,3 +995,4 @@ Start fresh sessions at milestone boundaries.
 
 *Last updated: 2025-06-01*
 *Companion to: [design.md](./design.md) · [LEARNING.md](./LEARNING.md) · [cc-workflow-guide.md](./cc-workflow-guide.md)*
+
