@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Phase 5 complete — batch creation, QR codes, link previews, expiry update, and spam detection shipped (7 tools, 3 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
+**Current state:** Phase 6 in progress — public shorten endpoint + Astro landing page (M6.1–M6.3 done). Phase 5 shipped batch, QR codes, link previews, expiry update, spam detection (7 tools, 3 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
 
 ## Commands
 
@@ -43,6 +43,11 @@ make dev/redis/stop                  # Stop Redis
 
 # Deploy
 fly deploy                           # Deploy to Fly.io
+
+# Website (Astro)
+make website/dev                     # Start Astro dev server (bun run dev)
+make website/build                   # Build static site to website/dist/
+make website/check                   # Lint + format with Biome (bun run check)
 ```
 
 ## Architecture
@@ -69,6 +74,15 @@ db/
 ├── migrations/        # goose versioned SQL migrations (embedded via go:embed)
 ├── queries.sql        # All SQL queries (sqlc input)
 └── sqlc.yaml          # sqlc config
+
+website/
+├── src/
+│   ├── layouts/       # base-layout.astro (HTML shell, SEO, theme script)
+│   ├── components/    # navbar, footer, theme-toggle, shorten-widget
+│   ├── pages/         # index.astro (output: 'static')
+│   ├── styles/        # global.css (@theme tokens, component classes)
+│   └── lib/           # dom.ts (typed data-* query helpers)
+└── public/            # robots.txt, favicon.svg
 ```
 
 **Layer boundaries:** `api/` and `mcp/` call `shortener.Service` interface; `shortener/` calls `Storage` and `Encoder` interfaces only — never concrete types. Cache-aside is a delivery-layer concern (in `api/handler.go`), not in the service. `cmd/server/main.go` is the only file that knows all concrete types (DI wiring point).
@@ -89,6 +103,9 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 - **Spam detection:** `URLChecker` interface; `SafeBrowsingChecker` calls Google Safe Browsing v4 — **fail-open**: any API error returns nil so URL creation is never blocked. `NoopChecker` used when no key is configured.
 - **Schema migrations:** goose embedded FS — `db/migrations/*.sql` versioned files applied automatically at server startup via `goose.Up`.
 - **Test-only constructors:** `export_test.go` (package `shortener`, not `shortener_test`) exposes internal fields to external test packages without polluting the public API.
+- **Tailwind v4 `@apply` limitation:** Cannot `@apply` custom component classes inside other custom classes — only utility classes. Use the two-class pattern in HTML: `class="btn btn-primary"`, where `.btn` provides structure and `.btn-primary` adds colour only.
+- **Biome + Astro false positives:** `noUnusedVariables` and `noUnusedImports` fire on frontmatter vars/imports used in Astro templates. Suppressed via `overrides` in `website/biome.jsonc`. Do not remove that override.
+- **Public endpoint (`POST /api/v1/urls/public`):** No auth required, 5 req/min via isolated `r.Group()`, honeypot field `website` (non-empty → fake 201 with `short_code:"decoy"`), forced 30-day expiry, no custom alias allowed.
 
 ## Phased Roadmap
 
@@ -100,7 +117,8 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | 3.5 | Fly.io deploy + Cloudflare DNS/CDN | ✅ goshort.app |
 | 4 | MCP server (official Go SDK, stdio + HTTP) | ✅ v0.4.0 |
 | 5 | Batch, QR codes, link previews, expiry update, spam detection | ✅ v0.5.0 |
-| 6+ | Analytics, PostgreSQL, Redis counter | 🔲 |
+| 6  | Landing page (Astro + Cloudflare Worker), public endpoint | 🔄 |
+| 7+ | Analytics, PostgreSQL, Redis counter | 🔲 |
 
 ## Technology Stack
 
@@ -119,6 +137,8 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | QR codes | `skip2/go-qrcode` |
 | Spam detection | Google Safe Browsing Lookup API v4 (optional, fail-open) |
 | API testing | Bruno (`.bru` files in `api-tests/`) |
+| Website | Astro v6, `@tailwindcss/vite` v4, `@biomejs/biome` v2, Bun |
+| Cloudflare Worker | Asset-first proxy: static Astro build → Fly.io fallback |
 
 ## Configuration
 
