@@ -892,15 +892,15 @@ changelog:
 
 ### Milestone 6.2: Astro Project Setup
 
-- [ ] **T6.2.1** Create `website/` — `bun create astro@latest`
-- [ ] **T6.2.2** Configure Tailwind CSS v4 via `@tailwindcss/vite` plugin
-- [ ] **T6.2.3** Set up `src/styles/global.css`: `@theme` design tokens + component classes (`.btn`, `.btn-primary`, `.input`, `.card`)
-- [ ] **T6.2.4** Configure Biome (`biome.jsonc`): tabs, single quotes, kebab-case filenames, `noMagicNumbers`
-- [ ] **T6.2.5** Set up TypeScript strict mode, path aliases (`@/components`, `@/config`, `@/lib`)
-- [ ] **T6.2.6** Create `src/lib/dom.ts` — typed DOM query helper (query by `data-*`)
-- [ ] **T6.2.7** Set `output: 'static'` in `astro.config.mjs`, add `@astrojs/sitemap`
-- [ ] **T6.2.8** Add `make website/dev` and `make website/build` to root Makefile
-- [ ] **T6.2.9** Verify: `cd website && bun run dev` shows blank styled page, `bun run build` outputs `dist/`
+- [x] **T6.2.1** Create `website/` — `bun create astro@latest`
+- [x] **T6.2.2** Configure Tailwind CSS v4 via `@tailwindcss/vite` plugin
+- [x] **T6.2.3** Set up `src/styles/global.css`: `@theme` design tokens + component classes (`.btn`, `.btn-primary`, `.input`, `.card`)
+- [x] **T6.2.4** Configure Biome (`biome.jsonc`): tabs, single quotes, kebab-case filenames, `noMagicNumbers`
+- [x] **T6.2.5** Set up TypeScript strict mode, path aliases (`@/components`, `@/config`, `@/lib`)
+- [x] **T6.2.6** Create `src/lib/dom.ts` — typed DOM query helper (query by `data-*`)
+- [x] **T6.2.7** Set `output: 'static'` in `astro.config.mjs`, add `@astrojs/sitemap`
+- [x] **T6.2.8** Add `make website/dev` and `make website/build` to root Makefile
+- [x] **T6.2.9** Verify: `cd website && bun run dev` shows blank styled page, `bun run build` outputs `dist/`
 
 ### Milestone 6.3: Base Layout + Navbar
 

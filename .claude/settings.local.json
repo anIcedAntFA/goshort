@@ -22,7 +22,10 @@
       "Bash(kill %1)",
       "mcp__goshort__delete_url",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(bun add *)",
+      "Bash(bun biome *)",
+      "Bash(bun run *)"
     ]
   },
   "enabledMcpjsonServers": [
