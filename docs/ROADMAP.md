@@ -937,23 +937,29 @@ changelog:
 - [x] **T6.5.5** `favicon.svg` in `public/` (done in M6.3)
 - [ ] **T6.5.6** Verify: Lighthouse score >90 on Performance/SEO/Accessibility/Best Practices
 
-### Milestone 6.6: Deploy + DNS
+### Milestone 6.6: Deploy + DNS (Option B: subdomain split)
+
+Worker serves static Astro assets only at `goshort.ngockhoi96.dev`; `goshort.app` stays on Fly.io.
 
 - [x] **T6.6.1** Create `wrangler.jsonc` with static assets config
-- [x] **T6.6.2** Create Worker entry point (~15 lines): try `env.ASSETS.fetch()` first, fallback proxy to `goshort-api.fly.dev`
-- [x] **T6.6.3** Test locally: `wrangler dev` serves landing page, proxies `/api/*` to Fly.io
-- [ ] **T6.6.4** Deploy: `wrangler deploy`
-- [ ] **T6.6.5** Update Cloudflare DNS: `goshort.app` → Worker (remove old Fly.io A/AAAA records)
-- [ ] **T6.6.6** Verify: `goshort.app` → landing page, `goshort.app/api/v1/urls` → API, `goshort.app/k7Xm2p` → redirect, Cloudflare cache rules still work
+- [x] **T6.6.2** Simplify `src/worker.ts` to pure static-asset handler (no proxy logic)
+- [x] **T6.6.3** Update `wrangler.jsonc`: route `goshort.ngockhoi96.dev`, remove `vars.ORIGIN`
+- [x] **T6.6.4** Update `astro.config.mjs`: `site` → `https://goshort.ngockhoi96.dev`
+- [x] **T6.6.5** Update shorten widget: default `API_BASE` → `https://goshort.app` (cross-origin)
+- [x] **T6.6.6** Add `CORSMiddleware()` to `internal/api/middleware.go`; apply to public endpoint group in `router.go`
+- [x] **T6.6.7** DNS already configured: `goshort.ngockhoi96.dev` Worker record → `goshort-website` (Proxied) in `ngockhoi96.dev` zone
+- [x] **T6.6.8** Deploy: `make website/build && wrangler deploy`
+- [x] **T6.6.9** Deploy Go server: `fly deploy`
+- [x] **T6.6.10** Verify: `goshort.ngockhoi96.dev` → landing page, shorten widget works end-to-end; `goshort.app/k7Xm2p` → redirect unaffected; CORS preflight `OPTIONS /api/v1/urls/public` returns `Access-Control-Allow-Origin: *`
 
 ### Milestone 6.7: Release
 
 - [ ] **T6.7.1** Add `.github/FUNDING.yml`: `github: anIcedAntFA`, `ko_fi: anIcedAntFA`
-- [ ] **T6.7.2** Update `CLAUDE.md` with website architecture, Worker routing, public endpoint
-- [ ] **T6.7.3** Update `README.md`: add "Website" section, update architecture
+- [ ] **T6.7.2** Update `CLAUDE.md`: website architecture (Option B subdomain split), public endpoint + CORS
+- [ ] **T6.7.3** Update `README.md`: add "Website" section (`goshort.ngockhoi96.dev`), update architecture
 - [ ] **T6.7.4** Update `CHANGELOG.md` with Phase 6 entries
 - [ ] **T6.7.5** Add website build to CI: `cd website && bun install && bun run build`
-- [ ] **T6.7.6** Final: `make lint && make test && make build` (Go) + `cd website && bun run build` (Astro)
+- [ ] **T6.7.6** Final: `make lint && make test && make build` (Go) + `make website/build` (Astro)
 - [ ] **T6.7.7** Commit: `✨ feat: v0.6.0 — landing page on Cloudflare Workers, public shorten endpoint`
 - [ ] **T6.7.8** Tag: `git tag v0.6.0 && git push --tags`
 
