@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-15
+
+### Added
+
+- **Public shorten endpoint** — `POST /api/v1/urls/public` requires no authentication
+  - 5 req/min per IP via an isolated Chi group (never shares the bucket with authenticated routes)
+  - Honeypot field `website`: non-empty value returns a fake 201 with `short_code:"decoy"` to confuse bots silently
+  - Forced 30-day expiry; custom alias not allowed on the public endpoint
+  - HTTP 422 `unsafe_url` if Safe Browsing is enabled and flags the URL
+- **Landing page** — Astro v6 static site deployed at [goshort.ngockhoi96.dev](https://goshort.ngockhoi96.dev)
+  - **Shorten widget** — live form calling the public endpoint; honeypot included; copy-to-clipboard on result
+  - **Tabbed code demo** — API (curl), CLI, and MCP usage examples with Shiki syntax highlighting
+  - **Feature cards** — REST API, CLI Tool, MCP Tools, Secure by Default
+  - **Install section** — 3-step guide (Download / Configure / Shorten) with inline code snippets
+  - **Theme toggle** — Light / Dark / Auto with `localStorage` persistence; blocking inline script prevents flash-of-wrong-theme
+  - **Responsive layout** — mobile-first; hamburger menu with CSS-only X animation; IntersectionObserver active-link highlighting
+  - Sitemap (`@astrojs/sitemap`), OpenGraph / Twitter Card meta, canonical URL, `favicon.svg`, `robots.txt`
+- **Cloudflare Worker** — pure static-asset handler (`env.ASSETS.fetch(request)`, 8 lines)
+  - **Option B subdomain split**: `goshort.ngockhoi96.dev` → Cloudflare Worker (static landing page only);
+    `goshort.app` → Fly.io directly (API + redirects + MCP — unchanged, zero latency overhead)
+  - Worker has no proxy logic; `goshort.app` DNS zone is untouched; rollback is deleting one CNAME
+- **CORS middleware** — `CORSMiddleware()` with `Access-Control-Allow-Origin: *` scoped to the public endpoint group;
+  `r.Options("/urls/public", ...)` registered in the same group so Chi routes preflight requests before responding 405
+- **govulncheck CI workflow** — `.github/workflows/govulncheck.yml` scans Go dependencies against the
+  Go vulnerability database on every push/PR to `main` and on a weekly Monday schedule
+- **Website CI job** — `website` job in `ci.yml`: `setup-bun` → `bun install --frozen-lockfile` → `bun run lint` → `bun run build`
+- **lefthook website-lint hook** — pre-commit Biome check (`bun run check --write`) runs on staged
+  `*.ts`, `*.astro`, `*.css`, `*.json`, `*.mjs` files under `website/`; auto-fixes staged
+- **FUNDING.yml** — GitHub Sponsors and Ko-fi support links (`github: anIcedAntFA`, `ko_fi: anIcedAntFA`)
+
+### Changed
+
+- README badges reorganised into two rows:
+  - Row 1 (health): CI · govulncheck · Codecov · Go Report Card · Release
+  - Row 2 (info): License · Go 1.26 · Website · API Docs · Ko-fi
+- `SECURITY.md` supported versions updated: 0.6.x and 0.5.x active; < 0.5 no patches
+- `CONTRIBUTING.md` — added **Website Development** section covering `bun run dev`, `bun run check`,
+  `PUBLIC_API_BASE` override for local dev, and Tailwind/Biome conventions
+- `.mcp.json` removed from repository (machine-specific path; README now shows example to create locally)
+- `.gitignore` updated: `.wrangler/` and `.dev.vars*` excluded (Wrangler artifacts not committed)
+
 ## [0.5.1] - 2026-05-10
 
 ### Security
@@ -213,7 +254,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.5.1...HEAD
+[unreleased]: https://github.com/anIcedAntFA/goshort/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/anIcedAntFA/goshort/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/anIcedAntFA/goshort/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/anIcedAntFA/goshort/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/anIcedAntFA/goshort/compare/v0.3.1...v0.4.0

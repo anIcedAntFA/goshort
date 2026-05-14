@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GoShort is a self-hosted URL shortener built in Go — a dual-purpose project: a practical tool and a learning vehicle for Go, system design, caching, and MCP/AI integration.
 
-**Current state:** Phase 6 in progress — public shorten endpoint + Astro landing page (M6.1–M6.5 done). Phase 5 shipped batch, QR codes, link previews, expiry update, spam detection (7 tools, 3 resources, 2 prompts). Deployed at [goshort.app](https://goshort.app).
+**Current state:** Phase 6 M6.6 done — landing page deployed at [goshort.ngockhoi96.dev](https://goshort.ngockhoi96.dev) (Option B subdomain split; `goshort.app` stays on Fly.io). Phase 5 shipped batch, QR codes, link previews, expiry update, spam detection (7 tools, 3 resources, 2 prompts). API + redirects at [goshort.app](https://goshort.app).
 
 ## Commands
 
@@ -77,12 +77,14 @@ db/
 
 website/
 ├── src/
+│   ├── worker.ts      # Cloudflare Worker entry point (pure static-asset handler)
 │   ├── layouts/       # base-layout.astro (HTML shell, SEO, theme script)
 │   ├── components/    # navbar, footer, theme-toggle, shorten-widget
 │   ├── pages/         # index.astro (output: 'static')
 │   ├── styles/        # global.css (@theme tokens, component classes)
 │   └── lib/           # dom.ts (typed data-* query helpers)
-└── public/            # robots.txt, favicon.svg
+├── public/            # robots.txt, favicon.svg
+└── wrangler.jsonc     # Cloudflare Workers config (route: goshort.ngockhoi96.dev)
 ```
 
 **Layer boundaries:** `api/` and `mcp/` call `shortener.Service` interface; `shortener/` calls `Storage` and `Encoder` interfaces only — never concrete types. Cache-aside is a delivery-layer concern (in `api/handler.go`), not in the service. `cmd/server/main.go` is the only file that knows all concrete types (DI wiring point).
@@ -106,6 +108,8 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 - **Tailwind v4 `@apply` limitation:** Cannot `@apply` custom component classes inside other custom classes — only utility classes. Use the two-class pattern in HTML: `class="btn btn-primary"`, where `.btn` provides structure and `.btn-primary` adds colour only.
 - **Biome + Astro false positives:** `noUnusedVariables` and `noUnusedImports` fire on frontmatter vars/imports used in Astro templates. Suppressed via `overrides` in `website/biome.jsonc`. Do not remove that override.
 - **Public endpoint (`POST /api/v1/urls/public`):** No auth required, 5 req/min via isolated `r.Group()`, honeypot field `website` (non-empty → fake 201 with `short_code:"decoy"`), forced 30-day expiry, no custom alias allowed.
+- **CORS for public endpoint:** `CORSMiddleware()` with `Access-Control-Allow-Origin: *` — appropriate since the endpoint has no auth and is rate-limited. Must also register `r.Options("/urls/public", ...)` in the same group or Chi returns 405 before the middleware runs.
+- **Website deployment (Option B subdomain split):** Landing page at `goshort.ngockhoi96.dev` (Cloudflare Worker, pure static). `goshort.app` stays on Fly.io for API + redirects + MCP. Worker serves only `env.ASSETS.fetch(request)` — no proxy logic. Shorten widget calls `https://goshort.app/api/v1/urls/public` explicitly; override with `PUBLIC_API_BASE` env var for local dev.
 
 ## Phased Roadmap
 
@@ -117,7 +121,7 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | 3.5 | Fly.io deploy + Cloudflare DNS/CDN | ✅ goshort.app |
 | 4 | MCP server (official Go SDK, stdio + HTTP) | ✅ v0.4.0 |
 | 5 | Batch, QR codes, link previews, expiry update, spam detection | ✅ v0.5.0 |
-| 6  | Landing page (Astro + Cloudflare Worker), public endpoint | 🔄 |
+| 6  | Landing page (Astro + Cloudflare Worker), public endpoint | ✅ v0.6.0 |
 | 7+ | Analytics, PostgreSQL, Redis counter | 🔲 |
 
 ## Technology Stack
@@ -138,7 +142,7 @@ Consult `docs/DESIGN.md` for full rationale. Critical decisions:
 | Spam detection | Google Safe Browsing Lookup API v4 (optional, fail-open) |
 | API testing | Bruno (`.bru` files in `api-tests/`) |
 | Website | Astro v6, `@tailwindcss/vite` v4, `@biomejs/biome` v2, Bun |
-| Cloudflare Worker | Asset-first proxy: static Astro build → Fly.io fallback |
+| Cloudflare Worker | Pure static asset handler at `goshort.ngockhoi96.dev` (Option B subdomain split) |
 
 ## Configuration
 

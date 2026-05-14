@@ -53,6 +53,18 @@ jobs:
           go-version-file: go.mod
       - run: go build -o goshort ./cmd/server
 
+  website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run build
+
   security:
     runs-on: ubuntu-latest
     steps:

@@ -14,6 +14,11 @@ pre-commit:
         if [ -n "$changed_pkgs" ]; then
           go test -race -count=1 -timeout=30s $changed_pkgs
         fi
+    website-lint:
+      glob: "website/**/*.{ts,astro,css,json,mjs}"
+      root: "website"
+      run: bun run check
+      stage_fixed: true
     secrets:
       run: gitleaks git --no-banner --staged
 

@@ -4,9 +4,9 @@
 
 | Version | Supported          |
 |---------|--------------------|
-| 0.4.x   | ✅ Active support  |
-| 0.3.x   | ✅ Active support  |
-| < 0.3   | ❌ No patches      |
+| 0.6.x   | ✅ Active support  |
+| 0.5.x   | ✅ Active support  |
+| < 0.5   | ❌ No patches      |
 
 ## Reporting a Vulnerability
 
@@ -33,6 +33,7 @@ In scope:
 - Information disclosure (API key leakage, etc.)
 - Open redirect abuse
 - MCP tool abuse (unauthorized operations via MCP endpoint)
+- CORS misconfiguration on the public endpoint
 
 Out of scope:
 

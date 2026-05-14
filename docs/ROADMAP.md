@@ -954,14 +954,14 @@ Worker serves static Astro assets only at `goshort.ngockhoi96.dev`; `goshort.app
 
 ### Milestone 6.7: Release
 
-- [ ] **T6.7.1** Add `.github/FUNDING.yml`: `github: anIcedAntFA`, `ko_fi: anIcedAntFA`
-- [ ] **T6.7.2** Update `CLAUDE.md`: website architecture (Option B subdomain split), public endpoint + CORS
-- [ ] **T6.7.3** Update `README.md`: add "Website" section (`goshort.ngockhoi96.dev`), update architecture
-- [ ] **T6.7.4** Update `CHANGELOG.md` with Phase 6 entries
-- [ ] **T6.7.5** Add website build to CI: `cd website && bun install && bun run build`
-- [ ] **T6.7.6** Final: `make lint && make test && make build` (Go) + `make website/build` (Astro)
-- [ ] **T6.7.7** Commit: `✨ feat: v0.6.0 — landing page on Cloudflare Workers, public shorten endpoint`
-- [ ] **T6.7.8** Tag: `git tag v0.6.0 && git push --tags`
+- [x] **T6.7.1** Add `.github/FUNDING.yml`: `github: anIcedAntFA`, `ko_fi: anIcedAntFA`
+- [x] **T6.7.2** Update `CLAUDE.md`: website architecture (Option B subdomain split), public endpoint + CORS
+- [x] **T6.7.3** Update `README.md`: add "Website" section (`goshort.ngockhoi96.dev`), update architecture
+- [x] **T6.7.4** Update `CHANGELOG.md` with Phase 6 entries
+- [x] **T6.7.5** Add website build to CI: `cd website && bun install && bun run build`
+- [x] **T6.7.6** Final: `make lint && make test && make build` (Go) + `make website/build` (Astro)
+- [x] **T6.7.7** Commit: `✨ feat: v0.6.0 — landing page on Cloudflare Workers, public shorten endpoint`
+- [x] **T6.7.8** Tag: `git tag v0.6.0 && git push --tags`
 
 ---
 
