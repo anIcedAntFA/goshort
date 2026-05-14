@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-	site: 'https://goshort.app',
+	site: 'https://goshort.ngockhoi96.dev',
 	output: 'static',
 	integrations: [sitemap()],
 	vite: {
