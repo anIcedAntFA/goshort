@@ -939,9 +939,9 @@ changelog:
 
 ### Milestone 6.6: Deploy + DNS
 
-- [ ] **T6.6.1** Create `wrangler.jsonc` with static assets config
-- [ ] **T6.6.2** Create Worker entry point (~15 lines): try `env.ASSETS.fetch()` first, fallback proxy to `goshort-api.fly.dev`
-- [ ] **T6.6.3** Test locally: `wrangler dev` serves landing page, proxies `/api/*` to Fly.io
+- [x] **T6.6.1** Create `wrangler.jsonc` with static assets config
+- [x] **T6.6.2** Create Worker entry point (~15 lines): try `env.ASSETS.fetch()` first, fallback proxy to `goshort-api.fly.dev`
+- [x] **T6.6.3** Test locally: `wrangler dev` serves landing page, proxies `/api/*` to Fly.io
 - [ ] **T6.6.4** Deploy: `wrangler deploy`
 - [ ] **T6.6.5** Update Cloudflare DNS: `goshort.app` → Worker (remove old Fly.io A/AAAA records)
 - [ ] **T6.6.6** Verify: `goshort.app` → landing page, `goshort.app/api/v1/urls` → API, `goshort.app/k7Xm2p` → redirect, Cloudflare cache rules still work

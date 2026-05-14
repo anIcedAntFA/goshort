@@ -12,7 +12,10 @@
 		"astro": "astro",
 		"check": "biome check --write .",
 		"lint": "biome lint .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"dev:worker": "astro build && wrangler dev",
+		"worker:dev": "wrangler dev",
+		"worker:deploy": "wrangler deploy"
 	},
 	"dependencies": {
 		"@astrojs/sitemap": "^3.7.2",
@@ -21,6 +24,7 @@
 		"tailwindcss": "^4.3.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.15"
+		"@biomejs/biome": "^2.4.15",
+		"wrangler": "^4.0.0"
 	}
 }

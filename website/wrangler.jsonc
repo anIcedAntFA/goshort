@@ -1,0 +1,15 @@
+{
+	// Cloudflare Workers config for GoShort landing page
+	// Static assets (Astro dist/) served first; unmatched paths proxied to Fly.io
+	"name": "goshort-website",
+	"compatibility_date": "2025-01-13",
+	"main": "./src/worker.ts",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"vars": {
+		// Overridden in .dev.vars to http://localhost:8080 for local dev
+		"ORIGIN": "https://goshort-api.fly.dev"
+	}
+}

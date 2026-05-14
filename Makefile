@@ -112,13 +112,17 @@ ci: lint test build ## Run full CI locally (lint + test + build)
 
 WEBSITE_DIR := website
 
-.PHONY: website/dev website/build website/check
+.PHONY: website/dev website/build website/check website/worker/dev website/worker/deploy
 website/dev: ## Start Astro dev server
 	cd $(WEBSITE_DIR) && bun run dev
 website/build: ## Build Astro static site to website/dist/
 	cd $(WEBSITE_DIR) && bun run build
 website/check: ## Lint + format website with Biome
 	cd $(WEBSITE_DIR) && bun run check
+website/worker/dev: website/build ## Build site then run Cloudflare Worker locally
+	cd $(WEBSITE_DIR) && wrangler dev
+website/worker/deploy: website/build ## Build site then deploy Worker to Cloudflare
+	cd $(WEBSITE_DIR) && wrangler deploy
 
 # ── Housekeeping ──────────────────────────────────
 
