@@ -34,7 +34,9 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public shorten endpoint — no auth, always rate-limited at 5 req/min per IP.
 		r.Group(func(r chi.Router) {
+			r.Use(CORSMiddleware())
 			r.Use(RateLimitMiddleware(true, 5))
+			r.Options("/urls/public", func(_ http.ResponseWriter, _ *http.Request) {})
 			r.Post("/urls/public", h.PublicCreateURL)
 		})
 
