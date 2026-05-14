@@ -70,11 +70,11 @@ const year = new Date().getFullYear();
 		color: var(--color-brand);
 	}
 
-	:global(.dark) .footer-link {
+	:global([data-theme="dark"]) .footer-link {
 		color: var(--color-text-muted-dark);
 	}
 
-	:global(.dark) .footer-link:hover {
+	:global([data-theme="dark"]) .footer-link:hover {
 		color: var(--color-brand);
 	}
 </style>

@@ -4,15 +4,17 @@ import ThemeToggle from '@/components/theme-toggle.astro';
 interface NavLink {
 	label: string;
 	href: string;
-	external?: boolean;
 }
 
-const navLinks: NavLink[] = [
+const sectionLinks: NavLink[] = [
 	{ label: 'Features', href: '#features' },
 	{ label: 'Demo', href: '#demo' },
 	{ label: 'Install', href: '#install' },
-	{ label: 'API Docs', href: 'https://goshort.app/docs', external: true },
-	{ label: 'GitHub', href: 'https://github.com/anIcedAntFA/goshort', external: true },
+];
+
+const externalLinks: NavLink[] = [
+	{ label: 'API Docs', href: 'https://goshort.app/docs' },
+	{ label: 'GitHub', href: 'https://github.com/anIcedAntFA/goshort' },
 ];
 ---
 
@@ -20,19 +22,31 @@ const navLinks: NavLink[] = [
 	class="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-sm dark:border-border-dark dark:bg-surface-dark/80"
 	data-navbar
 >
-	<div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+	<div class="mx-auto grid max-w-5xl grid-cols-[auto_1fr_auto] items-center px-4 py-3">
+		<!-- Left: Logo -->
 		<a href="/" class="text-lg font-bold text-text dark:text-text-dark">GoShort</a>
 
+		<!-- Center: Section links (desktop only, centered) -->
+		<div class="hidden justify-center gap-6 md:flex">
+			{
+				sectionLinks.map((link) => (
+					<a href={link.href} class="nav-link text-sm" data-nav-link={link.href.slice(1)}>
+						{link.label}
+					</a>
+				))
+			}
+		</div>
+
+		<!-- Right: External links + theme toggle + hamburger -->
 		<div class="flex items-center gap-3">
-			<!-- Desktop links — hidden on mobile -->
-			<div class="hidden items-center gap-6 md:flex">
+			<div class="hidden items-center gap-3 md:flex">
 				{
-					navLinks.map((link) => (
+					externalLinks.map((link) => (
 						<a
 							href={link.href}
 							class="nav-link text-sm"
-							data-nav-link={link.href.startsWith('#') ? link.href.slice(1) : undefined}
-							{...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+							target="_blank"
+							rel="noopener noreferrer"
 						>
 							{link.label}
 						</a>
@@ -40,12 +54,12 @@ const navLinks: NavLink[] = [
 				}
 			</div>
 
-			<!-- Theme toggle — always visible -->
 			<ThemeToggle />
 
-			<!-- Hamburger — mobile only -->
+			<!-- Hamburger: Tailwind flex+md:hidden controls visibility;
+			     no display:flex in scoped CSS to avoid overriding md:hidden -->
 			<button
-				class="hamburger md:hidden"
+				class="hamburger flex md:hidden"
 				data-menu-toggle
 				aria-label="Toggle navigation"
 				aria-expanded="false"
@@ -62,12 +76,14 @@ const navLinks: NavLink[] = [
 	<div id="mobile-menu" class="mobile-menu" data-mobile-menu>
 		<div class="mx-auto max-w-5xl border-t border-border px-4 py-2 dark:border-border-dark">
 			{
-				navLinks.map((link) => (
+				[...sectionLinks, ...externalLinks].map((link) => (
 					<a
 						href={link.href}
 						class="nav-link mobile-nav-link text-sm"
 						data-nav-link={link.href.startsWith('#') ? link.href.slice(1) : undefined}
-						{...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+						{...(link.href.startsWith('http')
+							? { target: '_blank', rel: 'noopener noreferrer' }
+							: {})}
 					>
 						{link.label}
 					</a>
@@ -135,14 +151,14 @@ const navLinks: NavLink[] = [
 		color: var(--color-brand);
 		font-weight: 500;
 	}
-	:global(.dark) .nav-link {
+	:global([data-theme="dark"]) .nav-link {
 		color: var(--color-text-muted-dark);
 	}
-	:global(.dark) .nav-link:hover,
-	:global(.dark) .nav-link[data-active] {
+	:global([data-theme="dark"]) .nav-link:hover,
+	:global([data-theme="dark"]) .nav-link[data-active] {
 		color: var(--color-text-dark);
 	}
-	:global(.dark) .nav-link[data-active] {
+	:global([data-theme="dark"]) .nav-link[data-active] {
 		color: var(--color-brand);
 	}
 
@@ -153,9 +169,8 @@ const navLinks: NavLink[] = [
 		padding-bottom: 0.5rem;
 	}
 
-	/* Hamburger button */
+	/* Hamburger button — no display:flex here; Tailwind flex+md:hidden controls it */
 	.hamburger {
-		display: flex;
 		flex-direction: column;
 		gap: 4px;
 		padding: 4px;
@@ -164,7 +179,7 @@ const navLinks: NavLink[] = [
 		cursor: pointer;
 		color: var(--color-text-muted);
 	}
-	:global(.dark) .hamburger {
+	:global([data-theme="dark"]) .hamburger {
 		color: var(--color-text-muted-dark);
 	}
 	.hamburger span {

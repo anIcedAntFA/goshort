@@ -42,11 +42,12 @@ const {
 		<link rel="sitemap" href="/sitemap-index.xml" />
 		<meta name="generator" content={Astro.generator} />
 
-		<!-- Blocking theme script: prevents flash of wrong theme on load -->
+		<!-- Blocking theme script: prevents flash of wrong theme on load.
+		     Sets data-theme="dark" on <html>; dark: variants key off this attribute. -->
 		<script is:inline>
 			const t = localStorage.getItem('theme');
 			if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
-				document.documentElement.classList.add('dark');
+				document.documentElement.dataset.theme = 'dark';
 		</script>
 	</head>
 	<body class="bg-surface text-text dark:bg-surface-dark dark:text-text-dark">

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Rebind dark: from @media (prefers-color-scheme: dark) → data-theme="dark" on <html>.
+   This lets JS fully own dark mode rather than sharing control with the OS media query. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ─── Design Tokens ─── */
 @theme {
 	--color-brand: #4f46e5;

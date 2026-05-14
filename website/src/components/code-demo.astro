@@ -140,15 +140,15 @@ const tabs = [
 		background-color: var(--color-surface-alt);
 	}
 
-	:global(.dark) .demo-tab {
+	:global([data-theme="dark"]) .demo-tab {
 		color: var(--color-text-muted-dark);
 	}
 
-	:global(.dark) .demo-tab:hover {
+	:global([data-theme="dark"]) .demo-tab:hover {
 		color: var(--color-text-dark);
 	}
 
-	:global(.dark) .demo-tab[data-active] {
+	:global([data-theme="dark"]) .demo-tab[data-active] {
 		color: var(--color-brand);
 		background-color: var(--color-surface-alt-dark);
 	}
