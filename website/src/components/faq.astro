@@ -41,7 +41,7 @@ const items: FAQItem[] = [
 <div class="mx-auto max-w-2xl divide-y divide-border dark:divide-border-dark">
 	{
 		items.map((item) => (
-			<details class="faq-item group py-4">
+			<details class="group py-4" data-faq-item>
 				<summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-text dark:text-text-dark">
 					{item.question}
 					<span class="faq-icon shrink-0 text-text-muted transition-transform dark:text-text-muted-dark">
@@ -50,9 +50,11 @@ const items: FAQItem[] = [
 						</svg>
 					</span>
 				</summary>
-				<p class="mt-3 text-sm leading-relaxed text-text-muted dark:text-text-muted-dark">
-					{item.answer}
-				</p>
+				<div data-faq-body>
+					<p class="mt-3 pb-1 text-sm leading-relaxed text-text-muted dark:text-text-muted-dark">
+						{item.answer}
+					</p>
+				</div>
 			</details>
 		))
 	}
@@ -60,19 +62,88 @@ const items: FAQItem[] = [
 
 <style>
 	/* Hide default marker across browsers */
-	.faq-item > summary {
+	[data-faq-item] > summary {
 		list-style: none;
 	}
-	.faq-item > summary::-webkit-details-marker {
+	[data-faq-item] > summary::-webkit-details-marker {
 		display: none;
 	}
 
 	/* Rotate + icon to × when open */
-	.faq-item[open] .faq-icon {
+	[data-faq-item][open] .faq-icon {
 		transform: rotate(45deg);
 		color: var(--color-brand);
 	}
-	:global([data-theme='dark']) .faq-item[open] .faq-icon {
+	:global([data-theme='dark']) [data-faq-item][open] .faq-icon {
 		color: var(--color-brand);
 	}
+
+	/* Animated accordion body — JS drives max-height; CSS provides starting state */
+	[data-faq-body] {
+		overflow: hidden;
+		max-height: 0;
+		opacity: 0;
+		transition:
+			max-height 0.25s ease,
+			opacity 0.2s ease;
+	}
+	/* CSS fallback for open state when JS hasn't run (SSR/no-JS) */
+	details[open] > [data-faq-body] {
+		max-height: none;
+		opacity: 1;
+	}
 </style>
+
+<script>
+	import { queryAllData, queryData } from '@/lib/dom';
+
+	const faqItems = queryAllData<HTMLDetailsElement>('faq-item');
+
+	for (const details of faqItems) {
+		const summary = details.querySelector('summary');
+		const body = queryData<HTMLElement>('faq-body', undefined, details);
+		if (!summary || !body) continue;
+
+		summary.addEventListener('click', (e) => {
+			e.preventDefault();
+
+			if (details.open) {
+				// Closing: snapshot current rendered height, force-commit it, then animate to 0
+				body.style.maxHeight = `${body.scrollHeight}px`;
+				body.style.opacity = '1';
+				// Force reflow so browser commits the snapshot as the transition start
+				// biome-ignore lint/suspicious/noExplicitAny: intentional reflow trigger
+				void (body as any).offsetHeight;
+				body.style.maxHeight = '0';
+				body.style.opacity = '0';
+
+				const onClose = (ev: TransitionEvent) => {
+					if (ev.propertyName !== 'max-height') return;
+					details.removeAttribute('open');
+					body.removeEventListener('transitionend', onClose);
+				};
+				body.addEventListener('transitionend', onClose);
+			} else {
+				// Opening: set open first (needed for scrollHeight to reflect full content),
+				// immediately pin to 0 via inline style to override the CSS open-state fallback,
+				// force reflow to commit, then animate to full height
+				details.setAttribute('open', '');
+				const height = body.scrollHeight;
+				body.style.maxHeight = '0';
+				body.style.opacity = '0';
+				// biome-ignore lint/suspicious/noExplicitAny: intentional reflow trigger
+				void (body as any).offsetHeight;
+				body.style.maxHeight = `${height}px`;
+				body.style.opacity = '1';
+
+				const onOpen = (ev: TransitionEvent) => {
+					if (ev.propertyName !== 'max-height') return;
+					// Clear inline style — CSS open-state fallback (max-height: none) takes over
+					body.style.maxHeight = '';
+					body.removeEventListener('transitionend', onOpen);
+				};
+				body.addEventListener('transitionend', onOpen);
+			}
+		});
+	}
+</script>

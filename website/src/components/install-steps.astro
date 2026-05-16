@@ -49,14 +49,11 @@ curl http://localhost:8080/health
 # → {"status":"ok"}`;
 ---
 
-<!-- Step 1 — full width, tabbed install methods -->
+<!-- Quick start — full width, tabbed install methods -->
 <div class="rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
-	<div class="mb-4 flex items-start gap-3">
-		<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">1</span>
-		<div>
-			<h3 class="font-semibold text-text dark:text-text-dark">Install</h3>
-			<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">Pick your preferred install method.</p>
-		</div>
+	<div class="mb-4">
+		<h3 class="font-semibold text-text dark:text-text-dark">Quick start</h3>
+		<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">Pick your preferred install method.</p>
 	</div>
 
 	<div data-install-tabs>
@@ -87,32 +84,35 @@ curl http://localhost:8080/health
 	</div>
 </div>
 
-<!-- Steps 2 + 3 — two-column -->
-<div class="mt-4 grid gap-4 md:grid-cols-2">
-	<div class="rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
-		<div class="mb-4 flex items-start gap-3">
-			<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">2</span>
-			<div>
-				<h3 class="font-semibold text-text dark:text-text-dark">Configure</h3>
-				<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">
-					Edit <code class="inline-code">goshort.toml</code>.
-				</p>
-			</div>
-		</div>
-		<Code code={configCode} lang="toml" theme="github-dark" class="step-code" />
+<!-- Configure & run — two-column on desktop, stacked on mobile -->
+<div class="mt-4 rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
+	<div class="mb-4">
+		<h3 class="font-semibold text-text dark:text-text-dark">Configure &amp; run</h3>
 	</div>
-
-	<div class="rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
-		<div class="mb-4 flex items-start gap-3">
-			<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">3</span>
-			<div>
-				<h3 class="font-semibold text-text dark:text-text-dark">Run & verify</h3>
-				<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">Start the server and confirm it's live.</p>
-			</div>
+	<div class="grid gap-4 md:grid-cols-2">
+		<div>
+			<p class="mb-1.5 text-sm text-text-muted dark:text-text-muted-dark">
+				Edit <code class="inline-code">goshort.toml</code>.
+			</p>
+			<Code code={configCode} lang="toml" theme="github-dark" class="run-code" />
 		</div>
-		<Code code={verifyCode} lang="bash" theme="github-dark" class="step-code" />
+		<div>
+			<p class="mb-1.5 text-sm text-text-muted dark:text-text-muted-dark">
+				Start the server and confirm it's live.
+			</p>
+			<Code code={verifyCode} lang="bash" theme="github-dark" class="run-code" />
+		</div>
 	</div>
 </div>
+
+<p class="mt-4 text-center text-sm">
+	<a
+		href="https://github.com/anIcedAntFA/goshort#readme"
+		target="_blank"
+		rel="noopener noreferrer"
+		class="text-brand hover:underline"
+	>Full setup guide →</a>
+</p>
 
 <script>
 	import { query, queryAll } from '@/lib/dom';
@@ -180,7 +180,7 @@ curl http://localhost:8080/health
 		color: var(--color-text-dark);
 	}
 	:global([data-theme='dark']) .install-tab[data-active] {
-		color: var(--color-brand);
+		color: #a5b4fc;
 		background-color: var(--color-surface-alt-dark);
 	}
 
@@ -200,8 +200,18 @@ curl http://localhost:8080/health
 		display: block;
 	}
 
+	/* Code block inside tabbed panel — square top-left connects to active tab */
 	.step-code {
 		border-radius: 0 0.625rem 0.625rem 0.625rem !important;
+		margin: 0 !important;
+		padding: 1rem !important;
+		font-size: 0.8125rem !important;
+		line-height: 1.6 !important;
+	}
+
+	/* Code block outside tabs — fully rounded */
+	.run-code {
+		border-radius: 0.625rem !important;
 		margin: 0 !important;
 		padding: 1rem !important;
 		font-size: 0.8125rem !important;

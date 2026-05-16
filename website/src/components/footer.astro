@@ -1,4 +1,9 @@
 ---
+import Coffee from '@lucide/astro/icons/coffee';
+import Heart from '@lucide/astro/icons/heart';
+import Scale from '@lucide/astro/icons/scale';
+import GithubIcon from '@/components/github-icon.astro';
+
 const year = new Date().getFullYear();
 ---
 
@@ -26,33 +31,33 @@ const year = new Date().getFullYear();
 					href="https://github.com/anIcedAntFA/goshort"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="footer-link"
+					class="footer-link inline-flex items-center gap-1.5"
 				>
-					GitHub
+					<GithubIcon size={15} />GitHub
 				</a>
 				<a
 					href="https://github.com/sponsors/anIcedAntFA"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="footer-link"
+					class="footer-link inline-flex items-center gap-1.5"
 				>
-					Sponsors
+					<Heart size={14} />Sponsors
 				</a>
 				<a
 					href="https://ko-fi.com/anicedantfa"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="footer-link"
+					class="footer-link inline-flex items-center gap-1.5"
 				>
-					Ko-fi
+					<Coffee size={14} />Ko-fi
 				</a>
 				<a
 					href="https://github.com/anIcedAntFA/goshort/blob/main/LICENSE"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="footer-link"
+					class="footer-link inline-flex items-center gap-1.5"
 				>
-					MIT
+					<Scale size={14} />MIT
 				</a>
 			</div>
 		</div>

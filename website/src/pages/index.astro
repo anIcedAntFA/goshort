@@ -6,6 +6,7 @@ import Footer from '@/components/footer.astro';
 import InstallSteps from '@/components/install-steps.astro';
 import Navbar from '@/components/navbar.astro';
 import ShortenWidget from '@/components/shorten-widget/index.astro';
+import SponsorBanner from '@/components/sponsor-banner.astro';
 import BaseLayout from '@/layouts/base-layout.astro';
 ---
 
@@ -14,7 +15,7 @@ import BaseLayout from '@/layouts/base-layout.astro';
 
 	<main id="main-content" class="mx-auto max-w-5xl px-4">
 		<!-- Hero -->
-		<section class="py-20 text-center" id="hero">
+		<section class="py-16 text-center" id="hero">
 			<h1 class="text-4xl font-bold tracking-tight text-text md:text-5xl dark:text-text-dark">
 				Short links, fast.
 			</h1>
@@ -22,14 +23,14 @@ import BaseLayout from '@/layouts/base-layout.astro';
 				A self-hosted URL shortener built with Go. REST API, CLI, and MCP tools out of the box.
 				Own your data. Deploy anywhere.
 			</p>
-			<div class="mx-auto mt-10 max-w-xl">
+			<div class="mx-auto mt-10 max-w-2xl">
 				<ShortenWidget />
 			</div>
 		</section>
 
 		<!-- Features -->
 		<section id="features" class="py-16">
-			<p class="section-heading">Built for developers</p>
+			<h2 class="section-heading">Built for developers</h2>
 			<div class="mt-8">
 				<FeatureCards />
 			</div>
@@ -37,7 +38,7 @@ import BaseLayout from '@/layouts/base-layout.astro';
 
 		<!-- Demo -->
 		<section id="demo" class="py-16">
-			<p class="section-heading">See it in action</p>
+			<h2 class="section-heading">See it in action</h2>
 			<div class="mt-8">
 				<CodeDemo />
 			</div>
@@ -45,14 +46,20 @@ import BaseLayout from '@/layouts/base-layout.astro';
 
 		<!-- Install -->
 		<section id="install" class="py-16">
-			<p class="section-heading">Self-host in minutes</p>
+			<h2 class="section-heading">Self-host in minutes</h2>
 			<div class="mt-8">
 				<InstallSteps />
 			</div>
 		</section>
+
+		<!-- Sponsor -->
+		<div class="pb-8">
+			<SponsorBanner />
+		</div>
+
 		<!-- FAQ -->
 		<section id="faq" class="py-16">
-			<p class="section-heading">Frequently asked questions</p>
+			<h2 class="section-heading">Frequently asked questions</h2>
 			<div class="mt-8">
 				<Faq />
 			</div>
@@ -61,4 +68,3 @@ import BaseLayout from '@/layouts/base-layout.astro';
 
 	<Footer />
 </BaseLayout>
-

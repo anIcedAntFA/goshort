@@ -64,3 +64,15 @@
 .section-heading {
 	@apply text-center text-sm font-semibold uppercase tracking-wider text-text-muted dark:text-text-muted-dark;
 }
+
+/* Keep section content below the sticky navbar when following hash links */
+section[id] {
+	scroll-margin-top: 5rem;
+}
+
+/* WCAG AA fix: github-dark comment/punctuation color #8b949e on #24292e ≈ 4.47:1 (fail).
+   Boost to #a0b6c8 ≈ 6.2:1 (pass). !important is required to override Shiki's inline style. */
+pre.astro-code [style*="color:#8b949e"] {
+	/* biome-ignore lint/complexity/noImportantStyles: must override Shiki inline style for WCAG AA */
+	color: #a0b6c8 !important;
+}

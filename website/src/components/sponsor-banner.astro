@@ -1,0 +1,108 @@
+---
+import Heart from '@lucide/astro/icons/heart';
+import GithubIcon from '@/components/github-icon.astro';
+---
+
+<div class="sponsor-card">
+	<div class="sponsor-body">
+		<div class="sponsor-avatar">
+			<Heart size={18} />
+		</div>
+		<div class="sponsor-text">
+			<p class="sponsor-heading">Support GoShort</p>
+			<p class="sponsor-sub">
+				MIT-licensed and free forever. Sponsorships help keep it maintained and growing.
+			</p>
+		</div>
+	</div>
+	<a
+		href="https://github.com/sponsors/anIcedAntFA"
+		target="_blank"
+		rel="noopener noreferrer"
+		class="sponsor-cta"
+	>
+		<GithubIcon size={15} />
+		Become a sponsor
+	</a>
+</div>
+
+<style>
+	.sponsor-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1.5rem;
+		flex-wrap: wrap;
+		padding: 1.25rem 1.5rem;
+		border-radius: 0.875rem;
+		background-color: #f5f3ff;
+		border: 1px solid #c7d2fe;
+	}
+	:global([data-theme='dark']) .sponsor-card {
+		background-color: #1e1b4b;
+		border-color: #3730a3;
+	}
+
+	.sponsor-body {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		min-width: 0;
+	}
+
+	.sponsor-avatar {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #ec4899, #8b5cf6);
+		color: white;
+	}
+
+	.sponsor-text {
+		min-width: 0;
+	}
+
+	.sponsor-heading {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	:global([data-theme='dark']) .sponsor-heading {
+		color: var(--color-text-dark);
+	}
+
+	.sponsor-sub {
+		font-size: 0.8125rem;
+		margin-top: 0.125rem;
+		color: var(--color-text-muted);
+		line-height: 1.5;
+	}
+	:global([data-theme='dark']) .sponsor-sub {
+		color: var(--color-text-muted-dark);
+	}
+
+	.sponsor-cta {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5625rem 1.25rem;
+		border-radius: 9999px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		background: linear-gradient(135deg, #ec4899, #8b5cf6);
+		color: white;
+		text-decoration: none;
+		border: none;
+		transition: opacity 0.15s, box-shadow 0.15s;
+		box-shadow: 0 1px 3px rgba(139, 92, 246, 0.3);
+	}
+	.sponsor-cta:hover {
+		opacity: 0.9;
+		box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+	}
+</style>

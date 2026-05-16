@@ -1,0 +1,303 @@
+/* Override text-center inherited from the hero section */
+[data-shorten-result] {
+	text-align: left;
+}
+
+/* Card flash on result reveal */
+@keyframes ring-flash {
+	0% {
+		box-shadow: 0 0 0 2px var(--color-success);
+	}
+	100% {
+		box-shadow: 0 0 0 2px transparent;
+	}
+}
+[data-shorten-result][data-flash] {
+	animation: ring-flash 0.6s ease-out forwards;
+}
+
+/* Result section labels (Shortened URL / Original URL) */
+.result-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--color-text-muted);
+	margin-bottom: 0.125rem;
+}
+[data-theme="dark"] .result-label {
+	color: var(--color-text-muted-dark);
+}
+
+/* Inline expires annotation — resets uppercase/tracking from parent label */
+.result-label-meta {
+	font-weight: 400;
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 0.6875rem;
+	color: var(--color-text-muted);
+}
+[data-theme="dark"] .result-label-meta {
+	color: var(--color-text-muted-dark);
+}
+
+/* Result value text (Original URL) */
+.result-value {
+	font-size: 0.875rem;
+	color: var(--color-text);
+}
+[data-theme="dark"] .result-value {
+	color: var(--color-text-dark);
+}
+
+/* Outlined download buttons inside the QR panel */
+.download-qr-btn {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.875rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	border-radius: 0.5rem;
+	border: 1px solid var(--color-border);
+	background: var(--color-surface);
+	cursor: pointer;
+	color: var(--color-text-muted);
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		background-color 0.15s,
+		color 0.15s,
+		border-color 0.15s;
+}
+.download-qr-btn:hover {
+	background-color: var(--color-surface-alt);
+	color: var(--color-text);
+	border-color: var(--color-text-muted);
+}
+[data-theme="dark"] .download-qr-btn {
+	background: var(--color-surface-dark);
+	color: var(--color-text-muted-dark);
+	border-color: var(--color-border-dark);
+	transition:
+		background-color 0.15s,
+		color 0.15s,
+		border-color 0.15s;
+}
+[data-theme="dark"] .download-qr-btn:hover {
+	background-color: var(--color-surface-alt-dark);
+	color: var(--color-text-dark);
+	border-color: var(--color-text-muted-dark);
+}
+
+/* Icon-only copy button (inline next to short URL) */
+.copy-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.25rem;
+	border: none;
+	border-radius: 0.375rem;
+	background: transparent;
+	cursor: pointer;
+	color: var(--color-text-muted);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+}
+.copy-icon-btn:hover {
+	background-color: var(--color-surface-alt);
+	color: var(--color-text);
+}
+[data-theme="dark"] .copy-icon-btn {
+	color: var(--color-text-muted-dark);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+}
+[data-theme="dark"] .copy-icon-btn:hover {
+	background-color: var(--color-surface-alt-dark);
+	color: var(--color-text-dark);
+}
+
+/* Small action buttons (Visit, QR, Copy, Download) */
+.action-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.625rem;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	border-radius: 0.375rem;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: var(--color-text-muted);
+	text-decoration: none;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+}
+.action-btn:hover {
+	background-color: var(--color-surface-alt);
+	color: var(--color-text);
+}
+.action-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+.action-btn:disabled:hover {
+	background: transparent;
+	color: var(--color-text-muted);
+}
+[data-theme="dark"] .action-btn {
+	color: var(--color-text-muted-dark);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+}
+[data-theme="dark"] .action-btn:hover {
+	background-color: var(--color-surface-alt-dark);
+	color: var(--color-text-dark);
+}
+[data-theme="dark"] .action-btn:disabled:hover {
+	background: transparent;
+	color: var(--color-text-muted-dark);
+}
+
+/* QR button active state (when panel is open) */
+[data-qr-btn][data-active] {
+	background-color: var(--color-surface-alt);
+	color: var(--color-text);
+}
+[data-theme="dark"] [data-qr-btn][data-active] {
+	background-color: var(--color-surface-alt-dark);
+	color: var(--color-text-dark);
+}
+
+/* QR section heading */
+.qr-section-label {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--color-text);
+}
+[data-theme="dark"] .qr-section-label {
+	color: var(--color-text-dark);
+}
+
+/* Copy icon swap: default shows Copy icon, [data-copied] shows Check */
+[data-icon-check] {
+	display: none;
+}
+[data-copy-btn][data-copied] [data-icon-copy] {
+	display: none;
+}
+[data-copy-btn][data-copied] [data-icon-check] {
+	display: inline-flex;
+}
+[data-copy-btn][data-copied] {
+	color: var(--color-success);
+}
+[data-copy-icon-btn][data-copied] [data-icon-copy] {
+	display: none;
+}
+[data-copy-icon-btn][data-copied] [data-icon-check] {
+	display: inline-flex;
+}
+[data-copy-icon-btn][data-copied] {
+	color: var(--color-success);
+}
+/* QR image wrapper + hover overlay copy button */
+.qr-img-wrapper {
+	position: relative;
+	display: inline-flex;
+	flex-shrink: 0;
+}
+.qr-copy-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0.25rem;
+	border: none;
+	cursor: pointer;
+	background: rgba(0, 0, 0, 0.28);
+	color: white;
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+.qr-img-wrapper:hover .qr-copy-overlay {
+	opacity: 1;
+}
+/* Mobile (coarse pointer): always-visible corner badge */
+@media (pointer: coarse) {
+	.qr-copy-overlay {
+		inset: auto;
+		bottom: 0;
+		right: 0;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 0.375rem 0 0.25rem 0;
+		opacity: 1;
+	}
+}
+[data-copy-qr-btn][data-copied] [data-icon-copy] {
+	display: none;
+}
+[data-copy-qr-btn][data-copied] [data-icon-check] {
+	display: inline-flex;
+}
+[data-copy-qr-btn][data-copied] {
+	background: rgba(22, 163, 74, 0.6);
+}
+
+/* QR fade-in/out panel — max-height transition avoids display:none jump */
+.qr-panel {
+	overflow: hidden;
+	max-height: 0;
+	opacity: 0;
+	transition:
+		max-height 0.25s ease,
+		opacity 0.2s ease;
+}
+.qr-panel[data-visible] {
+	max-height: 280px;
+	opacity: 1;
+}
+
+/* "Shorten another" dashed ghost button */
+.shorten-another-btn {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	padding: 0.5rem;
+	font-size: 0.8125rem;
+	color: var(--color-text-muted);
+	background: transparent;
+	border: 1px dashed var(--color-border);
+	border-radius: 0.5rem;
+	cursor: pointer;
+	transition:
+		color 0.15s,
+		border-color 0.15s;
+}
+.shorten-another-btn:hover {
+	color: var(--color-brand);
+	border-color: var(--color-brand);
+}
+[data-theme="dark"] .shorten-another-btn {
+	color: var(--color-text-muted-dark);
+	border-color: var(--color-border-dark);
+}
+[data-theme="dark"] .shorten-another-btn:hover {
+	color: var(--color-brand);
+	border-color: var(--color-brand);
+}

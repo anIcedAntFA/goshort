@@ -1,4 +1,6 @@
 ---
+import BookOpen from '@lucide/astro/icons/book-open';
+import GithubIcon from '@/components/github-icon.astro';
 import ThemeToggle from '@/components/theme-toggle.astro';
 
 interface NavLink {
@@ -46,11 +48,14 @@ const externalLinks: NavLink[] = [
 					externalLinks.map((link) => (
 						<a
 							href={link.href}
-							class="nav-link text-sm"
+							class="nav-link text-sm inline-flex items-center gap-1.5"
 							target="_blank"
 							rel="noopener noreferrer"
+							aria-label={link.label === 'GitHub' ? 'GitHub repository' : undefined}
 						>
-							{link.label}
+							{link.label === 'API Docs' && <BookOpen size={14} />}
+							{link.label === 'API Docs' && link.label}
+							{link.label === 'GitHub' && <GithubIcon size={18} />}
 						</a>
 					))
 				}
@@ -87,6 +92,8 @@ const externalLinks: NavLink[] = [
 							? { target: '_blank', rel: 'noopener noreferrer' }
 							: {})}
 					>
+						{link.label === 'API Docs' && <BookOpen size={14} />}
+						{link.label === 'GitHub' && <GithubIcon size={16} />}
 						{link.label}
 					</a>
 				))
@@ -118,21 +125,26 @@ const externalLinks: NavLink[] = [
 		});
 	}
 
-	// Highlight active nav link on scroll
-	const observer = new IntersectionObserver(
-		(entries) => {
-			for (const entry of entries) {
-				if (entry.isIntersecting) {
-					for (const link of navLinks) {
-						link.toggleAttribute('data-active', link.dataset.navLink === entry.target.id);
-					}
-				}
-			}
-		},
-		{ rootMargin: '-80px 0px -60% 0px' },
-	);
+	// Highlight the nav link whose section top is closest above the trigger line
+	function getActiveSectionId(): string {
+		const triggerY = window.scrollY + 120; // 80px navbar + 40px buffer
+		let activeId = '';
+		for (const section of sections) {
+			if (section.offsetTop <= triggerY) activeId = section.id;
+		}
+		return activeId;
+	}
 
-	for (const section of sections) observer.observe(section);
+	function setActiveNavLink(id: string): void {
+		for (const link of navLinks) {
+			link.toggleAttribute('data-active', link.dataset.navLink === id);
+		}
+	}
+
+	window.addEventListener('scroll', () => setActiveNavLink(getActiveSectionId()), {
+		passive: true,
+	});
+	setActiveNavLink(getActiveSectionId());
 </script>
 
 <style>
@@ -166,7 +178,9 @@ const externalLinks: NavLink[] = [
 
 	/* Mobile nav link stacking */
 	.mobile-nav-link {
-		display: block;
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
 	}
@@ -208,7 +222,10 @@ const externalLinks: NavLink[] = [
 
 	/* Mobile dropdown panel — absolutely positioned to overlay content, not push it down */
 	.mobile-menu {
-		display: none;
+		overflow: hidden;
+		max-height: 0;
+		opacity: 0;
+		transform: translateY(-6px);
 		position: absolute;
 		top: 100%;
 		left: 0;
@@ -217,6 +234,10 @@ const externalLinks: NavLink[] = [
 		background: var(--color-surface);
 		border-bottom: 1px solid var(--color-border);
 		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+		transition:
+			max-height 0.25s ease,
+			opacity 0.2s ease,
+			transform 0.2s ease;
 	}
 	:global([data-theme="dark"]) .mobile-menu {
 		background: var(--color-surface-dark);
@@ -224,7 +245,9 @@ const externalLinks: NavLink[] = [
 	}
 	@media (max-width: 767px) {
 		[data-navbar][data-menu-open] .mobile-menu {
-			display: block;
+			max-height: 300px;
+			opacity: 1;
+			transform: translateY(0);
 		}
 	}
 </style>
