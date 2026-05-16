@@ -5,8 +5,10 @@ import Check from '@lucide/astro/icons/check';
 import Copy from '@lucide/astro/icons/copy';
 import Download from '@lucide/astro/icons/download';
 import ExternalLink from '@lucide/astro/icons/external-link';
+import Globe from '@lucide/astro/icons/globe';
 import Plus from '@lucide/astro/icons/plus';
 import QrCode from '@lucide/astro/icons/qr-code';
+import WandSparkles from '@lucide/astro/icons/wand-sparkles';
 ---
 
 <div class="w-full" data-shorten-widget>
@@ -40,38 +42,32 @@ import QrCode from '@lucide/astro/icons/qr-code';
 	</form>
 
 	<div class="card mt-4 hidden" data-shorten-result>
-		<!-- Success indicator -->
-		<p class="result-success mb-3">
-			<Check size={12} class="shrink-0" />
-			<span>Shortened</span>
-		</p>
-
-		<!-- Short URL + copy -->
-		<div class="flex items-center justify-between gap-3">
-			<a
-				href=""
-				target="_blank"
-				rel="noopener noreferrer"
-				class="truncate font-semibold text-brand hover:underline"
-				data-short-url
-			></a>
-			<button class="action-btn shrink-0" data-copy-btn title="Copy short URL">
-				<span data-icon-copy><Copy size={14} /></span>
-				<span data-icon-check><Check size={14} /></span>
-				<span data-copy-label>Copy</span>
-			</button>
+		<!-- Original URL -->
+		<div class="mb-2">
+			<p class="result-label"><Globe size={14} />Original URL</p>
+			<p class="result-value truncate" data-original-url></p>
 		</div>
 
-		<!-- Meta -->
-		<p
-			class="mt-1 truncate text-sm text-text-muted dark:text-text-muted-dark"
-			data-original-url
-		>
-		</p>
-		<p class="mt-0.5 text-xs text-text-muted dark:text-text-muted-dark">Expires in 30 days</p>
+		<!-- Shortened URL -->
+		<div class="mb-3">
+			<p class="result-label"><WandSparkles size={14} /> Shortened URL <span class="result-label-meta" data-expires-label></span></p>
+			<div class="flex min-w-0 items-center gap-1">
+				<a
+					href=""
+					target="_blank"
+					rel="noopener noreferrer"
+					class="min-w-0 truncate font-semibold text-brand hover:underline"
+					data-short-url
+				></a>
+				<button class="copy-icon-btn shrink-0" data-copy-icon-btn title="Copy short URL">
+					<span data-icon-copy><Copy size={14} /></span>
+					<span data-icon-check><Check size={14} /></span>
+				</button>
+			</div>
+		</div>
 
-		<!-- Action row -->
-		<div class="mt-3 flex gap-1.5">
+		<!-- Action row: Visit | QR | Copy -->
+		<div class="flex gap-1.5">
 			<a
 				href=""
 				target="_blank"
@@ -81,36 +77,55 @@ import QrCode from '@lucide/astro/icons/qr-code';
 				data-visit-link
 			>
 				<ExternalLink size={13} />
-				<span>Visit</span>
+				<span>Visit URL</span>
 			</a>
 			<button class="action-btn" title="Show QR code" data-qr-btn>
 				<QrCode size={13} />
 				<span>QR</span>
 			</button>
+			<button class="action-btn" title="Copy short URL" data-copy-btn>
+				<span data-icon-copy><Copy size={13} /></span>
+				<span data-icon-check><Check size={13} /></span>
+				<span data-copy-label>Copy</span>
+			</button>
 		</div>
 
 		<!-- QR panel (fade-in/out via data-visible) -->
 		<div class="qr-panel mt-3" data-qr-section>
-			<div
-				class="flex items-start gap-4 rounded-lg border border-border p-3 dark:border-border-dark"
-			>
-				<!-- Runtime-dynamic URL set via JS — cannot use <Image> (build-time only) -->
-				<img
-					src=""
-					alt="QR code for short URL"
-					width="160"
-					height="160"
-					class="rounded"
-					data-qr-img
-				/>
-				<button
-					class="action-btn"
-					title="Download QR code as PNG"
-					data-download-btn
-				>
-					<Download size={13} />
-					<span>Download</span>
-				</button>
+			<div class="rounded-lg border border-border p-3 dark:border-border-dark">
+				<p class="qr-section-label mb-2">Download Your QR Code</p>
+				<div class="flex items-start gap-4">
+					<!-- Runtime-dynamic URL set via JS — cannot use <Image> (build-time only) -->
+					<div class="qr-img-wrapper">
+						<img
+							src=""
+							alt="QR code for short URL"
+							width="160"
+							height="160"
+							class="size-24 sm:size-32 lg:size-40 rounded"
+							crossorigin="anonymous"
+							data-qr-img
+						/>
+						<button class="qr-copy-overlay" data-copy-qr-btn title="Copy QR code to clipboard">
+							<span data-icon-copy><Copy size={16} /></span>
+							<span data-icon-check><Check size={16} /></span>
+						</button>
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<button class="action-btn" title="Download QR code as PNG" data-download-png-btn>
+							<Download size={13} />
+							<span>Download PNG</span>
+						</button>
+						<button class="action-btn" title="Download QR code as JPEG" data-download-jpeg-btn>
+							<Download size={13} />
+							<span>Download JPEG</span>
+						</button>
+						<button class="action-btn" title="Download QR code as SVG" data-download-svg-btn>
+							<Download size={13} />
+							<span>Download SVG</span>
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -127,7 +142,7 @@ import QrCode from '@lucide/astro/icons/qr-code';
 <script>
 	import { query } from '@/lib/dom';
 
-	const COPY_RESET_MS = 2000;
+	const COPY_RESET_MS = 4000;
 	const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'https://goshort.app';
 
 	interface ShortenResponse {
@@ -149,12 +164,17 @@ import QrCode from '@lucide/astro/icons/qr-code';
 	const shortUrlEl = query<HTMLAnchorElement>('[data-short-url]');
 	const originalUrlEl = query<HTMLParagraphElement>('[data-original-url]');
 	const visitLink = query<HTMLAnchorElement>('[data-visit-link]');
+	const copyIconBtn = query<HTMLButtonElement>('[data-copy-icon-btn]');
 	const copyBtn = query<HTMLButtonElement>('[data-copy-btn]');
 	const copyLabel = query<HTMLSpanElement>('[data-copy-label]');
 	const qrBtn = query<HTMLButtonElement>('[data-qr-btn]');
 	const qrSection = query<HTMLDivElement>('[data-qr-section]');
 	const qrImg = query<HTMLImageElement>('[data-qr-img]');
-	const downloadBtn = query<HTMLButtonElement>('[data-download-btn]');
+	const downloadPngBtn = query<HTMLButtonElement>('[data-download-png-btn]');
+	const downloadJpegBtn = query<HTMLButtonElement>('[data-download-jpeg-btn]');
+	const downloadSvgBtn = query<HTMLButtonElement>('[data-download-svg-btn]');
+	const copyQrBtn = query<HTMLButtonElement>('[data-copy-qr-btn]');
+	const expiresLabel = query<HTMLSpanElement>('[data-expires-label]');
 	const shortenAnotherBtn = query<HTMLButtonElement>('[data-shorten-another]');
 	const errorEl = query<HTMLParagraphElement>('[data-shorten-error]');
 
@@ -183,6 +203,14 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		shortUrlEl.href = data.short_url;
 		if (visitLink) visitLink.href = data.short_url;
 		originalUrlEl.textContent = data.original_url;
+		if (expiresLabel) {
+			if (data.expires_at) {
+				const days = Math.ceil((new Date(data.expires_at).getTime() - Date.now()) / 86_400_000);
+				expiresLabel.textContent = `· expires in ${days} day${days === 1 ? '' : 's'}`;
+			} else {
+				expiresLabel.textContent = '';
+			}
+		}
 		// Reset QR state
 		currentCode = data.short_code;
 		qrSection?.removeAttribute('data-visible');
@@ -190,6 +218,8 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		qrBtn?.removeAttribute('data-loaded');
 		if (qrImg) qrImg.src = '';
 		resultEl.classList.remove('hidden');
+		resultEl.setAttribute('data-flash', '');
+		setTimeout(() => resultEl?.removeAttribute('data-flash'), 700);
 	}
 
 	function validateURL(raw: string): string | null {
@@ -203,6 +233,11 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		} catch {
 			return "That doesn't look like a valid URL.";
 		}
+	}
+
+	async function copyShortUrl(): Promise<void> {
+		const url = shortUrlEl?.textContent ?? '';
+		if (url) await navigator.clipboard.writeText(url);
 	}
 
 	form?.addEventListener('submit', async (e) => {
@@ -246,10 +281,18 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		}
 	});
 
+	copyIconBtn?.addEventListener('click', async () => {
+		if (!copyIconBtn) return;
+		await copyShortUrl();
+		copyIconBtn.dataset.copied = '';
+		setTimeout(() => {
+			delete copyIconBtn.dataset.copied;
+		}, COPY_RESET_MS);
+	});
+
 	copyBtn?.addEventListener('click', async () => {
-		const url = shortUrlEl?.textContent ?? '';
-		if (!url || !copyBtn) return;
-		await navigator.clipboard.writeText(url);
+		if (!copyBtn) return;
+		await copyShortUrl();
 		copyBtn.dataset.copied = '';
 		if (copyLabel) copyLabel.textContent = 'Copied!';
 		setTimeout(() => {
@@ -263,7 +306,7 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		if (!qrSection || !qrImg || !currentCode) return;
 		// Lazy-load QR image on first reveal
 		if (!qrBtn.hasAttribute('data-loaded')) {
-			qrImg.src = `${API_BASE}/api/v1/urls/${currentCode}/qr`;
+			qrImg.src = `${API_BASE}/api/v1/urls/${currentCode}/qr?size=160`;
 			qrBtn.setAttribute('data-loaded', '');
 		}
 		const nowVisible = !qrSection.hasAttribute('data-visible');
@@ -271,22 +314,52 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		qrBtn.toggleAttribute('data-active', nowVisible);
 	});
 
-	// Option A: blob fetch for cross-origin download (goshort.ngockhoi96.dev ≠ goshort.app)
-	downloadBtn?.addEventListener('click', async () => {
+	// Blob fetch for cross-origin download (goshort.ngockhoi96.dev ≠ goshort.app)
+	async function downloadQR(format: 'png' | 'jpeg' | 'svg', filename: string): Promise<void> {
 		if (!currentCode) return;
 		try {
-			const res = await fetch(`${API_BASE}/api/v1/urls/${currentCode}/qr`);
+			const res = await fetch(`${API_BASE}/api/v1/urls/${currentCode}/qr?format=${format}`);
 			const blob = await res.blob();
 			const objectUrl = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = objectUrl;
-			a.download = `qr-${currentCode}.png`;
+			a.download = filename;
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(objectUrl);
 		} catch {
 			// silently fail — user can right-click the QR image and save manually
+		}
+	}
+
+	downloadPngBtn?.addEventListener('click', () => downloadQR('png', `qr-${currentCode}.png`));
+	downloadJpegBtn?.addEventListener('click', () => downloadQR('jpeg', `qr-${currentCode}.jpg`));
+	downloadSvgBtn?.addEventListener('click', () => downloadQR('svg', `qr-${currentCode}.svg`));
+
+	// Draw already-loaded QR img onto canvas → toBlob → clipboard (no extra fetch).
+	// crossOrigin="anonymous" on the img + CORS on the QR endpoint prevents canvas taint.
+	copyQrBtn?.addEventListener('click', async () => {
+		if (!qrImg || !qrImg.src || !copyQrBtn) return;
+		try {
+			const canvas = document.createElement('canvas');
+			canvas.width = qrImg.naturalWidth || 160;
+			canvas.height = qrImg.naturalHeight || 160;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) return;
+			ctx.drawImage(qrImg, 0, 0);
+			const blob = await new Promise<Blob | null>((resolve) =>
+				canvas.toBlob(resolve, 'image/png'),
+			);
+			if (!blob) return;
+			await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+			copyQrBtn.dataset.copied = '';
+			setTimeout(() => {
+				if (!copyQrBtn) return;
+				delete copyQrBtn.dataset.copied;
+			}, COPY_RESET_MS);
+		} catch {
+			// silently fail — canvas tainted or ClipboardItem not supported
 		}
 	});
 
@@ -300,14 +373,82 @@ import QrCode from '@lucide/astro/icons/qr-code';
 </script>
 
 <style>
-	/* Success label */
-	.result-success {
-		display: flex;
+	/* Override text-center inherited from the hero section */
+	[data-shorten-result] {
+		text-align: left;
+	}
+
+	/* Card flash on result reveal */
+	@keyframes ring-flash {
+		0%   { box-shadow: 0 0 0 2px var(--color-success); }
+		100% { box-shadow: 0 0 0 2px transparent; }
+	}
+	[data-shorten-result][data-flash] {
+		animation: ring-flash 0.6s ease-out forwards;
+	}
+
+	/* Result section labels (Shortened URL / Original URL) */
+	.result-label {
+		display: inline-flex;
 		align-items: center;
 		gap: 0.375rem;
 		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--color-success);
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-muted);
+		margin-bottom: 0.125rem;
+	}
+	:global([data-theme='dark']) .result-label {
+		color: var(--color-text-muted-dark);
+	}
+
+	/* Inline expires annotation — resets uppercase/tracking from parent label */
+	.result-label-meta {
+		font-weight: 400;
+		text-transform: none;
+		letter-spacing: 0;
+		font-size: 0.6875rem;
+		color: var(--color-text-muted);
+	}
+	:global([data-theme='dark']) .result-label-meta {
+		color: var(--color-text-muted-dark);
+	}
+
+	/* Result value text (Original URL) */
+	.result-value {
+		font-size: 0.875rem;
+		color: var(--color-text);
+	}
+	:global([data-theme='dark']) .result-value {
+		color: var(--color-text-dark);
+	}
+
+	/* Icon-only copy button (inline next to short URL) */
+	.copy-icon-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.25rem;
+		border: none;
+		border-radius: 0.375rem;
+		background: transparent;
+		cursor: pointer;
+		color: var(--color-text-muted);
+		transition:
+			background-color 0.15s,
+			color 0.15s;
+	}
+	.copy-icon-btn:hover {
+		background-color: var(--color-surface-alt);
+		color: var(--color-text);
+	}
+	:global([data-theme='dark']) .copy-icon-btn {
+		color: var(--color-text-muted-dark);
+	}
+	:global([data-theme='dark']) .copy-icon-btn:hover {
+		background-color: var(--color-surface-alt-dark);
+		color: var(--color-text-dark);
 	}
 
 	/* Small action buttons (Visit, QR, Copy, Download) */
@@ -332,12 +473,24 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		background-color: var(--color-surface-alt);
 		color: var(--color-text);
 	}
+	.action-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+	.action-btn:disabled:hover {
+		background: transparent;
+		color: var(--color-text-muted);
+	}
 	:global([data-theme='dark']) .action-btn {
 		color: var(--color-text-muted-dark);
 	}
 	:global([data-theme='dark']) .action-btn:hover {
 		background-color: var(--color-surface-alt-dark);
 		color: var(--color-text-dark);
+	}
+	:global([data-theme='dark']) .action-btn:disabled:hover {
+		background: transparent;
+		color: var(--color-text-muted-dark);
 	}
 
 	/* QR button active state (when panel is open) */
@@ -350,7 +503,17 @@ import QrCode from '@lucide/astro/icons/qr-code';
 		color: var(--color-text-dark);
 	}
 
-	/* Copy icon swap: default shows Copy, [data-copied] shows Check */
+	/* QR section heading */
+	.qr-section-label {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	:global([data-theme='dark']) .qr-section-label {
+		color: var(--color-text-dark);
+	}
+
+	/* Copy icon swap: default shows Copy icon, [data-copied] shows Check */
 	[data-icon-check] {
 		display: none;
 	}
@@ -363,6 +526,59 @@ import QrCode from '@lucide/astro/icons/qr-code';
 	[data-copy-btn][data-copied] {
 		color: var(--color-success);
 	}
+	[data-copy-icon-btn][data-copied] [data-icon-copy] {
+		display: none;
+	}
+	[data-copy-icon-btn][data-copied] [data-icon-check] {
+		display: inline-flex;
+	}
+	[data-copy-icon-btn][data-copied] {
+		color: var(--color-success);
+	}
+	/* QR image wrapper + hover overlay copy button */
+	.qr-img-wrapper {
+		position: relative;
+		display: inline-flex;
+		flex-shrink: 0;
+	}
+	.qr-copy-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 0.25rem;
+		border: none;
+		cursor: pointer;
+		background: rgba(0, 0, 0, 0.45);
+		color: white;
+		opacity: 0;
+		transition: opacity 0.15s;
+	}
+	.qr-img-wrapper:hover .qr-copy-overlay {
+		opacity: 1;
+	}
+	/* Mobile (coarse pointer): always-visible corner badge */
+	@media (pointer: coarse) {
+		.qr-copy-overlay {
+			inset: auto;
+			bottom: 0;
+			right: 0;
+			width: 2rem;
+			height: 2rem;
+			border-radius: 0.375rem 0 0.25rem 0;
+			opacity: 1;
+		}
+	}
+	[data-copy-qr-btn][data-copied] [data-icon-copy] {
+		display: none;
+	}
+	[data-copy-qr-btn][data-copied] [data-icon-check] {
+		display: inline-flex;
+	}
+	[data-copy-qr-btn][data-copied] {
+		background: rgba(22, 163, 74, 0.6);
+	}
 
 	/* QR fade-in/out panel — max-height transition avoids display:none jump */
 	.qr-panel {
@@ -374,7 +590,7 @@ import QrCode from '@lucide/astro/icons/qr-code';
 			opacity 0.2s ease;
 	}
 	.qr-panel[data-visible] {
-		max-height: 240px;
+		max-height: 280px;
 		opacity: 1;
 	}
 
