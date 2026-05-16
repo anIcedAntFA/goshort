@@ -8,45 +8,21 @@
   <sub>Turn long URLs into short, shareable links with click tracking, custom aliases, and AI agent integration.</sub>
 </p>
 
-<p align="center">
-  <a href="https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml">
-    <img src="https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml/badge.svg" alt="CI">
-  </a>
-  <a href="https://github.com/anIcedAntFA/goshort/actions/workflows/govulncheck.yml">
-    <img src="https://github.com/anIcedAntFA/goshort/actions/workflows/govulncheck.yml/badge.svg" alt="govulncheck">
-  </a>
-  <a href="https://codecov.io/gh/anIcedAntFA/goshort">
-    <img src="https://codecov.io/gh/anIcedAntFA/goshort/graph/badge.svg" alt="codecov">
-  </a>
-  <a href="https://goreportcard.com/report/github.com/anIcedAntFA/goshort">
-    <img src="https://goreportcard.com/badge/github.com/anIcedAntFA/goshort" alt="Go Report Card">
-  </a>
-  <a href="https://github.com/anIcedAntFA/goshort/releases/latest">
-    <img src="https://img.shields.io/github/v/release/anIcedAntFA/goshort" alt="Release">
-  </a>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
-  </a>
-  <a href="go.mod">
-    <img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go" alt="Go">
-  </a>
-  <a href="https://goshort.ngockhoi96.dev">
-    <img src="https://img.shields.io/badge/website-goshort.ngockhoi96.dev-0066CC?logo=cloudflare&logoColor=white" alt="Website">
-  </a>
-  <a href="https://goshort.app/docs">
-    <img src="https://img.shields.io/badge/API_docs-goshort.app%2Fdocs-FF6C37?logo=openapiinitiative&logoColor=white" alt="API Docs">
-  </a>
-  <a href="https://ko-fi.com/anIcedAntFA">
-    <img src="https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white" alt="Ko-fi">
-  </a>
-</p>
+[![CI](https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml/badge.svg)](https://github.com/anIcedAntFA/goshort/actions/workflows/ci.yml)
+[![Best Practices](https://www.bestpractices.dev/projects/12838/badge)](https://www.bestpractices.dev/projects/12838)
+[![govulncheck](https://github.com/anIcedAntFA/goshort/actions/workflows/govulncheck.yml/badge.svg)](https://github.com/anIcedAntFA/goshort/actions/workflows/govulncheck.yml)
+[![codecov](https://codecov.io/gh/anIcedAntFA/goshort/graph/badge.svg)](https://codecov.io/gh/anIcedAntFA/goshort)
+[![Go Report Card](https://goreportcard.com/badge/github.com/anIcedAntFA/goshort)](https://goreportcard.com/report/github.com/anIcedAntFA/goshort)
+[![Release](https://img.shields.io/github/v/release/anIcedAntFA/goshort)](https://github.com/anIcedAntFA/goshort/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](go.mod)
+[![Website](https://img.shields.io/badge/website-visit-0066CC?logo=cloudflare&logoColor=white)](https://goshort.ngockhoi96.dev)
+[![API Docs](https://img.shields.io/badge/API_docs-swagger-FF6C37?logo=openapiinitiative&logoColor=white)](https://goshort.app/docs)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/anIcedAntFA)
 
-<p align="center">
-  <img src="docs/demo.gif" alt="GoShort Demo" width="1200" height="auto">
-</p>
+</div>
 
 ---
 
@@ -266,39 +242,19 @@ claude mcp add goshort-remote \
 ```toml
 [server]
 port     = 8080
-base_url = "https://short.yourdomain.com"  # used in API responses
-
-[storage]
-driver      = "sqlite"              # sqlite | postgres (Phase 5+)
-sqlite_path = "./data/goshort.db"
-
-[cache]
-driver    = "none"                  # none | memory | redis
-redis_url = "redis://localhost:6379"
+base_url = "https://short.yourdomain.com"
 
 [auth]
-api_key = ""                        # empty = no auth
+api_key = "your-secret-key"   # empty = no auth
 
-[rate_limit]
-enabled             = false
-requests_per_minute = 60            # per IP, token bucket
+[cache]
+driver = "none"               # none | memory | redis
 
 [shortener]
-code_length    = 6
-default_expiry = "0"                # "0" = no expiry; or "30d", "1h"
-
-[logging]
-level  = "info"                     # debug | info | warn | error
-format = "json"                     # json | text
-
-[mcp]
-base_url = ""                       # override base URL for MCP responses; falls back to server.base_url
-
-[security]
-safe_browsing_api_key = ""          # empty = disabled; env: GOSHORT_SECURITY_SAFE_BROWSING_API_KEY
+default_expiry = "0"          # "0" = no expiry; or "7d", "30d", "365d"
 ```
 
-Env var override: every key maps to `GOSHORT_<SECTION>_<KEY>` — e.g., `GOSHORT_SERVER_PORT=9090`, `GOSHORT_AUTH_API_KEY=secret`.
+Every key maps to `GOSHORT_<SECTION>_<KEY>` env var — e.g., `GOSHORT_AUTH_API_KEY=secret`. Full reference: [`goshort.toml`](goshort.toml).
 
 ---
 
@@ -336,65 +292,7 @@ Interactive docs at [goshort.app/docs](https://goshort.app/docs). Landing page a
 
 ## 📁 Project Structure
 
-```
-cmd/
-├── server/main.go          # HTTP server + MCP wiring entry point
-└── cli/                    # CLI entry point + subcommands (Cobra)
-
-internal/
-├── api/                    # Chi router, handlers, middleware, error types
-│   ├── router.go           #   route definitions, Scalar docs
-│   ├── handler.go          #   CRUD handlers + redirect + cache-aside
-│   ├── middleware.go        #   auth, rate limit, logging, metrics
-│   └── errors.go           #   error → HTTP status mapping
-├── mcp/                    # MCP server (Phase 4)
-│   ├── server.go           #   server setup, RunStdio, RunHTTP, HTTPHandler
-│   ├── tools.go            #   5 tool handlers (shorten, list, stats, delete, lookup)
-│   ├── resources.go        #   stats summary + URL detail resources
-│   ├── prompts.go          #   shorten_and_share, batch_shorten
-│   └── auth.go             #   APIKeyMiddleware for /mcp endpoint
-├── shortener/              # Core business logic
-│   ├── service.go          #   Service interface (5 methods)
-│   ├── service_impl.go     #   ServiceImpl struct + business rules
-│   ├── storage.go          #   Storage interface (consumer-defined)
-│   ├── cache.go            #   Cache interface (consumer-defined)
-│   ├── encoder.go          #   Encoder interface (consumer-defined)
-│   ├── validator.go        #   URL, alias, expiry validation
-│   ├── model.go            #   URL struct, CreateRequest, ListOptions
-│   └── errors.go           #   sentinel errors (ErrNotFound, ErrExpired, ...)
-├── encoder/                # Sqids-based short code generation
-├── storage/                # SQLite storage (sqlc-generated queries)
-├── cache/                  # noop, memory (sync.Map), Redis implementations
-└── config/                 # Koanf config loading (TOML + env vars)
-
-db/
-├── schema.sql              # Table definitions (urls, counter)
-├── queries.sql             # All SQL queries (sqlc input)
-└── sqlc.yaml               # sqlc code generation config
-
-website/
-├── src/
-│   ├── worker.ts           # Cloudflare Worker entry (pure static-asset handler)
-│   ├── layouts/            # base-layout.astro (HTML shell, SEO, theme)
-│   ├── components/         # navbar, footer, theme-toggle, shorten-widget
-│   ├── pages/              # index.astro + 404.astro (output: 'static')
-│   ├── styles/             # global.css (@theme tokens, component classes)
-│   └── lib/                # dom.ts (typed data-* query helpers)
-├── public/                 # robots.txt, favicon.svg
-└── wrangler.jsonc          # Cloudflare Workers config (goshort.ngockhoi96.dev)
-
-docs/
-├── DESIGN.md               # Full system design and architecture rationale
-├── LEARNING.md             # Go patterns and GoShort-specific knowledge map
-├── DEPLOYMENT.md           # Fly.io, Cloudflare, Docker Compose deployment guide
-├── ROADMAP.md              # Task-level roadmap with checkboxes
-└── openapi.yaml            # OpenAPI 3.1 spec (served at /docs)
-
-api-tests/                  # Bruno API tests (.bru files)
-docker-compose.yml          # Production: GoShort + Caddy (auto-TLS)
-docker-compose.dev.yml      # Development: Redis only (throwaway, no persistence)
-goshort.toml                # Example server config
-```
+See [`docs/DESIGN.md`](docs/DESIGN.md) for the full architecture, layer boundaries, and design rationale.
 
 ---
 
@@ -407,42 +305,7 @@ lefthook install        # install git hooks (once after clone)
 make help               # list all targets
 ```
 
-### Make targets
-
-| Target                | What it does                                        |
-|-----------------------|-----------------------------------------------------|
-| `make build`          | Build server + CLI binaries into `bin/`             |
-| `make run`            | Run the server (pass `CONFIG=goshort.toml` for file)|
-| `make test`           | `go test ./...` (unit tests only)                   |
-| `make test/race`      | Unit tests with race detector                       |
-| `make test/cover`     | Coverage report opened in browser                   |
-| `make test/redis`     | All tests including Redis integration tests         |
-| `make test/all`       | Auto-detect Redis and run unit + integration tests  |
-| `make lint`           | `golangci-lint run`                                 |
-| `make lint/fix`       | Lint + auto-fix                                     |
-| `make sqlc`           | Regenerate type-safe Go from SQL                    |
-| `make dev/redis`      | Start throwaway Redis container on `localhost:6379` |
-| `make dev/redis/stop` | Stop local Redis                                    |
-| `make docker/up`      | `docker compose up -d` (production stack)           |
-| `make docker/down`    | Stop production stack                               |
-| `make clean`          | Remove binaries and coverage artifacts              |
-| `make website/dev`    | Start Astro dev server (`bun run dev`)              |
-| `make website/build`  | Build static site to `website/dist/`               |
-| `make website/check`  | Lint + format website with Biome                   |
-
-### Redis integration tests
-
-```bash
-make dev/redis          # start throwaway Redis (Docker)
-make test/redis         # run all tests including Redis
-make dev/redis/stop     # stop when done
-```
-
-`make test/all` auto-detects whether Redis is running and adjusts accordingly.
-
-**Git hooks (lefthook):** `pre-commit` lints staged files + secrets scan; `pre-push` runs full test suite with race detector; `commit-msg` enforces [Conventional Commits](https://www.conventionalcommits.org) with gitmoji.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+Run `make help` for the full list of targets. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development workflow including Redis integration tests and git hooks.
 
 ---
 
