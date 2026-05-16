@@ -3,11 +3,15 @@ package api_test
 import (
 	"bytes"
 	"net/http"
+	"strings"
 	"testing"
 )
 
 // pngMagic is the 8-byte PNG signature.
 var pngMagic = []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+
+// jpegMagic is the 3-byte JPEG signature.
+var jpegMagic = []byte{0xFF, 0xD8, 0xFF}
 
 func TestGetQRCode(t *testing.T) {
 	t.Parallel()
@@ -26,12 +30,54 @@ func TestGetQRCode(t *testing.T) {
 		code       string
 		query      string
 		wantStatus int
+		wantCT     string
+		checkBody  func(t *testing.T, b []byte)
 	}{
-		{"valid code default size", code, "", http.StatusOK},
-		{"valid code explicit size 128", code, "?size=128", http.StatusOK},
-		{"size 2000 clamped to 1024", code, "?size=2000", http.StatusOK},
-		{"size 50 clamped to 128", code, "?size=50", http.StatusOK},
-		{"nonexistent code", "doesnotexist", "", http.StatusNotFound},
+		{
+			name: "default format is PNG", code: code, query: "", wantStatus: http.StatusOK,
+			wantCT: "image/png",
+			checkBody: func(t *testing.T, b []byte) {
+				t.Helper()
+				if len(b) < 8 || !bytes.Equal(b[:8], pngMagic) {
+					t.Errorf("missing PNG magic bytes, got %x", b[:min(8, len(b))])
+				}
+			},
+		},
+		{
+			name: "explicit png format", code: code, query: "?format=png", wantStatus: http.StatusOK,
+			wantCT: "image/png",
+			checkBody: func(t *testing.T, b []byte) {
+				t.Helper()
+				if len(b) < 8 || !bytes.Equal(b[:8], pngMagic) {
+					t.Errorf("missing PNG magic bytes, got %x", b[:min(8, len(b))])
+				}
+			},
+		},
+		{
+			name: "jpeg format", code: code, query: "?format=jpeg", wantStatus: http.StatusOK,
+			wantCT: "image/jpeg",
+			checkBody: func(t *testing.T, b []byte) {
+				t.Helper()
+				if len(b) < 3 || !bytes.Equal(b[:3], jpegMagic) {
+					t.Errorf("missing JPEG magic bytes, got %x", b[:min(3, len(b))])
+				}
+			},
+		},
+		{
+			name: "svg format", code: code, query: "?format=svg", wantStatus: http.StatusOK,
+			wantCT: "image/svg+xml",
+			checkBody: func(t *testing.T, b []byte) {
+				t.Helper()
+				if !strings.HasPrefix(string(b), "<svg") {
+					t.Errorf("SVG body does not start with <svg, got: %.40s", b)
+				}
+			},
+		},
+		{name: "invalid format", code: code, query: "?format=gif", wantStatus: http.StatusBadRequest},
+		{name: "explicit size 128", code: code, query: "?size=128", wantStatus: http.StatusOK, wantCT: "image/png"},
+		{name: "size 2000 clamped to 1024", code: code, query: "?size=2000", wantStatus: http.StatusOK, wantCT: "image/png"},
+		{name: "size 50 clamped to 128", code: code, query: "?size=50", wantStatus: http.StatusOK, wantCT: "image/png"},
+		{name: "nonexistent code", code: "doesnotexist", query: "", wantStatus: http.StatusNotFound},
 	}
 
 	for _, tc := range tests {
@@ -44,15 +90,13 @@ func TestGetQRCode(t *testing.T) {
 			if tc.wantStatus != http.StatusOK {
 				return
 			}
-			if ct := r.Header().Get("Content-Type"); ct != "image/png" {
-				t.Errorf("Content-Type = %q, want %q", ct, "image/png")
+			if tc.wantCT != "" {
+				if ct := r.Header().Get("Content-Type"); ct != tc.wantCT {
+					t.Errorf("Content-Type = %q, want %q", ct, tc.wantCT)
+				}
 			}
-			b := r.Body.Bytes()
-			if len(b) < 8 {
-				t.Fatalf("body too short (%d bytes) to contain PNG magic", len(b))
-			}
-			if !bytes.Equal(b[:8], pngMagic) {
-				t.Errorf("body does not start with PNG magic bytes, got %x", b[:8])
+			if tc.checkBody != nil {
+				tc.checkBody(t, r.Body.Bytes())
 			}
 		})
 	}

@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image/jpeg"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -331,7 +333,7 @@ func (h *Handler) UpdateURL(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetQRCode handles GET /api/v1/urls/{code}/qr.
-// Returns a PNG QR code for the full short URL. Size is clamped to [128, 1024].
+// Returns a QR code image. Size is clamped to [128, 1024]. Format defaults to PNG.
 func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
 
@@ -343,24 +345,85 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 		size = 1024
 	}
 
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "png"
+	}
+	switch format {
+	case "png", "jpeg", "svg":
+	default:
+		respondJSON(w, http.StatusBadRequest, errorResponse{Error: errorDetail{
+			Code:    "invalid_format",
+			Message: "Format must be png, jpeg, or svg",
+		}})
+		return
+	}
+
 	if _, err := h.svc.GetByCode(r.Context(), code); err != nil {
 		respondError(w, err)
 		return
 	}
 
 	shortURL := fmt.Sprintf("%s/%s", h.baseURL, code)
-	png, err := qrcode.Encode(shortURL, qrcode.Medium, size)
-	if err != nil {
-		h.logger.Error("qr code generation failed", "code", code, "error", err)
-		respondJSON(w, http.StatusInternalServerError, errorResponse{Error: errorDetail{
-			Code:    "internal_error",
-			Message: "An internal error occurred",
-		}})
-		return
-	}
+	h.writeQRImage(w, code, shortURL, format, size)
+}
 
-	w.Header().Set("Content-Type", "image/png")
-	_, _ = w.Write(png) //nolint:errcheck,gosec // response already committed; write failure is unrecoverable
+func (h *Handler) writeQRImage(w http.ResponseWriter, code, shortURL, format string, size int) {
+	switch format {
+	case "png":
+		data, err := qrcode.Encode(shortURL, qrcode.Medium, size)
+		if err != nil {
+			h.respondQRError(w, code, err)
+			return
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(data) //nolint:errcheck,gosec
+
+	case "jpeg":
+		q, err := qrcode.New(shortURL, qrcode.Medium)
+		if err != nil {
+			h.respondQRError(w, code, err)
+			return
+		}
+		w.Header().Set("Content-Type", "image/jpeg")
+		_ = jpeg.Encode(w, q.Image(size), &jpeg.Options{Quality: 90}) //nolint:errcheck,gosec
+
+	case "svg":
+		q, err := qrcode.New(shortURL, qrcode.Medium)
+		if err != nil {
+			h.respondQRError(w, code, err)
+			return
+		}
+		w.Header().Set("Content-Type", "image/svg+xml")
+		_, _ = w.Write(qrToSVG(q.Bitmap(), size)) //nolint:errcheck,gosec
+	}
+}
+
+func qrToSVG(bitmap [][]bool, size int) []byte {
+	gridLen := len(bitmap)
+	moduleSize := size / gridLen
+	totalSize := moduleSize * gridLen
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d">`, totalSize, totalSize)
+	buf.WriteString(`<rect width="100%" height="100%" fill="white"/>`)
+	for y, row := range bitmap {
+		for x, black := range row {
+			if black {
+				fmt.Fprintf(&buf, `<rect x="%d" y="%d" width="%d" height="%d" fill="black"/>`,
+					x*moduleSize, y*moduleSize, moduleSize, moduleSize)
+			}
+		}
+	}
+	buf.WriteString(`</svg>`)
+	return buf.Bytes()
+}
+
+func (h *Handler) respondQRError(w http.ResponseWriter, code string, err error) {
+	h.logger.Error("qr code generation failed", "code", code, "error", err)
+	respondJSON(w, http.StatusInternalServerError, errorResponse{Error: errorDetail{
+		Code:    "internal_error",
+		Message: "An internal error occurred",
+	}})
 }
 
 type publicCreateURLRequest struct {

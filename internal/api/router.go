@@ -40,8 +40,11 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 			r.Post("/urls/public", h.PublicCreateURL)
 		})
 
-		// QR code — public, no auth (PNG image, no sensitive data).
-		r.Get("/urls/{code}/qr", h.GetQRCode)
+		// QR code — public, no auth, CORS enabled for cross-origin canvas/fetch.
+		r.Group(func(r chi.Router) {
+			r.Use(CORSMiddleware())
+			r.Get("/urls/{code}/qr", h.GetQRCode)
+		})
 
 		// Protected routes — auth before rate limiting so bad keys get 401, not 429.
 		r.Group(func(r chi.Router) {
