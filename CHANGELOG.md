@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-05-16
+
+### Added
+
+- **QR multi-format** — `GET /api/v1/urls/{code}/qr` now accepts `?format=png|jpeg|svg`
+  (v0.6.0 was PNG-only); response `Content-Type` changes accordingly;
+  `JPEG` uses quality 90; `SVG` returns vector markup as `image/svg+xml`
+- **Landing page — QR panel** — shorten widget result card now includes a collapsible QR panel:
+  lazy-loads the QR image on first reveal, canvas-copy to clipboard, and three outlined
+  download buttons (PNG / JPEG / SVG) whose combined height matches the QR image at every breakpoint
+- **Landing page — FAQ** — animated accordion using `<details>` + JS-driven `max-height` transition;
+  open and close both animate smoothly with inline-style + forced-reflow technique
+- **Landing page — Sponsor banner** — support CTA with GitHub Sponsors link placed above FAQ
+
+### Changed
+
+- **Landing page — shorten widget** — CSS and TypeScript logic extracted to `shorten-widget.css`
+  and `shorten-widget.ts`; CSS imported via frontmatter (not `<style>`) so
+  `[data-theme="dark"]` selectors are not Astro-scoped and work correctly
+- **Landing page — result card** — redesigned: Original URL shown first; Shortened URL with
+  inline copy icon and `data-copied` feedback; Visit / QR / Copy action row with Lucide icons
+- **Landing page — install section** — tabbed quick-start (Docker Compose, Binary, go install)
+  + Configure & Run shown side-by-side in a two-column grid; "Full setup guide" link added
+- **Landing page — nav highlight** — replaced `IntersectionObserver` with a scroll-based
+  algorithm (`offsetTop ≤ scrollY + 120`); reliably highlights Features (first) and FAQ (last)
+  across all scroll positions without tuning `rootMargin`
+- **Landing page — mobile menu** — slide-in/out animation using `max-height + opacity +
+  translateY(-6px → 0)` transition; replaces `display: none/block` snap
+- **Landing page — section spacing** — all sections unified to `py-16`
+  (hero was `py-20`); consistent vertical rhythm throughout
+- **Landing page — accessibility** — Shiki `github-dark` comment color overridden
+  (`#8b949e` → `#a0b6c8`, ratio 4.47:1 → ~6.2:1, WCAG AA); dark-mode active tab color
+  changed from `#4f46e5` to `#a5b4fc` (ratio 2.4:1 → ~6.0:1, WCAG AA)
+
+### Fixed
+
+- **QR endpoint auth** — `GET /api/v1/urls/{code}/qr` was inside the authenticated
+  router group; moved to the public group so it no longer returns 401 for unauthenticated
+  callers (widget, browser direct access, sharing)
+- **Shorten widget — validation** — client-side URL validation added; empty input and
+  non-http(s) URLs show an inline error; error reserves a fixed `min-h-5` line so no
+  layout shift occurs; typing clears the error immediately
+- **Shorten widget — error dark mode** — CSS imported via frontmatter prevents Astro's
+  scoped-style mechanism from attaching `data-astro-cid-*` to `[data-theme="dark"]` rules,
+  which was breaking all dark-mode widget styles
+- **FAQ — open animation flash** — `details.setAttribute('open')` previously made the CSS
+  open-state fallback (`max-height: none`) flash visible before JS could set `max-height: 0`;
+  fixed by immediately overriding with inline styles + forced reflow before starting transition
+- **Navbar — mobile layout** — mobile grid columns and overlay z-index corrected
+
 ## [0.6.0] - 2026-05-15
 
 ### Added

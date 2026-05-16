@@ -37,7 +37,7 @@
 - **Custom aliases** — bring your own slug (`/my-link`); charset isolation prevents collision with generated codes
 - **URL expiration** — configurable TTL with lazy expiry on read + hourly background cleanup; update expiry via `PATCH`
 - **Batch creation** — `POST /api/v1/urls/batch` accepts up to 100 URLs; per-item success/failure
-- **QR codes** — `GET /api/v1/urls/{code}/qr` returns a PNG QR code for any short link
+- **QR codes** — `GET /api/v1/urls/{code}/qr?format=png|jpeg|svg` returns a QR code for any short link in three formats
 - **Link previews** — `title` and `description` auto-fetched on create (fail-open, private-IP blocked)
 - **Spam detection** — optional Google Safe Browsing v4 integration; unsafe URLs rejected with 422 (fail-open)
 - **Switchable cache** — `none | memory | redis` at config time; cache-aside with TTL capped to remaining expiry
@@ -231,7 +231,7 @@ claude mcp add goshort-remote \
 |-----|-------------|
 | `goshort://stats/summary` | Total URL count and top URLs by clicks |
 | `goshort://urls/{code}` | Full details for a specific short code |
-| `goshort://urls/{code}/qr` | PNG QR code blob for a short URL |
+| `goshort://urls/{code}/qr` | QR code blob for a short URL (PNG/JPEG/SVG via `?format=`) |
 
 ### Prompts
 
@@ -274,7 +274,7 @@ Every key maps to `GOSHORT_<SECTION>_<KEY>` env var — e.g., `GOSHORT_AUTH_API_
 | `PATCH`  | `/api/v1/urls/:code`       | Yes  | Update URL expiry        |
 | `DELETE` | `/api/v1/urls/:code`       | Yes  | Delete short URL         |
 | `POST`   | `/api/v1/urls/public`      | No   | Public shorten (30d TTL) |
-| `GET`    | `/api/v1/urls/:code/qr`    | No   | QR code PNG              |
+| `GET`    | `/api/v1/urls/:code/qr`    | No   | QR code (PNG/JPEG/SVG)   |
 | `GET`    | `/:code`                   | No   | Redirect (302)           |
 | `GET`    | `/health`                  | No   | Health check             |
 | `GET`    | `/metrics`                 | No   | Prometheus metrics       |
