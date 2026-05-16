@@ -60,7 +60,6 @@
 	align-items: center;
 	justify-content: center;
 	gap: 0.5rem;
-	padding: 0.5rem 0.875rem;
 	font-size: 0.875rem;
 	font-weight: 500;
 	border-radius: 0.5rem;
@@ -182,7 +181,6 @@
 
 /* QR section heading */
 .qr-section-label {
-	font-size: 0.75rem;
 	font-weight: 600;
 	color: var(--color-text);
 }

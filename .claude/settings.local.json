@@ -25,7 +25,22 @@
       "Bash(git commit *)",
       "Bash(bun add *)",
       "Bash(bun biome *)",
-      "Bash(bun run *)"
+      "Bash(bun run *)",
+      "Bash(make website/check)",
+      "Bash(make website/build)",
+      "Skill(git-workflow)",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "Bash(pkill -f \"astro dev\")",
+      "Bash(rm -f /home/ngockhoi96/workspace/github.com/anIcedAntFA/goshort/widget-*.png)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_fill_form",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_hover",
+      "Bash(pkill -f \"bun.*dev\")",
+      "Bash(git -C /home/ngockhoi96/workspace/github.com/anIcedAntFA/goshort status --short)",
+      "Bash(git -C /home/ngockhoi96/workspace/github.com/anIcedAntFA/goshort log --oneline -5)"
     ]
   },
   "enabledMcpjsonServers": [

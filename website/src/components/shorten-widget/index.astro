@@ -95,10 +95,9 @@ import WandSparkles from '@lucide/astro/icons/wand-sparkles';
 
 		<!-- QR panel (fade-in/out via data-visible) -->
 		<div class="qr-panel mt-3" data-qr-section>
-			<div class="rounded-lg border border-border p-3 dark:border-border-dark">
-				<p class="qr-section-label mb-2">Download Your QR Code</p>
+			<div class="rounded-lg border border-border p-3 dark:border-border-dark bg-surface-alt dark:bg-surface-alt-dark">
+				<p class="qr-section-label mb-3">Download Your QR Code</p>
 				<div class="flex items-start gap-4">
-					<!-- Runtime-dynamic URL set via JS — cannot use <Image> (build-time only) -->
 					<div class="qr-img-wrapper">
 						<img
 							src=""
@@ -114,17 +113,17 @@ import WandSparkles from '@lucide/astro/icons/wand-sparkles';
 							<span data-icon-check><Check size={16} /></span>
 						</button>
 					</div>
-					<div class="flex h-24 flex-1 flex-col justify-between sm:h-32 lg:h-40">
+					<div class="flex gap-1 h-24 flex-1 flex-col justify-between sm:h-32 sm:gap-3 lg:h-40 lg:gap-4">
 						<button class="download-qr-btn" title="Download QR code as PNG" data-download-png-btn>
-							<Download size={15} />
+							<Download size={16} />
 							<span>Download PNG</span>
 						</button>
 						<button class="download-qr-btn" title="Download QR code as JPEG" data-download-jpeg-btn>
-							<Download size={15} />
+							<Download size={16} />
 							<span>Download JPEG</span>
 						</button>
 						<button class="download-qr-btn" title="Download QR code as SVG" data-download-svg-btn>
-							<Download size={15} />
+							<Download size={16} />
 							<span>Download SVG</span>
 						</button>
 					</div>
