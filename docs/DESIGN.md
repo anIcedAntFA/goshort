@@ -79,6 +79,7 @@ Phase 5+:   Optional hosted service (free tier + paid for heavy use)
 | D13 | Reverse proxy | Nginx, Caddy, Traefik | **Caddy (Docker Compose), Nginx (VPS learning)** | Caddy for self-host ease; Nginx for learning depth |
 | D14 | CDN | Cloudflare, CloudFront, None | **Cloudflare (free tier)** | Already have account; DNS + CDN + DDoS protection |
 | D15 | Scaling reads | Skip, Some layers, All 3 | **All 3 layers** | Learning exercise — Index → Redis → CDN |
+| D16 | Public endpoint configurability | Always-on, Config toggle | **Always-on (Phase 6)** | Single self-hoster; premature to build toggle; manual router edit is the escape hatch. Future: `[public] enabled = true/false` in `goshort.toml` wired into `RouterConfig`. |
 | D16 | Scaling writes | Now, Later | **Later (Phase 5+)** | 1000 users ≈ <1 write/sec; trivial |
 | D17 | DB replication | Now, Later, Never | **Later (Phase 5+)** | Learning exercise only; no practical need at this scale |
 | D18 | MCP runtime | Cloudflare Workers, Go | **Go (go-sdk)** | Same language; official `modelcontextprotocol/go-sdk` v1.6, stable v1, generics-based |

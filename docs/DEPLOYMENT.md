@@ -10,6 +10,7 @@ Production deployment and operations reference.
 4. [Docker Compose (Self-Host)](#4-docker-compose-self-host)
 5. [Operations](#5-operations)
 6. [Troubleshooting](#6-troubleshooting)
+7. [Private Instance (Fully Authenticated)](#7-private-instance-fully-authenticated)
 
 ---
 
@@ -232,3 +233,33 @@ goshort_http_request_duration_seconds     # latency
 | SQLite locked | Multiple instances | `fly scale count 1` |
 | Cache serving stale redirect | CDN cache TTL | Wait 5 min or purge via Cloudflare |
 | Health returning EXPIRED | Cache rule order wrong | Bypass rule must be BELOW cache rule |
+
+---
+
+## 7. Private Instance (Fully Authenticated)
+
+By default, GoShort exposes two routes **without authentication**, regardless of whether `[auth] api_key` is set:
+
+| Route | Purpose |
+|-------|---------|
+| `POST /api/v1/urls/public` | Landing page demo — no auth, 30-day TTL, honeypot |
+| `GET /api/v1/urls/{code}/qr` | QR code generation — public with CORS |
+
+This is intentional: both routes power the public landing page widget at `goshort.ngockhoi96.dev`, which cannot send auth headers across origins. QR is also not a security boundary — it encodes the redirect URL, which is already publicly accessible by visiting the short link.
+
+**If you self-host and want every endpoint to require an API key**, make the following manual change in `internal/api/router.go`:
+
+1. Delete the public-create group (the `r.Group` block for `POST /urls/public` and its `r.Options`).
+2. Move the QR group (`r.Get("/urls/{code}/qr", ...)`) from its standalone public block into the protected group.
+
+```go
+// Before — two separate public groups
+r.Group(func(r chi.Router) { /* public create */ })
+r.Group(func(r chi.Router) { /* QR, public */ })
+r.Group(func(r chi.Router) { /* protected routes */ })
+
+// After — QR inside protected group
+r.Group(func(r chi.Router) { /* protected routes + QR */ })
+```
+
+> **Planned improvement:** A `[public] enabled = true/false` config flag in `goshort.toml` will automate this toggle (see D16 in `docs/DESIGN.md`). Until then, the router edit above is the supported escape hatch.
