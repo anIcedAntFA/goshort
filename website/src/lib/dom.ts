@@ -24,7 +24,8 @@ export function queryData<T extends HTMLElement>(
 	value?: string,
 	parent: ParentNode = document,
 ): T | null {
-	const selector = value != null ? `[data-${name}="${value}"]` : `[data-${name}]`;
+	const selector =
+		value != null ? `[data-${name}="${value}"]` : `[data-${name}]`;
 	return parent.querySelector<T>(selector);
 }
 
@@ -33,6 +34,7 @@ export function queryAllData<T extends HTMLElement>(
 	value?: string,
 	parent: ParentNode = document,
 ): NodeListOf<T> {
-	const selector = value != null ? `[data-${name}="${value}"]` : `[data-${name}]`;
+	const selector =
+		value != null ? `[data-${name}="${value}"]` : `[data-${name}]`;
 	return parent.querySelectorAll<T>(selector);
 }

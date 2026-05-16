@@ -43,7 +43,7 @@ goshort
 
 # Create a short link
 curl -X POST http://localhost:8080/api/v1/urls \\
-  -H "Authorization: Bearer your-secret-key" \\
+  -H "X-API-Key: your-secret-key" \\
   -H "Content-Type: application/json" \\
   -d '{"url":"https://github.com/anIcedAntFA/goshort"}'`,
 		lang: 'bash',

@@ -105,9 +105,30 @@
 		resultEl.classList.remove('hidden');
 	}
 
+	function validateURL(raw: string): string | null {
+		const trimmed = raw.trim();
+		if (!trimmed) return 'Please enter a URL.';
+		try {
+			const url = new URL(trimmed);
+			if (url.protocol !== 'http:' && url.protocol !== 'https:')
+				return 'URL must start with http:// or https://';
+			return null;
+		} catch {
+			return "That doesn't look like a valid URL.";
+		}
+	}
+
 	form?.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		hideError();
+
+		const raw = urlInput?.value ?? '';
+		const validationError = validateURL(raw);
+		if (validationError) {
+			showError(validationError);
+			return;
+		}
+
 		setLoading(true);
 
 		try {
@@ -115,7 +136,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					url: urlInput?.value ?? '',
+					url: raw.trim(),
 					website: honeypot?.value ?? '',
 				}),
 			});
