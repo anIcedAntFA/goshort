@@ -1,0 +1,78 @@
+---
+interface FAQItem {
+	question: string;
+	answer: string;
+}
+
+const items: FAQItem[] = [
+	{
+		question: 'Is it free?',
+		answer:
+			'Yes. GoShort is MIT-licensed open source — self-host it for free on any server. The live demo at goshort.ngockhoi96.dev runs on a shared instance with a 5 req/min rate limit.',
+	},
+	{
+		question: 'Can I use my own domain for short links?',
+		answer:
+			'Yes. Set base_url in goshort.toml to your domain (e.g. https://go.yourco.com) and all generated links use it. Bring your own TLS via Caddy or any reverse proxy.',
+	},
+	{
+		question: 'Does it support custom aliases like /my-link?',
+		answer:
+			'Yes, via the authenticated REST API or CLI: POST /api/v1/urls with a custom_alias field, or goshort-cli shorten --alias my-link. The public demo widget uses auto-generated codes only.',
+	},
+	{
+		question: 'How many URLs can I store?',
+		answer:
+			'Limited only by disk space. SQLite handles millions of rows without issue. For very high write throughput, a PostgreSQL backend is on the roadmap.',
+	},
+	{
+		question: 'Do you track my URLs or collect analytics?',
+		answer:
+			'No tracking, no ads, no third-party scripts. The public instance counts clicks per link — nothing else. Self-hosted instances are entirely under your control.',
+	},
+	{
+		question: 'What happens to links after 30 days on the public demo?',
+		answer:
+			'Public links expire after 30 days and return 410 Gone on access. Self-hosted instances let you set any expiry — or no expiry at all.',
+	},
+];
+---
+
+<div class="mx-auto max-w-2xl divide-y divide-border dark:divide-border-dark">
+	{
+		items.map((item) => (
+			<details class="faq-item group py-4">
+				<summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-text dark:text-text-dark">
+					{item.question}
+					<span class="faq-icon shrink-0 text-text-muted transition-transform dark:text-text-muted-dark">
+						<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+						</svg>
+					</span>
+				</summary>
+				<p class="mt-3 text-sm leading-relaxed text-text-muted dark:text-text-muted-dark">
+					{item.answer}
+				</p>
+			</details>
+		))
+	}
+</div>
+
+<style>
+	/* Hide default marker across browsers */
+	.faq-item > summary {
+		list-style: none;
+	}
+	.faq-item > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	/* Rotate + icon to × when open */
+	.faq-item[open] .faq-icon {
+		transform: rotate(45deg);
+		color: var(--color-brand);
+	}
+	:global([data-theme='dark']) .faq-item[open] .faq-icon {
+		color: var(--color-brand);
+	}
+</style>
