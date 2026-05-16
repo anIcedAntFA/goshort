@@ -1,16 +1,23 @@
 ---
 import { Code } from 'astro:components';
 
-const apiCode = `curl -X POST https://goshort.app/api/v1/urls/public \\
+const apiCode = `# Public — no auth, 30-day expiry
+curl -X POST https://goshort.app/api/v1/urls/public \\
   -H "Content-Type: application/json" \\
   -d '{"url":"https://github.com/anIcedAntFA/goshort"}'
 
+# Authenticated — custom alias, any expiry
+curl -X POST https://goshort.app/api/v1/urls \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: your-api-key" \\
+  -d '{"url":"https://github.com/anIcedAntFA/goshort","custom_alias":"goshort","expires_in":"365d"}'
+
 # 201 Created
 {
-  "short_code": "k7Xm2p",
-  "short_url": "https://goshort.app/k7Xm2p",
+  "short_code": "goshort",
+  "short_url": "https://goshort.app/goshort",
   "original_url": "https://github.com/anIcedAntFA/goshort",
-  "expires_at": "2026-06-13T00:00:00Z"
+  "expires_at": "2027-05-16T00:00:00Z"
 }`;
 
 const cliCode = `# Install (requires Go 1.22+)
@@ -26,7 +33,7 @@ goshort-cli list
 # Authenticated commands use GOSHORT_API_KEY env var
 export GOSHORT_API_KEY=your-secret-key`;
 
-const mcpCode = `# Add to claude_desktop_config.json (stdio transport)
+const mcpCode = `// Claude Code / Claude Desktop  →  .mcp.json
 {
   "mcpServers": {
     "goshort": {
@@ -37,17 +44,26 @@ const mcpCode = `# Add to claude_desktop_config.json (stdio transport)
   }
 }
 
-# Or connect via HTTP (Streamable HTTP transport)
-# MCP endpoint: https://goshort.app/mcp
+// Cursor  →  .cursor/mcp.json  (identical format)
+{
+  "mcpServers": {
+    "goshort": {
+      "command": "goshort",
+      "args": ["--mcp"],
+      "env": { "GOSHORT_API_KEY": "your-secret-key" }
+    }
+  }
+}
 
-# Example tool call: create_url
-# { "url": "https://github.com/anIcedAntFA/goshort", "expires_in": "7d" }
-# → { "short_url": "https://goshort.app/k7Xm2p" }`;
+// Remote HTTP — connect to any deployed instance
+// claude mcp add goshort-remote \\
+//   --transport http https://goshort.app/mcp \\
+//   --header "X-API-Key: your-api-key"`;
 
 const tabs = [
 	{ id: 'api', label: 'API', code: apiCode, lang: 'bash' },
 	{ id: 'cli', label: 'CLI', code: cliCode, lang: 'bash' },
-	{ id: 'mcp', label: 'MCP', code: mcpCode, lang: 'json' },
+	{ id: 'mcp', label: 'MCP', code: mcpCode, lang: 'jsonc' },
 ] as const;
 ---
 
