@@ -1,54 +1,12 @@
 ---
-import { Code } from 'astro:components';
 import CodeDemo from '@/components/code-demo.astro';
+import Faq from '@/components/faq.astro';
 import FeatureCards from '@/components/feature-cards.astro';
 import Footer from '@/components/footer.astro';
+import InstallSteps from '@/components/install-steps.astro';
 import Navbar from '@/components/navbar.astro';
 import ShortenWidget from '@/components/shorten-widget/index.astro';
 import BaseLayout from '@/layouts/base-layout.astro';
-
-const installSteps = [
-	{
-		step: 1,
-		title: 'Download',
-		body: 'Grab the latest binary or install from source:',
-		code: `# Binary (GitHub Releases)
-curl -L https://github.com/anIcedAntFA/goshort/releases/latest/download/goshort_linux_amd64.tar.gz | tar xz
-
-# Or build from source (Go 1.22+)
-go install github.com/anIcedAntFA/goshort/cmd/server@latest`,
-		lang: 'bash',
-	},
-	{
-		step: 2,
-		title: 'Configure',
-		body: 'Create goshort.toml in your working directory:',
-		code: `[server]
-port     = 8080
-base_url = "https://your.domain.com"
-
-[auth]
-api_key = "your-secret-key"
-
-[cache]
-driver = "memory"`,
-		lang: 'toml',
-	},
-	{
-		step: 3,
-		title: 'Shorten',
-		body: 'Start the server and create your first short link:',
-		code: `# Start the server
-goshort
-
-# Create a short link
-curl -X POST http://localhost:8080/api/v1/urls \\
-  -H "X-API-Key: your-secret-key" \\
-  -H "Content-Type: application/json" \\
-  -d '{"url":"https://github.com/anIcedAntFA/goshort"}'`,
-		lang: 'bash',
-	},
-] as const;
 ---
 
 <BaseLayout>
@@ -88,26 +46,15 @@ curl -X POST http://localhost:8080/api/v1/urls \\
 		<!-- Install -->
 		<section id="install" class="py-16">
 			<p class="section-heading">Self-host in minutes</p>
-			<div class="mt-8 grid gap-8 md:grid-cols-3">
-				{
-					installSteps.map((s) => (
-						<div>
-							<div class="mb-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
-								{s.step}
-							</div>
-							<h3 class="font-semibold text-text dark:text-text-dark">{s.title}</h3>
-							<p class="mt-1 text-sm text-text-muted dark:text-text-muted-dark">{s.body}</p>
-							<div class="mt-3 overflow-hidden rounded-xl">
-								<Code
-									code={s.code}
-									lang={s.lang}
-									theme="github-dark"
-									class="install-code"
-								/>
-							</div>
-						</div>
-					))
-				}
+			<div class="mt-8">
+				<InstallSteps />
+			</div>
+		</section>
+		<!-- FAQ -->
+		<section id="faq" class="py-16">
+			<p class="section-heading">Frequently asked questions</p>
+			<div class="mt-8">
+				<Faq />
 			</div>
 		</section>
 	</main>
@@ -115,12 +62,3 @@ curl -X POST http://localhost:8080/api/v1/urls \\
 	<Footer />
 </BaseLayout>
 
-<style>
-	.install-code {
-		margin: 0 !important;
-		padding: 1rem !important;
-		font-size: 0.8125rem !important;
-		line-height: 1.6 !important;
-		border-radius: 0.75rem !important;
-	}
-</style>

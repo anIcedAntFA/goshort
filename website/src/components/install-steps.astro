@@ -1,0 +1,210 @@
+---
+import { Code } from 'astro:components';
+
+const installMethods = [
+	{
+		id: 'docker',
+		label: 'Docker Compose',
+		recommended: true,
+		code: `# Pull config files and start (Caddy handles TLS automatically)
+curl -O https://raw.githubusercontent.com/anIcedAntFA/goshort/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/anIcedAntFA/goshort/main/goshort.toml
+docker compose up -d`,
+		lang: 'bash' as const,
+	},
+	{
+		id: 'binary',
+		label: 'Binary',
+		recommended: false,
+		code: `# Linux amd64 — swap suffix for darwin_arm64, windows_amd64, etc.
+curl -L https://github.com/anIcedAntFA/goshort/releases/latest/download/goshort_linux_amd64.tar.gz | tar xz
+./goshort`,
+		lang: 'bash' as const,
+	},
+	{
+		id: 'goinstall',
+		label: 'go install',
+		recommended: false,
+		code: `# Requires Go 1.22+
+go install github.com/anIcedAntFA/goshort/cmd/server@latest
+goshort`,
+		lang: 'bash' as const,
+	},
+] as const;
+
+const configCode = `[server]
+base_url = "https://your.domain.com"
+
+[auth]
+api_key  = "your-secret-key"
+
+[cache]
+driver   = "memory"  # none | memory | redis`;
+
+const verifyCode = `# Start the server (binary / go install)
+goshort
+
+# Verify it's running
+curl http://localhost:8080/health
+# → {"status":"ok"}`;
+---
+
+<!-- Step 1 — full width, tabbed install methods -->
+<div class="rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
+	<div class="mb-4 flex items-start gap-3">
+		<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">1</span>
+		<div>
+			<h3 class="font-semibold text-text dark:text-text-dark">Install</h3>
+			<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">Pick your preferred install method.</p>
+		</div>
+	</div>
+
+	<div data-install-tabs>
+		<div class="mb-1 flex flex-wrap gap-1" role="tablist">
+			{
+				installMethods.map((m, i) => (
+					<button
+						role="tab"
+						class="install-tab"
+						data-tab={m.id}
+						aria-selected={i === 0 ? 'true' : 'false'}
+						data-active={i === 0 ? '' : undefined}
+					>
+						{m.label}
+						{m.recommended && <span class="recommended-badge">recommended</span>}
+					</button>
+				))
+			}
+		</div>
+
+		{
+			installMethods.map((m, i) => (
+				<div data-panel={m.id} data-active={i === 0 ? '' : undefined} role="tabpanel">
+					<Code code={m.code} lang={m.lang} theme="github-dark" class="step-code" />
+				</div>
+			))
+		}
+	</div>
+</div>
+
+<!-- Steps 2 + 3 — two-column -->
+<div class="mt-4 grid gap-4 md:grid-cols-2">
+	<div class="rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
+		<div class="mb-4 flex items-start gap-3">
+			<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">2</span>
+			<div>
+				<h3 class="font-semibold text-text dark:text-text-dark">Configure</h3>
+				<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">
+					Edit <code class="inline-code">goshort.toml</code>.
+				</p>
+			</div>
+		</div>
+		<Code code={configCode} lang="toml" theme="github-dark" class="step-code" />
+	</div>
+
+	<div class="rounded-xl border border-border bg-surface p-5 dark:border-border-dark dark:bg-surface-dark">
+		<div class="mb-4 flex items-start gap-3">
+			<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">3</span>
+			<div>
+				<h3 class="font-semibold text-text dark:text-text-dark">Run & verify</h3>
+				<p class="mt-0.5 text-sm text-text-muted dark:text-text-muted-dark">Start the server and confirm it's live.</p>
+			</div>
+		</div>
+		<Code code={verifyCode} lang="bash" theme="github-dark" class="step-code" />
+	</div>
+</div>
+
+<script>
+	import { query, queryAll } from '@/lib/dom';
+
+	const container = query<HTMLElement>('[data-install-tabs]');
+	if (container) {
+		const tabs = queryAll<HTMLButtonElement>('[data-tab]', container);
+		const panels = queryAll<HTMLElement>('[data-panel]', container);
+
+		for (const btn of tabs) {
+			btn.addEventListener('click', () => {
+				const active = btn.dataset.tab;
+				for (const b of tabs) {
+					b.toggleAttribute('data-active', b.dataset.tab === active);
+					b.setAttribute('aria-selected', String(b.dataset.tab === active));
+				}
+				for (const p of panels) {
+					p.toggleAttribute('data-active', p.dataset.panel === active);
+				}
+			});
+		}
+	}
+</script>
+
+<style>
+	.inline-code {
+		border-radius: 0.25rem;
+		background-color: var(--color-surface-alt);
+		padding: 0 0.25rem;
+		font-family: monospace;
+		font-size: 0.75rem;
+	}
+	:global([data-theme='dark']) .inline-code {
+		background-color: var(--color-surface-alt-dark);
+	}
+
+	/* Tab bar */
+	.install-tab {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.25rem 0.75rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		border-radius: 0.5rem 0.5rem 0 0;
+		border: none;
+		background: transparent;
+		cursor: pointer;
+		color: var(--color-text-muted);
+		transition:
+			color 0.15s,
+			background-color 0.15s;
+	}
+	.install-tab:hover {
+		color: var(--color-text);
+	}
+	.install-tab[data-active] {
+		color: var(--color-brand);
+		background-color: var(--color-surface-alt);
+	}
+	:global([data-theme='dark']) .install-tab {
+		color: var(--color-text-muted-dark);
+	}
+	:global([data-theme='dark']) .install-tab:hover {
+		color: var(--color-text-dark);
+	}
+	:global([data-theme='dark']) .install-tab[data-active] {
+		color: var(--color-brand);
+		background-color: var(--color-surface-alt-dark);
+	}
+
+	.recommended-badge {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		padding: 0.1rem 0.4rem;
+		border-radius: 9999px;
+		background-color: var(--color-brand-light);
+		color: var(--color-brand);
+	}
+
+	[data-panel] {
+		display: none;
+	}
+	[data-panel][data-active] {
+		display: block;
+	}
+
+	.step-code {
+		border-radius: 0 0.625rem 0.625rem 0.625rem !important;
+		margin: 0 !important;
+		padding: 1rem !important;
+		font-size: 0.8125rem !important;
+		line-height: 1.6 !important;
+	}
+</style>
