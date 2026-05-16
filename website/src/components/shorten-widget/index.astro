@@ -1,11 +1,17 @@
 ---
 // POST /api/v1/urls/public — no auth, 30-day expiry, honeypot spam guard.
 // Set PUBLIC_API_BASE env var to override origin (e.g. http://localhost:8080 for local dev).
+import Check from '@lucide/astro/icons/check';
+import Copy from '@lucide/astro/icons/copy';
+import Download from '@lucide/astro/icons/download';
+import ExternalLink from '@lucide/astro/icons/external-link';
+import Plus from '@lucide/astro/icons/plus';
+import QrCode from '@lucide/astro/icons/qr-code';
 ---
 
 <div class="w-full" data-shorten-widget>
 	<form data-shorten-form novalidate>
-		<!-- Honeypot: positioned off-screen, invisible to humans, detectable by bots -->
+		<!-- Honeypot: off-screen, invisible to humans, detectable by bots -->
 		<div
 			aria-hidden="true"
 			style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"
@@ -34,8 +40,14 @@
 	</form>
 
 	<div class="card mt-4 hidden" data-shorten-result>
-		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-success">URL shortened</p>
-		<div class="flex items-center justify-between gap-4">
+		<!-- Success indicator -->
+		<p class="result-success mb-3">
+			<Check size={12} class="shrink-0" />
+			<span>Shortened</span>
+		</p>
+
+		<!-- Short URL + copy -->
+		<div class="flex items-center justify-between gap-3">
 			<a
 				href=""
 				target="_blank"
@@ -43,24 +55,70 @@
 				class="truncate font-semibold text-brand hover:underline"
 				data-short-url
 			></a>
-			<div class="flex shrink-0 gap-2">
-				<button class="btn btn-ghost text-sm" data-qr-btn>Get QR</button>
-				<button class="btn btn-ghost text-sm" data-copy-btn>Copy</button>
+			<button class="action-btn shrink-0" data-copy-btn title="Copy short URL">
+				<span data-icon-copy><Copy size={14} /></span>
+				<span data-icon-check><Check size={14} /></span>
+				<span data-copy-label>Copy</span>
+			</button>
+		</div>
+
+		<!-- Meta -->
+		<p
+			class="mt-1 truncate text-sm text-text-muted dark:text-text-muted-dark"
+			data-original-url
+		>
+		</p>
+		<p class="mt-0.5 text-xs text-text-muted dark:text-text-muted-dark">Expires in 30 days</p>
+
+		<!-- Action row -->
+		<div class="mt-3 flex gap-1.5">
+			<a
+				href=""
+				target="_blank"
+				rel="noopener noreferrer"
+				class="action-btn"
+				title="Open short URL in new tab"
+				data-visit-link
+			>
+				<ExternalLink size={13} />
+				<span>Visit</span>
+			</a>
+			<button class="action-btn" title="Show QR code" data-qr-btn>
+				<QrCode size={13} />
+				<span>QR</span>
+			</button>
+		</div>
+
+		<!-- QR panel (fade-in/out via data-visible) -->
+		<div class="qr-panel mt-3" data-qr-section>
+			<div
+				class="flex items-start gap-4 rounded-lg border border-border p-3 dark:border-border-dark"
+			>
+				<!-- Runtime-dynamic URL set via JS — cannot use <Image> (build-time only) -->
+				<img
+					src=""
+					alt="QR code for short URL"
+					width="160"
+					height="160"
+					class="rounded"
+					data-qr-img
+				/>
+				<button
+					class="action-btn"
+					title="Download QR code as PNG"
+					data-download-btn
+				>
+					<Download size={13} />
+					<span>Download</span>
+				</button>
 			</div>
 		</div>
-		<p class="mt-1 truncate text-sm text-text-muted dark:text-text-muted-dark" data-original-url>
-		</p>
-		<p class="mt-1 text-xs text-text-muted dark:text-text-muted-dark">Expires: 30 days</p>
-		<div class="mt-3 hidden" data-qr-section>
-			<img
-				src=""
-				alt="QR code for short URL"
-				width="160"
-				height="160"
-				class="rounded-lg border border-border dark:border-border-dark"
-				data-qr-img
-			/>
-		</div>
+
+		<!-- Shorten another -->
+		<button class="shorten-another-btn mt-4" data-shorten-another>
+			<Plus size={13} />
+			<span>Shorten another link</span>
+		</button>
 	</div>
 
 	<p class="mt-3 hidden text-sm text-danger" data-shorten-error></p>
@@ -90,10 +148,14 @@
 	const resultEl = query<HTMLDivElement>('[data-shorten-result]');
 	const shortUrlEl = query<HTMLAnchorElement>('[data-short-url]');
 	const originalUrlEl = query<HTMLParagraphElement>('[data-original-url]');
+	const visitLink = query<HTMLAnchorElement>('[data-visit-link]');
 	const copyBtn = query<HTMLButtonElement>('[data-copy-btn]');
+	const copyLabel = query<HTMLSpanElement>('[data-copy-label]');
 	const qrBtn = query<HTMLButtonElement>('[data-qr-btn]');
 	const qrSection = query<HTMLDivElement>('[data-qr-section]');
 	const qrImg = query<HTMLImageElement>('[data-qr-img]');
+	const downloadBtn = query<HTMLButtonElement>('[data-download-btn]');
+	const shortenAnotherBtn = query<HTMLButtonElement>('[data-shorten-another]');
 	const errorEl = query<HTMLParagraphElement>('[data-shorten-error]');
 
 	let currentCode = '';
@@ -119,12 +181,14 @@
 		if (!resultEl || !shortUrlEl || !originalUrlEl) return;
 		shortUrlEl.textContent = data.short_url;
 		shortUrlEl.href = data.short_url;
+		if (visitLink) visitLink.href = data.short_url;
 		originalUrlEl.textContent = data.original_url;
-		// Reset QR state for new result
+		// Reset QR state
 		currentCode = data.short_code;
-		qrSection?.classList.add('hidden');
-		if (qrImg) qrImg.src = '';
+		qrSection?.removeAttribute('data-visible');
+		qrBtn?.removeAttribute('data-active');
 		qrBtn?.removeAttribute('data-loaded');
+		if (qrImg) qrImg.src = '';
 		resultEl.classList.remove('hidden');
 	}
 
@@ -182,32 +246,166 @@
 		}
 	});
 
-	qrBtn?.addEventListener('click', () => {
-		if (!qrSection || !qrImg || !currentCode) return;
-		if (!qrBtn.hasAttribute('data-loaded')) {
-			qrImg.src = `${API_BASE}/api/v1/urls/${currentCode}/qr`;
-			qrBtn.setAttribute('data-loaded', '');
-		}
-		qrSection.classList.toggle('hidden');
-		qrBtn.textContent = qrSection.classList.contains('hidden') ? 'Get QR' : 'Hide QR';
-	});
-
 	copyBtn?.addEventListener('click', async () => {
 		const url = shortUrlEl?.textContent ?? '';
 		if (!url || !copyBtn) return;
 		await navigator.clipboard.writeText(url);
-		copyBtn.textContent = 'Copied!';
 		copyBtn.dataset.copied = '';
+		if (copyLabel) copyLabel.textContent = 'Copied!';
 		setTimeout(() => {
 			if (!copyBtn) return;
-			copyBtn.textContent = 'Copy';
 			delete copyBtn.dataset.copied;
+			if (copyLabel) copyLabel.textContent = 'Copy';
 		}, COPY_RESET_MS);
+	});
+
+	qrBtn?.addEventListener('click', () => {
+		if (!qrSection || !qrImg || !currentCode) return;
+		// Lazy-load QR image on first reveal
+		if (!qrBtn.hasAttribute('data-loaded')) {
+			qrImg.src = `${API_BASE}/api/v1/urls/${currentCode}/qr`;
+			qrBtn.setAttribute('data-loaded', '');
+		}
+		const nowVisible = !qrSection.hasAttribute('data-visible');
+		qrSection.toggleAttribute('data-visible', nowVisible);
+		qrBtn.toggleAttribute('data-active', nowVisible);
+	});
+
+	// Option A: blob fetch for cross-origin download (goshort.ngockhoi96.dev ≠ goshort.app)
+	downloadBtn?.addEventListener('click', async () => {
+		if (!currentCode) return;
+		try {
+			const res = await fetch(`${API_BASE}/api/v1/urls/${currentCode}/qr`);
+			const blob = await res.blob();
+			const objectUrl = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = objectUrl;
+			a.download = `qr-${currentCode}.png`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(objectUrl);
+		} catch {
+			// silently fail — user can right-click the QR image and save manually
+		}
+	});
+
+	shortenAnotherBtn?.addEventListener('click', () => {
+		if (!urlInput || !resultEl) return;
+		resultEl.classList.add('hidden');
+		urlInput.value = '';
+		hideError();
+		urlInput.focus();
 	});
 </script>
 
 <style>
+	/* Success label */
+	.result-success {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--color-success);
+	}
+
+	/* Small action buttons (Visit, QR, Copy, Download) */
+	.action-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.25rem 0.625rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		border-radius: 0.375rem;
+		border: none;
+		background: transparent;
+		cursor: pointer;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		transition:
+			background-color 0.15s,
+			color 0.15s;
+	}
+	.action-btn:hover {
+		background-color: var(--color-surface-alt);
+		color: var(--color-text);
+	}
+	:global([data-theme='dark']) .action-btn {
+		color: var(--color-text-muted-dark);
+	}
+	:global([data-theme='dark']) .action-btn:hover {
+		background-color: var(--color-surface-alt-dark);
+		color: var(--color-text-dark);
+	}
+
+	/* QR button active state (when panel is open) */
+	[data-qr-btn][data-active] {
+		background-color: var(--color-surface-alt);
+		color: var(--color-text);
+	}
+	:global([data-theme='dark']) [data-qr-btn][data-active] {
+		background-color: var(--color-surface-alt-dark);
+		color: var(--color-text-dark);
+	}
+
+	/* Copy icon swap: default shows Copy, [data-copied] shows Check */
+	[data-icon-check] {
+		display: none;
+	}
+	[data-copy-btn][data-copied] [data-icon-copy] {
+		display: none;
+	}
+	[data-copy-btn][data-copied] [data-icon-check] {
+		display: inline-flex;
+	}
 	[data-copy-btn][data-copied] {
 		color: var(--color-success);
+	}
+
+	/* QR fade-in/out panel — max-height transition avoids display:none jump */
+	.qr-panel {
+		overflow: hidden;
+		max-height: 0;
+		opacity: 0;
+		transition:
+			max-height 0.25s ease,
+			opacity 0.2s ease;
+	}
+	.qr-panel[data-visible] {
+		max-height: 240px;
+		opacity: 1;
+	}
+
+	/* "Shorten another" dashed ghost button */
+	.shorten-another-btn {
+		display: flex;
+		width: 100%;
+		align-items: center;
+		justify-content: center;
+		gap: 0.375rem;
+		padding: 0.5rem;
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+		background: transparent;
+		border: 1px dashed var(--color-border);
+		border-radius: 0.5rem;
+		cursor: pointer;
+		transition:
+			color 0.15s,
+			border-color 0.15s;
+	}
+	.shorten-another-btn:hover {
+		color: var(--color-brand);
+		border-color: var(--color-brand);
+	}
+	:global([data-theme='dark']) .shorten-another-btn {
+		color: var(--color-text-muted-dark);
+		border-color: var(--color-border-dark);
+	}
+	:global([data-theme='dark']) .shorten-another-btn:hover {
+		color: var(--color-brand);
+		border-color: var(--color-brand);
 	}
 </style>
