@@ -40,6 +40,9 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 			r.Post("/urls/public", h.PublicCreateURL)
 		})
 
+		// QR code — public, no auth (PNG image, no sensitive data).
+		r.Get("/urls/{code}/qr", h.GetQRCode)
+
 		// Protected routes — auth before rate limiting so bad keys get 401, not 429.
 		r.Group(func(r chi.Router) {
 			r.Use(AuthMiddleware(cfg.APIKey))
@@ -47,7 +50,6 @@ func NewRouter(h *Handler, cfg RouterConfig) chi.Router {
 			r.Post("/urls", h.CreateURL)
 			r.Post("/urls/batch", h.BatchCreateURL)
 			r.Get("/urls", h.ListURLs)
-			r.Get("/urls/{code}/qr", h.GetQRCode)
 			r.Get("/urls/{code}", h.GetURL)
 			r.Patch("/urls/{code}", h.UpdateURL)
 			r.Delete("/urls/{code}", h.DeleteURL)
